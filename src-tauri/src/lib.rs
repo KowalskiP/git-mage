@@ -36,6 +36,12 @@ pub fn run() {
             ipc::commands::stage_all,
             ipc::commands::unstage_all,
             ipc::commands::commit,
+            ipc::commands::list_branches,
+            ipc::commands::checkout,
+            ipc::commands::create_branch,
+            ipc::commands::fetch,
+            ipc::commands::pull,
+            ipc::commands::push,
             ipc::commands::watch_repo,
             ipc::commands::unwatch_repo,
         ])

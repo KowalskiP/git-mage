@@ -1,4 +1,9 @@
 //! Tauri command surface (SPEC §5.3). Thin wrappers; logic lives in db/git/watcher.
+//!
+//! Git-backed commands are `async` so Tauri runs them on the async runtime
+//! instead of the main thread — a blocking git call (e.g. `fetch`/`pull`/`push`
+//! doing network I/O) must never freeze the UI. The fast local-DB and watcher
+//! commands stay synchronous.
 
 use tauri::{AppHandle, State};
 
@@ -35,53 +40,83 @@ pub fn set_favorite(id: i64, favorite: bool, db: State<Db>) -> AppResult<()> {
 }
 
 #[tauri::command]
-pub fn repo_status(path: String) -> AppResult<RepoStatus> {
+pub async fn repo_status(path: String) -> AppResult<RepoStatus> {
     git::status(&path)
 }
 
 #[tauri::command]
-pub fn graph_load(path: String, limit: Option<usize>) -> AppResult<Vec<GraphRow>> {
+pub async fn graph_load(path: String, limit: Option<usize>) -> AppResult<Vec<GraphRow>> {
     git::graph(&path, limit.unwrap_or(2000))
 }
 
 #[tauri::command]
-pub fn commit_detail(path: String, sha: String) -> AppResult<CommitDetail> {
+pub async fn commit_detail(path: String, sha: String) -> AppResult<CommitDetail> {
     git::commit_detail(&path, &sha)
 }
 
 #[tauri::command]
-pub fn commit_diff(path: String, sha: String, file: String) -> AppResult<String> {
+pub async fn commit_diff(path: String, sha: String, file: String) -> AppResult<String> {
     git::commit_diff(&path, &sha, &file)
 }
 
 #[tauri::command]
-pub fn wip_diff(path: String, file: String) -> AppResult<String> {
+pub async fn wip_diff(path: String, file: String) -> AppResult<String> {
     git::wip_diff(&path, &file)
 }
 
 #[tauri::command]
-pub fn stage(path: String, files: Vec<String>) -> AppResult<()> {
+pub async fn stage(path: String, files: Vec<String>) -> AppResult<()> {
     git::stage(&path, &files)
 }
 
 #[tauri::command]
-pub fn unstage(path: String, files: Vec<String>) -> AppResult<()> {
+pub async fn unstage(path: String, files: Vec<String>) -> AppResult<()> {
     git::unstage(&path, &files)
 }
 
 #[tauri::command]
-pub fn stage_all(path: String) -> AppResult<()> {
+pub async fn stage_all(path: String) -> AppResult<()> {
     git::stage_all(&path)
 }
 
 #[tauri::command]
-pub fn unstage_all(path: String) -> AppResult<()> {
+pub async fn unstage_all(path: String) -> AppResult<()> {
     git::unstage_all(&path)
 }
 
 #[tauri::command]
-pub fn commit(path: String, message: String, amend: bool) -> AppResult<()> {
+pub async fn commit(path: String, message: String, amend: bool) -> AppResult<()> {
     git::commit(&path, &message, amend)
+}
+
+#[tauri::command]
+pub async fn list_branches(path: String) -> AppResult<Vec<String>> {
+    git::list_branches(&path)
+}
+
+#[tauri::command]
+pub async fn checkout(path: String, refname: String) -> AppResult<()> {
+    git::checkout(&path, &refname)
+}
+
+#[tauri::command]
+pub async fn create_branch(path: String, name: String, checkout: bool) -> AppResult<()> {
+    git::create_branch(&path, &name, checkout)
+}
+
+#[tauri::command]
+pub async fn fetch(path: String) -> AppResult<()> {
+    git::fetch(&path)
+}
+
+#[tauri::command]
+pub async fn pull(path: String) -> AppResult<()> {
+    git::pull(&path)
+}
+
+#[tauri::command]
+pub async fn push(path: String) -> AppResult<()> {
+    git::push(&path)
 }
 
 #[tauri::command]

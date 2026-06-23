@@ -4,6 +4,7 @@ import { commitDiff, wipDiff } from "../ipc/commands";
 import { CommitGraph } from "./graph/CommitGraph";
 import { DetailPanel } from "./DetailPanel";
 import { DiffView } from "./DiffView";
+import { Toolbar } from "./Toolbar";
 
 export function RepoView() {
   const selected = useRepos((s) => s.selected);
@@ -36,6 +37,7 @@ export function RepoView() {
 
   return (
     <div className="repo-view">
+      <Toolbar />
       <div className="repo-view__body">
         <CommitGraph />
         <DetailPanel onOpenFile={open} selectedFile={openFile} />

@@ -7,11 +7,13 @@
 
 mod commit;
 mod graph;
+mod ops;
 mod stage;
 mod status;
 
 pub use commit::{commit_detail, commit_diff, wip_diff};
 pub use graph::graph;
+pub use ops::{checkout, create_branch, fetch, list_branches, pull, push};
 pub use stage::{commit, stage, stage_all, unstage, unstage_all};
 pub use status::status;
 

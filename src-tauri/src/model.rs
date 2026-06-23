@@ -24,6 +24,8 @@ pub struct FileEntry {
 pub struct RepoStatus {
     pub branch: Option<String>,
     pub upstream: Option<String>,
+    pub ahead: u32,
+    pub behind: u32,
     pub staged: Vec<FileEntry>,
     pub unstaged: Vec<FileEntry>,
     pub untracked: Vec<FileEntry>,

@@ -19,6 +19,8 @@ export interface FileEntry {
 export interface RepoStatus {
   branch: string | null;
   upstream: string | null;
+  ahead: number;
+  behind: number;
   staged: FileEntry[];
   unstaged: FileEntry[];
   untracked: FileEntry[];

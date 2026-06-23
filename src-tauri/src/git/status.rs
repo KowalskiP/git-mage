@@ -31,9 +31,11 @@ pub fn status(path: &str) -> AppResult<RepoStatus> {
 
     for line in text.lines() {
         if let Some(branch_line) = line.strip_prefix("## ") {
-            let (branch, upstream) = parse_branch_line(branch_line);
+            let (branch, upstream, ahead, behind) = parse_branch_line(branch_line);
             st.branch = branch;
             st.upstream = upstream;
+            st.ahead = ahead;
+            st.behind = behind;
         } else if !line.is_empty() {
             classify(line, &mut st);
         }
@@ -47,21 +49,33 @@ pub fn status(path: &str) -> AppResult<RepoStatus> {
     Ok(st)
 }
 
-/// Parse the `## ` branch header (already stripped of the prefix).
-fn parse_branch_line(rest: &str) -> (Option<String>, Option<String>) {
+/// Parse the `## ` branch header (already stripped of the prefix) into
+/// (branch, upstream, ahead, behind).
+fn parse_branch_line(rest: &str) -> (Option<String>, Option<String>, u32, u32) {
     if rest.starts_with("HEAD (no branch)") {
-        return (Some("HEAD (detached)".into()), None);
+        return (Some("HEAD (detached)".into()), None, 0, 0);
     }
     if let Some(name) = rest.strip_prefix("No commits yet on ") {
-        return (Some(name.trim().to_string()), None);
+        return (Some(name.trim().to_string()), None, 0, 0);
     }
     let mut parts = rest.splitn(2, "...");
     let branch = parts.next().unwrap_or("").trim().to_string();
-    let upstream = parts.next().map(|u| {
-        // Drop a trailing " [ahead N, behind M]" segment.
-        u.split(" [").next().unwrap_or(u).trim().to_string()
-    });
-    (Some(branch), upstream)
+    let mut upstream = None;
+    let mut ahead = 0;
+    let mut behind = 0;
+    if let Some(rem) = parts.next() {
+        upstream = Some(rem.split(" [").next().unwrap_or(rem).trim().to_string());
+        if let Some((_, bracket)) = rem.split_once('[') {
+            for token in bracket.trim_end_matches(']').split(", ") {
+                if let Some(n) = token.strip_prefix("ahead ") {
+                    ahead = n.trim().parse().unwrap_or(0);
+                } else if let Some(n) = token.strip_prefix("behind ") {
+                    behind = n.trim().parse().unwrap_or(0);
+                }
+            }
+        }
+    }
+    (Some(branch), upstream, ahead, behind)
 }
 
 /// Classify one porcelain v1 entry line into the status buckets.

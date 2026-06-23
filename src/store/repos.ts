@@ -9,6 +9,8 @@ interface ReposState {
   graph: GraphRow[];
   graphLoading: boolean;
   selectedSha: string | null;
+  branches: string[];
+  busy: string | null;
   loading: boolean;
   error: string | null;
 
@@ -23,6 +25,12 @@ interface ReposState {
   stageAll: () => Promise<void>;
   unstageAll: () => Promise<void>;
   commit: (message: string, amend: boolean) => Promise<void>;
+  loadBranches: () => Promise<void>;
+  checkout: (refname: string) => Promise<void>;
+  createBranch: (name: string, checkout: boolean) => Promise<void>;
+  fetch: () => Promise<void>;
+  pull: () => Promise<void>;
+  push: () => Promise<void>;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -34,6 +42,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   graph: [],
   graphLoading: false,
   selectedSha: null,
+  branches: [],
+  busy: null,
   loading: false,
   error: null,
 
@@ -63,9 +73,9 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (prev && prev.path !== repo.path) {
       await api.unwatchRepo(prev.path).catch(() => {});
     }
-    set({ selected: repo, status: null, graph: [], selectedSha: null });
+    set({ selected: repo, status: null, graph: [], selectedSha: null, branches: [] });
     await api.watchRepo(repo.path).catch(() => {});
-    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
   },
 
   refreshStatus: async () => {
@@ -146,7 +156,82 @@ export const useRepos = create<ReposState>((set, get) => ({
     const sel = get().selected;
     if (!sel) return;
     await api.commit(sel.path, message, amend);
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+  },
+
+  loadBranches: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ branches: await api.listBranches(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  checkout: async (refname) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Checking out ${refname}…`, error: null });
+    try {
+      await api.checkout(sel.path, refname);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  createBranch: async (name, checkout) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Creating ${name}…`, error: null });
+    try {
+      await api.createBranch(sel.path, name, checkout);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  fetch: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Fetching…", error: null });
+    try {
+      await api.fetch(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
     await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  pull: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Pulling…", error: null });
+    try {
+      await api.pull(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  push: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Pushing…", error: null });
+    try {
+      await api.push(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    set({ busy: null });
   },
 
   remove: async (id) => {
@@ -161,3 +246,10 @@ export const useRepos = create<ReposState>((set, get) => ({
     await get().loadRepos();
   },
 }));
+
+// Zustand state doesn't survive HMR patching cleanly (it can leave components
+// bound to a stale store, with dead event handlers). Force a full window reload
+// whenever this module changes so dev edits to the store stay safe.
+if (import.meta.hot) {
+  import.meta.hot.accept(() => import.meta.hot!.invalidate());
+}
