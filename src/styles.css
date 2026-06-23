@@ -625,11 +625,15 @@ body {
 
 /* Detail panel — reuse the polished Changes (StatusPanel) styling */
 .detail-files .status-section {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 .detail-files .status-section h3 {
-  padding: 0 12px;
-  margin: 12px 0 4px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-elev);
+  padding: 6px 12px 4px;
+  margin: 0;
 }
 .detail-files .file-row {
   padding: 3px 12px;
@@ -651,4 +655,87 @@ body {
 /* keep tree rows visually consistent with the section rows */
 .detail-files .fileitem {
   font-family: ui-monospace, monospace;
+}
+
+/* Staging actions */
+.row-action {
+  opacity: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.file-row:hover .row-action {
+  opacity: 1;
+}
+.row-action:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.bulk {
+  display: flex;
+  gap: 10px;
+}
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--blue);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+}
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+/* Commit box */
+.commit-box {
+  border-top: 1px solid var(--border);
+  padding: 10px 12px;
+  flex: 0 0 auto;
+}
+.commit-msg {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.commit-msg:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.commit-err {
+  color: var(--red);
+  font-size: 11px;
+  margin-top: 6px;
+}
+.commit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.amend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
 }

@@ -60,6 +60,31 @@ pub fn wip_diff(path: String, file: String) -> AppResult<String> {
 }
 
 #[tauri::command]
+pub fn stage(path: String, files: Vec<String>) -> AppResult<()> {
+    git::stage(&path, &files)
+}
+
+#[tauri::command]
+pub fn unstage(path: String, files: Vec<String>) -> AppResult<()> {
+    git::unstage(&path, &files)
+}
+
+#[tauri::command]
+pub fn stage_all(path: String) -> AppResult<()> {
+    git::stage_all(&path)
+}
+
+#[tauri::command]
+pub fn unstage_all(path: String) -> AppResult<()> {
+    git::unstage_all(&path)
+}
+
+#[tauri::command]
+pub fn commit(path: String, message: String, amend: bool) -> AppResult<()> {
+    git::commit(&path, &message, amend)
+}
+
+#[tauri::command]
 pub fn watch_repo(path: String, app: AppHandle, watchers: State<Watchers>) -> AppResult<()> {
     watcher::watch(&app, &watchers, &path)
 }

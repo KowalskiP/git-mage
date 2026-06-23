@@ -25,6 +25,13 @@ export const commitDiff = (path: string, sha: string, file: string) =>
 export const wipDiff = (path: string, file: string) =>
   invoke<string>("wip_diff", { path, file });
 
+export const stage = (path: string, files: string[]) => invoke<void>("stage", { path, files });
+export const unstage = (path: string, files: string[]) => invoke<void>("unstage", { path, files });
+export const stageAll = (path: string) => invoke<void>("stage_all", { path });
+export const unstageAll = (path: string) => invoke<void>("unstage_all", { path });
+export const commit = (path: string, message: string, amend: boolean) =>
+  invoke<void>("commit", { path, message, amend });
+
 export const watchRepo = (path: string) => invoke<void>("watch_repo", { path });
 
 export const unwatchRepo = (path: string) => invoke<void>("unwatch_repo", { path });

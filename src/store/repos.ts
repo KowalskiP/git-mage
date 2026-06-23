@@ -18,6 +18,11 @@ interface ReposState {
   refreshStatus: () => Promise<void>;
   loadGraph: () => Promise<void>;
   selectNode: (sha: string) => void;
+  stage: (files: string[]) => Promise<void>;
+  unstage: (files: string[]) => Promise<void>;
+  stageAll: () => Promise<void>;
+  unstageAll: () => Promise<void>;
+  commit: (message: string, amend: boolean) => Promise<void>;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -91,6 +96,58 @@ export const useRepos = create<ReposState>((set, get) => ({
   },
 
   selectNode: (sha) => set({ selectedSha: sha }),
+
+  stage: async (files) => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      await api.stage(sel.path, files);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+  },
+
+  unstage: async (files) => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      await api.unstage(sel.path, files);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+  },
+
+  stageAll: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      await api.stageAll(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+  },
+
+  unstageAll: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      await api.unstageAll(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+  },
+
+  // Throws on failure so the commit box can react (show error, keep the message).
+  commit: async (message, amend) => {
+    const sel = get().selected;
+    if (!sel) return;
+    await api.commit(sel.path, message, amend);
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+  },
 
   remove: async (id) => {
     await api.removeRepo(id);

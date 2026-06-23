@@ -1,42 +1,89 @@
 import { type ReactElement, useMemo, useState } from "react";
 import type { FileEntry } from "../types/git";
 
-function code(status: string) {
-  return status === "??" ? "U" : status[0];
-}
+const code = (status: string) => (status === "??" ? "U" : status[0]);
 
-function StatusBadge({ status }: { status: string }) {
-  const c = code(status);
-  return <span className={"fstat fstat-" + c}>{c}</span>;
-}
+export type RowAction = "stage" | "unstage";
 
 interface Props {
   files: FileEntry[];
   mode: "path" | "tree";
   selected: string | null;
   onSelect: (path: string) => void;
+  action?: RowAction;
+  onAction?: (path: string) => void;
 }
 
-export function FileTree({ files, mode, selected, onSelect }: Props) {
+function Row({
+  file,
+  label,
+  pad,
+  selected,
+  onSelect,
+  action,
+  onAction,
+}: {
+  file: FileEntry;
+  label: string;
+  pad?: number;
+  selected: string | null;
+  onSelect: (p: string) => void;
+  action?: RowAction;
+  onAction?: (p: string) => void;
+}) {
+  return (
+    <li
+      className={"file-row file-row--btn" + (file.path === selected ? " file-row--active" : "")}
+      style={pad ? { paddingLeft: pad } : undefined}
+      onClick={() => onSelect(file.path)}
+      title={file.path}
+    >
+      <span className={"fstat fstat-" + code(file.status)}>{code(file.status)}</span>
+      <span className="file-row__path">{label}</span>
+      {action && (
+        <button
+          className="row-action"
+          title={action === "stage" ? "Stage" : "Unstage"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction?.(file.path);
+          }}
+        >
+          {action === "stage" ? "+" : "−"}
+        </button>
+      )}
+    </li>
+  );
+}
+
+export function FileTree({ files, mode, selected, onSelect, action, onAction }: Props) {
   if (files.length === 0) return <div className="filetree-empty">No files</div>;
   if (mode === "path") {
     return (
-      <ul className="filelist">
+      <ul className="file-list">
         {files.map((f) => (
-          <li
+          <Row
             key={f.path}
-            className={"fileitem" + (f.path === selected ? " fileitem--active" : "")}
-            onClick={() => onSelect(f.path)}
-            title={f.path}
-          >
-            <StatusBadge status={f.status} />
-            <span className="fileitem__path">{f.path}</span>
-          </li>
+            file={f}
+            label={f.path}
+            selected={selected}
+            onSelect={onSelect}
+            action={action}
+            onAction={onAction}
+          />
         ))}
       </ul>
     );
   }
-  return <TreeView files={files} selected={selected} onSelect={onSelect} />;
+  return (
+    <TreeView
+      files={files}
+      selected={selected}
+      onSelect={onSelect}
+      action={action}
+      onAction={onAction}
+    />
+  );
 }
 
 interface TNode {
@@ -73,7 +120,7 @@ function buildTree(files: FileEntry[]): TNode[] {
   return root.children;
 }
 
-function TreeView({ files, selected, onSelect }: Omit<Props, "mode">) {
+function TreeView({ files, selected, onSelect, action, onAction }: Omit<Props, "mode">) {
   const tree = useMemo(() => buildTree(files), [files]);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
@@ -86,24 +133,29 @@ function TreeView({ files, selected, onSelect }: Omit<Props, "mode">) {
 
   const render = (nodes: TNode[], depth: number): ReactElement[] =>
     nodes.flatMap((n) => {
-      const pad = { paddingLeft: 8 + depth * 14 };
+      const pad = 8 + depth * 14;
       if (n.file) {
         return [
-          <li
+          <Row
             key={n.path}
-            className={"fileitem" + (n.path === selected ? " fileitem--active" : "")}
-            style={pad}
-            onClick={() => onSelect(n.path)}
-            title={n.path}
-          >
-            <StatusBadge status={n.file.status} />
-            <span className="fileitem__path">{n.name}</span>
-          </li>,
+            file={n.file}
+            label={n.name}
+            pad={pad}
+            selected={selected}
+            onSelect={onSelect}
+            action={action}
+            onAction={onAction}
+          />,
         ];
       }
       const open = !collapsed.has(n.path);
       const rows: ReactElement[] = [
-        <li key={n.path} className="treedir" style={pad} onClick={() => toggle(n.path)}>
+        <li
+          key={n.path}
+          className="treedir"
+          style={{ paddingLeft: pad }}
+          onClick={() => toggle(n.path)}
+        >
           <span className="treedir__chev">{open ? "▾" : "▸"}</span>
           {n.name}
         </li>,
@@ -112,5 +164,5 @@ function TreeView({ files, selected, onSelect }: Omit<Props, "mode">) {
       return rows;
     });
 
-  return <ul className="filelist">{render(tree, 0)}</ul>;
+  return <ul className="file-list">{render(tree, 0)}</ul>;
 }

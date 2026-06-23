@@ -7,10 +7,12 @@
 
 mod commit;
 mod graph;
+mod stage;
 mod status;
 
 pub use commit::{commit_detail, commit_diff, wip_diff};
 pub use graph::graph;
+pub use stage::{commit, stage, stage_all, unstage, unstage_all};
 pub use status::status;
 
 use crate::error::{AppError, AppResult};
