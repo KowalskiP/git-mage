@@ -1,6 +1,6 @@
 // Typed wrappers around Tauri commands (src-tauri/src/ipc/commands.rs).
 import { invoke } from "@tauri-apps/api/core";
-import type { RepoMeta, RepoStatus } from "../types/git";
+import type { CommitDetail, GraphRow, RepoMeta, RepoStatus } from "../types/git";
 
 export const listRepos = () => invoke<RepoMeta[]>("list_repos");
 
@@ -12,6 +12,18 @@ export const setFavorite = (id: number, favorite: boolean) =>
   invoke<void>("set_favorite", { id, favorite });
 
 export const repoStatus = (path: string) => invoke<RepoStatus>("repo_status", { path });
+
+export const graphLoad = (path: string, limit?: number) =>
+  invoke<GraphRow[]>("graph_load", { path, limit });
+
+export const commitDetail = (path: string, sha: string) =>
+  invoke<CommitDetail>("commit_detail", { path, sha });
+
+export const commitDiff = (path: string, sha: string, file: string) =>
+  invoke<string>("commit_diff", { path, sha, file });
+
+export const wipDiff = (path: string, file: string) =>
+  invoke<string>("wip_diff", { path, file });
 
 export const watchRepo = (path: string) => invoke<void>("watch_repo", { path });
 

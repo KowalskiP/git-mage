@@ -5,8 +5,12 @@
 //! and shell out to system `git` for the porcelain working-tree status.
 //! M1 will move status onto `gix::status` (see `status.rs`).
 
+mod commit;
+mod graph;
 mod status;
 
+pub use commit::{commit_detail, commit_diff, wip_diff};
+pub use graph::graph;
 pub use status::status;
 
 use crate::error::{AppError, AppResult};

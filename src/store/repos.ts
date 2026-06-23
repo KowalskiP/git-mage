@@ -1,11 +1,14 @@
 import { create } from "zustand";
-import type { RepoMeta, RepoStatus } from "../types/git";
+import type { GraphRow, RepoMeta, RepoStatus } from "../types/git";
 import * as api from "../ipc/commands";
 
 interface ReposState {
   repos: RepoMeta[];
   selected: RepoMeta | null;
   status: RepoStatus | null;
+  graph: GraphRow[];
+  graphLoading: boolean;
+  selectedSha: string | null;
   loading: boolean;
   error: string | null;
 
@@ -13,6 +16,8 @@ interface ReposState {
   openRepo: (path: string) => Promise<void>;
   select: (repo: RepoMeta) => Promise<void>;
   refreshStatus: () => Promise<void>;
+  loadGraph: () => Promise<void>;
+  selectNode: (sha: string) => void;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -21,6 +26,9 @@ export const useRepos = create<ReposState>((set, get) => ({
   repos: [],
   selected: null,
   status: null,
+  graph: [],
+  graphLoading: false,
+  selectedSha: null,
   loading: false,
   error: null,
 
@@ -50,9 +58,9 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (prev && prev.path !== repo.path) {
       await api.unwatchRepo(prev.path).catch(() => {});
     }
-    set({ selected: repo, status: null });
+    set({ selected: repo, status: null, graph: [], selectedSha: null });
     await api.watchRepo(repo.path).catch(() => {});
-    await get().refreshStatus();
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
   },
 
   refreshStatus: async () => {
@@ -65,10 +73,29 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
   },
 
+  loadGraph: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ graphLoading: true });
+    try {
+      const graph = await api.graphLoad(sel.path);
+      // Keep the current selection if still present, else select the top node.
+      const cur = get().selectedSha;
+      const keep = cur && graph.some((r) => r.sha === cur) ? cur : graph[0]?.sha ?? null;
+      set({ graph, selectedSha: keep, error: null });
+    } catch (e) {
+      set({ error: String(e) });
+    } finally {
+      set({ graphLoading: false });
+    }
+  },
+
+  selectNode: (sha) => set({ selectedSha: sha }),
+
   remove: async (id) => {
     await api.removeRepo(id);
     const sel = get().selected;
-    if (sel?.id === id) set({ selected: null, status: null });
+    if (sel?.id === id) set({ selected: null, status: null, graph: [], selectedSha: null });
     await get().loadRepos();
   },
 

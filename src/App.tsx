@@ -2,11 +2,12 @@ import { useEffect, useRef } from "react";
 import { useRepos } from "./store/repos";
 import { onFsChange } from "./ipc/events";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
-import { StatusPanel } from "./features/status/StatusPanel";
+import { RepoView } from "./features/RepoView";
 
 export function App() {
   const loadRepos = useRepos((s) => s.loadRepos);
   const refreshStatus = useRepos((s) => s.refreshStatus);
+  const loadGraph = useRepos((s) => s.loadGraph);
   const selected = useRepos((s) => s.selected);
 
   // Throttle fs-change-driven refreshes (SPEC NFR: refresh ≤100ms, but coalesce bursts).
@@ -23,19 +24,20 @@ export function App() {
       throttle.current = window.setTimeout(() => {
         throttle.current = null;
         refreshStatus();
-      }, 120);
+        loadGraph();
+      }, 150);
     });
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [refreshStatus]);
+  }, [refreshStatus, loadGraph]);
 
   return (
     <div className="app">
       <RepoSidebar />
       <main className="main">
         {selected ? (
-          <StatusPanel />
+          <RepoView />
         ) : (
           <div className="empty">
             <h1>GitMage</h1>

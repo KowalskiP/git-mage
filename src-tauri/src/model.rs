@@ -28,3 +28,44 @@ pub struct RepoStatus {
     pub unstaged: Vec<FileEntry>,
     pub untracked: Vec<FileEntry>,
 }
+
+/// One line segment in the commit graph, drawn from this row toward the next.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GraphEdge {
+    pub from: u32,
+    pub to: u32,
+    pub color: u32,
+}
+
+/// One commit, with its computed lane/column position and outgoing edges.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GraphRow {
+    pub sha: String,
+    pub summary: String,
+    pub author: String,
+    /// Author time, unix epoch seconds.
+    pub time: i64,
+    /// Decoration names pointing at this commit (branches, tags, HEAD).
+    pub refs: Vec<String>,
+    pub column: u32,
+    pub color: u32,
+    pub edges: Vec<GraphEdge>,
+    /// True for the synthetic "working directory" node at the top of the graph.
+    pub wip: bool,
+}
+
+/// Full detail of a single commit, for the detail sidebar.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CommitDetail {
+    pub sha: String,
+    pub summary: String,
+    pub body: String,
+    pub author: String,
+    pub email: String,
+    pub time: i64,
+    pub parents: Vec<String>,
+    pub files: Vec<FileEntry>,
+}

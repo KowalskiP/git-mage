@@ -27,6 +27,10 @@ pub fn run() {
             ipc::commands::remove_repo,
             ipc::commands::set_favorite,
             ipc::commands::repo_status,
+            ipc::commands::graph_load,
+            ipc::commands::commit_detail,
+            ipc::commands::commit_diff,
+            ipc::commands::wip_diff,
             ipc::commands::watch_repo,
             ipc::commands::unwatch_repo,
         ])

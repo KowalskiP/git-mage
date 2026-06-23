@@ -5,7 +5,7 @@ use tauri::{AppHandle, State};
 use crate::db::Db;
 use crate::error::AppResult;
 use crate::git;
-use crate::model::{RepoMeta, RepoStatus};
+use crate::model::{CommitDetail, GraphRow, RepoMeta, RepoStatus};
 use crate::watcher::{self, Watchers};
 
 #[tauri::command]
@@ -37,6 +37,26 @@ pub fn set_favorite(id: i64, favorite: bool, db: State<Db>) -> AppResult<()> {
 #[tauri::command]
 pub fn repo_status(path: String) -> AppResult<RepoStatus> {
     git::status(&path)
+}
+
+#[tauri::command]
+pub fn graph_load(path: String, limit: Option<usize>) -> AppResult<Vec<GraphRow>> {
+    git::graph(&path, limit.unwrap_or(2000))
+}
+
+#[tauri::command]
+pub fn commit_detail(path: String, sha: String) -> AppResult<CommitDetail> {
+    git::commit_detail(&path, &sha)
+}
+
+#[tauri::command]
+pub fn commit_diff(path: String, sha: String, file: String) -> AppResult<String> {
+    git::commit_diff(&path, &sha, &file)
+}
+
+#[tauri::command]
+pub fn wip_diff(path: String, file: String) -> AppResult<String> {
+    git::wip_diff(&path, &file)
 }
 
 #[tauri::command]

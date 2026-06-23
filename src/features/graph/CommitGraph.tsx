@@ -1,0 +1,203 @@
+import { useLayoutEffect, useRef, useState } from "react";
+import { useRepos } from "../../store/repos";
+
+const ROW_H = 26;
+const COL_W = 14;
+const PAD_X = 12;
+const DOT_R = 4.5;
+
+// Lane palette — index must match the backend's color_of (col % 8).
+const PALETTE = [
+  "#8b5cf6", "#61afef", "#5ec27a", "#d6a35c",
+  "#e06c75", "#56b6c2", "#c678dd", "#e5c07b",
+];
+
+const shortSha = (sha: string) => sha.slice(0, 7);
+
+function relTime(epoch: number) {
+  const s = Math.max(0, Math.floor(Date.now() / 1000 - epoch));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo}mo`;
+  return `${Math.floor(mo / 12)}y`;
+}
+
+function refKind(name: string): string {
+  if (name.startsWith("tag:")) return "ref--tag";
+  if (name.startsWith("HEAD")) return "ref--head";
+  if (name.includes("/")) return "ref--remote";
+  return "ref--local";
+}
+
+export function CommitGraph() {
+  const graph = useRepos((s) => s.graph);
+  const graphLoading = useRepos((s) => s.graphLoading);
+  const selectedSha = useRepos((s) => s.selectedSha);
+  const selectNode = useRepos((s) => s.selectNode);
+  const status = useRepos((s) => s.status);
+  const error = useRepos((s) => s.error);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportH, setViewportH] = useState(0);
+  const rafRef = useRef<number | null>(null);
+
+  const changeCount = status
+    ? status.staged.length + status.unstaged.length + status.untracked.length
+    : 0;
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => setViewportH(el.clientHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [graphLoading, graph.length]);
+
+  function onScroll() {
+    const el = scrollRef.current;
+    if (!el || rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      setScrollTop(el.scrollTop);
+    });
+  }
+
+  let maxCol = 1;
+  for (const r of graph) {
+    if (r.column > maxCol) maxCol = r.column;
+    for (const e of r.edges) maxCol = Math.max(maxCol, e.from, e.to);
+  }
+  const graphW = PAD_X * 2 + (maxCol + 1) * COL_W;
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || viewportH === 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = graphW * dpr;
+    canvas.height = viewportH * dpr;
+    const ctx = canvas.getContext("2d")!;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, graphW, viewportH);
+    if (graph.length === 0) return;
+
+    const first = Math.max(0, Math.floor(scrollTop / ROW_H) - 1);
+    const last = Math.min(graph.length - 1, Math.ceil((scrollTop + viewportH) / ROW_H) + 1);
+    const x = (col: number) => PAD_X + col * COL_W + COL_W / 2;
+    const yc = (i: number) => i * ROW_H - scrollTop + ROW_H / 2;
+
+    ctx.lineWidth = 1.6;
+    for (let i = first; i <= last; i++) {
+      const row = graph[i];
+      const y0 = yc(i);
+      const y1 = yc(i + 1);
+      for (const e of row.edges) {
+        ctx.strokeStyle = PALETTE[e.color % PALETTE.length];
+        const x0 = x(e.from);
+        const x1 = x(e.to);
+        ctx.beginPath();
+        if (e.from === e.to) {
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x0, y1);
+        } else {
+          const ym = (y0 + y1) / 2;
+          ctx.moveTo(x0, y0);
+          ctx.bezierCurveTo(x0, ym, x1, ym, x1, y1);
+        }
+        ctx.stroke();
+      }
+    }
+
+    for (let i = first; i <= last; i++) {
+      const row = graph[i];
+      const cx = x(row.column);
+      const cy = yc(i);
+      const active = row.sha === selectedSha;
+      ctx.beginPath();
+      ctx.arc(cx, cy, active ? DOT_R + 1.5 : DOT_R, 0, Math.PI * 2);
+      if (row.wip) {
+        // Hollow dashed node for uncommitted changes.
+        ctx.fillStyle = "#16181d";
+        ctx.fill();
+        ctx.setLineDash([2, 2]);
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = "#8b5cf6";
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        ctx.fillStyle = PALETTE[row.color % PALETTE.length];
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "#16181d";
+        ctx.stroke();
+      }
+    }
+  }, [graph, scrollTop, viewportH, graphW, selectedSha]);
+
+  if (graphLoading && graph.length === 0) return <div className="graph-msg">Loading history…</div>;
+  if (error && graph.length === 0) return <div className="graph-msg error">{error}</div>;
+  if (graph.length === 0) return <div className="graph-msg">No commits yet.</div>;
+
+  const first = Math.max(0, Math.floor(scrollTop / ROW_H) - 1);
+  const last = Math.min(graph.length - 1, Math.ceil((scrollTop + viewportH) / ROW_H) + 1);
+  const visibleIdx: number[] = [];
+  for (let i = first; i <= last; i++) visibleIdx.push(i);
+
+  return (
+    <div className="graph-scroll" ref={scrollRef} onScroll={onScroll}>
+      <canvas
+        ref={canvasRef}
+        className="graph-canvas"
+        style={{ top: scrollTop, width: graphW, height: viewportH }}
+      />
+      <div className="graph-sizer" style={{ height: graph.length * ROW_H }}>
+        {visibleIdx.map((i) => {
+          const row = graph[i];
+          const active = row.sha === selectedSha;
+          if (row.wip) {
+            return (
+              <div
+                key="wip"
+                className={"commit-row commit-row--wip" + (active ? " commit-row--active" : "")}
+                style={{ top: i * ROW_H, left: graphW, height: ROW_H }}
+                onClick={() => selectNode(row.sha)}
+              >
+                <span className="wip-label">// WIP — uncommitted changes</span>
+                {changeCount > 0 && <span className="wip-count">{changeCount}</span>}
+              </div>
+            );
+          }
+          return (
+            <div
+              key={row.sha}
+              className={"commit-row" + (active ? " commit-row--active" : "")}
+              style={{ top: i * ROW_H, left: graphW, height: ROW_H }}
+              onClick={() => selectNode(row.sha)}
+            >
+              <div className="commit-row__main">
+                {row.refs.map((r) => (
+                  <span key={r} className={"ref " + refKind(r)}>
+                    {r.replace("tag: ", "").replace("HEAD -> ", "")}
+                  </span>
+                ))}
+                <span className="commit-row__summary">{row.summary}</span>
+              </div>
+              <span className="commit-row__author">{row.author}</span>
+              <span className="commit-row__sha">{shortSha(row.sha)}</span>
+              <span className="commit-row__time">{relTime(row.time)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

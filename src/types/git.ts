@@ -23,3 +23,37 @@ export interface RepoStatus {
   unstaged: FileEntry[];
   untracked: FileEntry[];
 }
+
+export interface GraphEdge {
+  from: number;
+  to: number;
+  color: number;
+}
+
+export interface GraphRow {
+  sha: string;
+  summary: string;
+  author: string;
+  /** Author time, unix epoch seconds. */
+  time: number;
+  refs: string[];
+  column: number;
+  color: number;
+  edges: GraphEdge[];
+  /** True for the synthetic working-directory node at the top of the graph. */
+  wip: boolean;
+}
+
+export interface CommitDetail {
+  sha: string;
+  summary: string;
+  body: string;
+  author: string;
+  email: string;
+  time: number;
+  parents: string[];
+  files: FileEntry[];
+}
+
+/** Sentinel sha of the working-directory (WIP) node; matches the Rust backend. */
+export const WIP_SHA = "0000000000000000000000000000000000000000";
