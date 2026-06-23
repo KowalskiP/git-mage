@@ -573,13 +573,20 @@ body {
 .diff-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--border);
 }
 .diff-title {
+  flex: 1;
   font-family: ui-monospace, monospace;
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seg--diff {
+  flex: 0 0 auto;
 }
 .diff-close {
   background: none;
@@ -594,7 +601,8 @@ body {
 .diff-body {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  position: relative;
+  overflow: hidden;
 }
 .diff-pre {
   margin: 0;
@@ -872,4 +880,63 @@ body {
 .new-branch__input:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+/* CodeMirror diff fills the overlay body and scrolls internally.
+   The CM root is absolutely positioned so it fills both axes in split and
+   inline modes regardless of flex quirks. */
+.diff-body .cm-merge {
+  position: absolute;
+  inset: 0;
+}
+/* Give the scrolling root a fixed-size box. In split mode .cm-mergeView is
+   itself the scroller; in inline mode it's the single editor's .cm-scroller.
+   (Don't force heights on the inner split editors — that fights MergeView's
+   own scroll coordination and breaks scrolling.) */
+.cm-merge > .cm-mergeView,
+.cm-merge > .cm-editor {
+  position: absolute;
+  inset: 0;
+}
+.cm-merge > .cm-mergeView {
+  overflow: auto;
+}
+.cm-merge > .cm-editor .cm-scroller {
+  overflow: auto;
+}
+
+/* Readable diff-highlight colors (override @codemirror/merge defaults that are
+   too dark/low-contrast under the one-dark theme). Subtle line tints keep
+   syntax colors legible; saturated inline spans force light text. */
+.cm-merge .cm-changedLine,
+.cm-merge .cm-insertedLine {
+  background-color: rgba(66, 196, 120, 0.22);
+}
+.cm-merge-a .cm-changedLine,
+.cm-merge .cm-deletedChunk,
+.cm-merge .cm-deletedLine {
+  background-color: rgba(236, 96, 108, 0.22);
+}
+/* inserted / new-side changed text — green */
+.cm-merge .cm-changedText {
+  background: rgba(66, 196, 120, 0.6);
+  border-radius: 2px;
+}
+.cm-merge .cm-changedText,
+.cm-merge .cm-changedText * {
+  color: #eafff3 !important;
+  text-decoration: none !important;
+}
+/* deleted / old-side changed text — red (more specific, wins over green) */
+.cm-merge-a .cm-changedText,
+.cm-merge .cm-deletedText {
+  background: rgba(236, 96, 108, 0.62);
+  border-radius: 2px;
+}
+.cm-merge-a .cm-changedText,
+.cm-merge-a .cm-changedText *,
+.cm-merge .cm-deletedText,
+.cm-merge .cm-deletedText * {
+  color: #fff0f2 !important;
+  text-decoration: none !important;
 }

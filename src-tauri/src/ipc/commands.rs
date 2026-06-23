@@ -10,7 +10,7 @@ use tauri::{AppHandle, State};
 use crate::db::Db;
 use crate::error::AppResult;
 use crate::git;
-use crate::model::{CommitDetail, GraphRow, RepoMeta, RepoStatus};
+use crate::model::{CommitDetail, DiffSides, GraphRow, RepoMeta, RepoStatus};
 use crate::watcher::{self, Watchers};
 
 #[tauri::command]
@@ -62,6 +62,11 @@ pub async fn commit_diff(path: String, sha: String, file: String) -> AppResult<S
 #[tauri::command]
 pub async fn wip_diff(path: String, file: String) -> AppResult<String> {
     git::wip_diff(&path, &file)
+}
+
+#[tauri::command]
+pub async fn diff_sides(path: String, sha: String, file: String) -> AppResult<DiffSides> {
+    git::diff_sides(&path, &sha, &file)
 }
 
 #[tauri::command]

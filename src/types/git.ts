@@ -46,6 +46,12 @@ export interface GraphRow {
   wip: boolean;
 }
 
+export interface DiffSides {
+  oldText: string;
+  newText: string;
+  binary: boolean;
+}
+
 export interface CommitDetail {
   sha: string;
   summary: string;

@@ -58,6 +58,15 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// Old and new contents of a file, for a side-by-side diff view.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct DiffSides {
+    pub old_text: String,
+    pub new_text: String,
+    pub binary: bool,
+}
+
 /// Full detail of a single commit, for the detail sidebar.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

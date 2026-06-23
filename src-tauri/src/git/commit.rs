@@ -4,7 +4,7 @@
 use std::process::Command;
 
 use crate::error::{AppError, AppResult};
-use crate::model::{CommitDetail, FileEntry};
+use crate::model::{CommitDetail, DiffSides, FileEntry};
 
 const US: char = '\u{1f}';
 
@@ -127,4 +127,53 @@ pub fn wip_diff(path: &str, file: &str) -> AppResult<String> {
         &["-c", "core.quotePath=false", "diff", "--no-color", "--no-index", "--", "/dev/null", file],
     )?;
     Ok(String::from_utf8_lossy(&untracked.stdout).to_string())
+}
+
+/// Old + new contents of a file for a side-by-side diff. For the WIP node the
+/// "old" side is HEAD and the "new" side is the working-tree file.
+pub fn diff_sides(path: &str, sha: &str, file: &str) -> AppResult<DiffSides> {
+    let (old, old_bin, new, new_bin) = if sha == super::graph::WIP_SHA {
+        let (o, ob) = show_side(path, &format!("HEAD:{file}"));
+        let (n, nb) = read_working(path, file);
+        (o, ob, n, nb)
+    } else {
+        let (o, ob) = show_side(path, &format!("{sha}^:{file}"));
+        let (n, nb) = show_side(path, &format!("{sha}:{file}"));
+        (o, ob, n, nb)
+    };
+    let binary = old_bin || new_bin;
+    Ok(DiffSides {
+        old_text: if binary { String::new() } else { old },
+        new_text: if binary { String::new() } else { new },
+        binary,
+    })
+}
+
+/// Contents of `<rev>` (e.g. "HEAD:path" or "sha^:path"); empty if it doesn't exist.
+fn show_side(path: &str, rev: &str) -> (String, bool) {
+    match Command::new("git")
+        .current_dir(path)
+        .args(["-c", "core.quotePath=false", "show", rev])
+        .output()
+    {
+        Ok(out) if out.status.success() => bytes_to_text(&out.stdout),
+        _ => (String::new(), false),
+    }
+}
+
+/// Working-tree file contents; empty if missing (deleted).
+fn read_working(path: &str, file: &str) -> (String, bool) {
+    match std::fs::read(std::path::Path::new(path).join(file)) {
+        Ok(bytes) => bytes_to_text(&bytes),
+        Err(_) => (String::new(), false),
+    }
+}
+
+/// (text, is_binary). Treats any NUL byte as binary.
+fn bytes_to_text(bytes: &[u8]) -> (String, bool) {
+    if bytes.contains(&0) {
+        (String::new(), true)
+    } else {
+        (String::from_utf8_lossy(bytes).into_owned(), false)
+    }
 }

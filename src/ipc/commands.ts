@@ -1,6 +1,6 @@
 // Typed wrappers around Tauri commands (src-tauri/src/ipc/commands.rs).
 import { invoke } from "@tauri-apps/api/core";
-import type { CommitDetail, GraphRow, RepoMeta, RepoStatus } from "../types/git";
+import type { CommitDetail, DiffSides, GraphRow, RepoMeta, RepoStatus } from "../types/git";
 
 export const listRepos = () => invoke<RepoMeta[]>("list_repos");
 
@@ -24,6 +24,9 @@ export const commitDiff = (path: string, sha: string, file: string) =>
 
 export const wipDiff = (path: string, file: string) =>
   invoke<string>("wip_diff", { path, file });
+
+export const diffSides = (path: string, sha: string, file: string) =>
+  invoke<DiffSides>("diff_sides", { path, sha, file });
 
 export const stage = (path: string, files: string[]) => invoke<void>("stage", { path, files });
 export const unstage = (path: string, files: string[]) => invoke<void>("unstage", { path, files });
