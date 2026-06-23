@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+src-tauri/target/
+src-tauri/gen/
+
+# Generated icons (regenerate with `npm run tauri icon app-icon.png`)
+# src-tauri/icons/  # keep generated icons committed; uncomment to ignore
+
+# Logs / env
+*.log
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

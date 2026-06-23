@@ -1,0 +1,30 @@
+[package]
+name = "gitmage"
+version = "0.1.0"
+description = "GitMage — open-source, fast, lightweight Git client"
+authors = ["GitMage contributors"]
+edition = "2021"
+license = "GPL-3.0-or-later"
+repository = ""
+
+[lib]
+name = "gitmage_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[dependencies]
+gix = "0.85.0"
+notify = "8.2.0"
+rusqlite = { version = "0.40.1", features = ["bundled"] }
+serde = { version = "1.0.228", features = ["derive"] }
+tauri = { version = "2.11.3", features = [] }
+tauri-plugin-dialog = "2.7.1"
+thiserror = "2.0.18"
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+# Dependencies are added via `cargo add` so versions resolve to what exists on
+# crates.io. Expected set:
+#   build:   tauri-build
+#   runtime: tauri, tauri-plugin-dialog, serde, gix, rusqlite (bundled),
+#            notify, thiserror
