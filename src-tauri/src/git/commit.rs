@@ -28,7 +28,11 @@ pub fn commit_detail(path: &str, sha: &str) -> AppResult<CommitDetail> {
     let text = String::from_utf8_lossy(&meta.stdout);
     let f: Vec<&str> = text.trim_end().split(US).collect();
 
-    let files = commit_files(path, sha)?;
+    let parents: Vec<String> = f
+        .get(6)
+        .map(|p| p.split_whitespace().map(str::to_string).collect())
+        .unwrap_or_default();
+    let files = commit_files(path, sha, parents.len() >= 2)?;
 
     Ok(CommitDetail {
         sha: f.first().unwrap_or(&"").to_string(),
@@ -37,30 +41,46 @@ pub fn commit_detail(path: &str, sha: &str) -> AppResult<CommitDetail> {
         author: f.get(3).unwrap_or(&"").to_string(),
         email: f.get(4).unwrap_or(&"").to_string(),
         time: f.get(5).and_then(|s| s.trim().parse().ok()).unwrap_or(0),
-        parents: f
-            .get(6)
-            .map(|p| p.split_whitespace().map(str::to_string).collect())
-            .unwrap_or_default(),
+        parents,
         files,
     })
 }
 
-/// Files changed by a commit (`--root` so the first commit lists its files).
-fn commit_files(path: &str, sha: &str) -> AppResult<Vec<FileEntry>> {
-    let out = run(
-        path,
-        &[
-            "-c",
-            "core.quotePath=false",
-            "diff-tree",
-            "--no-commit-id",
-            "--name-status",
-            "-r",
-            "-z",
-            "--root",
-            sha,
-        ],
-    )?;
+/// Files changed by a commit. `--root` makes the first commit list its files;
+/// merges show nothing via plain diff-tree, so diff against the first parent
+/// to list what the merge introduced on the first-parent line.
+fn commit_files(path: &str, sha: &str, is_merge: bool) -> AppResult<Vec<FileEntry>> {
+    let parent = format!("{sha}^1");
+    let out = if is_merge {
+        run(
+            path,
+            &[
+                "-c",
+                "core.quotePath=false",
+                "diff",
+                "--name-status",
+                "-r",
+                "-z",
+                &parent,
+                sha,
+            ],
+        )?
+    } else {
+        run(
+            path,
+            &[
+                "-c",
+                "core.quotePath=false",
+                "diff-tree",
+                "--no-commit-id",
+                "--name-status",
+                "-r",
+                "-z",
+                "--root",
+                sha,
+            ],
+        )?
+    };
     let stdout = String::from_utf8_lossy(&out.stdout);
     let parts: Vec<&str> = stdout.split('\0').filter(|s| !s.is_empty()).collect();
 
