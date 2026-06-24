@@ -25,6 +25,8 @@ interface ReposState {
   stageAll: () => Promise<void>;
   unstageAll: () => Promise<void>;
   commit: (message: string, amend: boolean) => Promise<void>;
+  stageHunk: (patch: string) => Promise<void>;
+  unstageHunk: (patch: string) => Promise<void>;
   loadBranches: () => Promise<void>;
   checkout: (refname: string) => Promise<void>;
   createBranch: (name: string, checkout: boolean) => Promise<void>;
@@ -157,6 +159,28 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (!sel) return;
     await api.commit(sel.path, message, amend);
     await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+  },
+
+  stageHunk: async (patch) => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      await api.applyHunk(sel.path, patch, false);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+  },
+
+  unstageHunk: async (patch) => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      await api.applyHunk(sel.path, patch, true);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
   },
 
   loadBranches: async () => {

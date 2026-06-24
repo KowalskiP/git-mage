@@ -32,6 +32,8 @@ pub fn run() {
             ipc::commands::commit_diff,
             ipc::commands::wip_diff,
             ipc::commands::diff_sides,
+            ipc::commands::file_hunks,
+            ipc::commands::apply_hunk,
             ipc::commands::stage,
             ipc::commands::unstage,
             ipc::commands::stage_all,

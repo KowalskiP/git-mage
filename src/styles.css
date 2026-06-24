@@ -940,3 +940,53 @@ body {
   color: #fff0f2 !important;
   text-decoration: none !important;
 }
+
+/* Hunk staging view */
+.diff-body.hunk-body {
+  overflow-y: auto;
+  display: block;
+  padding: 6px 0 16px;
+}
+.hunk-mode {
+  flex: 1;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.hunk-empty {
+  padding: 24px;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.hunk {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 8px 12px;
+  overflow: hidden;
+}
+.hunk__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 10px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+}
+.hunk__hdr {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--blue);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hunk__lines {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+}

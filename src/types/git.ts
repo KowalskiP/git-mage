@@ -46,6 +46,12 @@ export interface GraphRow {
   wip: boolean;
 }
 
+export interface Hunk {
+  header: string;
+  lines: string[];
+  patch: string;
+}
+
 export interface DiffSides {
   oldText: string;
   newText: string;

@@ -58,6 +58,18 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// One hunk of a file's diff, plus a self-contained patch that stages/unstages it.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Hunk {
+    /// The `@@ -a,b +c,d @@ …` header line.
+    pub header: String,
+    /// Body lines (each prefixed with ` `, `+`, or `-`).
+    pub lines: Vec<String>,
+    /// Full applyable patch (file header + this hunk) for `git apply --cached`.
+    pub patch: String,
+}
+
 /// Old and new contents of a file, for a side-by-side diff view.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

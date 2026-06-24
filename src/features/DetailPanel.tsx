@@ -5,7 +5,7 @@ import type { CommitDetail, FileEntry } from "../types/git";
 import { FileTree } from "./FileTree";
 
 interface Props {
-  onOpenFile: (file: string, sha: string, wip: boolean) => void;
+  onOpenFile: (file: string, sha: string, wip: boolean, staged: boolean) => void;
   selectedFile: string | null;
 }
 
@@ -127,7 +127,8 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
     return <div className="detail-panel detail-panel--empty">Select a commit</div>;
   }
 
-  const onSelect = (f: string) => onOpenFile(f, selectedSha, isWip);
+  const openUnstaged = (f: string) => onOpenFile(f, selectedSha, isWip, false);
+  const openStaged = (f: string) => onOpenFile(f, selectedSha, isWip, true);
   const wipTotal = status
     ? status.staged.length + status.unstaged.length + status.untracked.length
     : 0;
@@ -202,7 +203,7 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
                 files={status?.staged ?? []}
                 mode={mode}
                 selected={selectedFile}
-                onSelect={onSelect}
+                onSelect={openStaged}
                 action="unstage"
                 onAction={(f) => unstage([f])}
               />
@@ -212,7 +213,7 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
                 files={status?.unstaged ?? []}
                 mode={mode}
                 selected={selectedFile}
-                onSelect={onSelect}
+                onSelect={openUnstaged}
                 action="stage"
                 onAction={(f) => stage([f])}
               />
@@ -222,7 +223,7 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
                 files={status?.untracked ?? []}
                 mode={mode}
                 selected={selectedFile}
-                onSelect={onSelect}
+                onSelect={openUnstaged}
                 action="stage"
                 onAction={(f) => stage([f])}
               />
@@ -230,12 +231,12 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
             {wipTotal === 0 && <div className="clean">✓ Working tree clean</div>}
           </>
         ) : mode === "tree" ? (
-          <FileTree files={commitFiles} mode="tree" selected={selectedFile} onSelect={onSelect} />
+          <FileTree files={commitFiles} mode="tree" selected={selectedFile} onSelect={openUnstaged} />
         ) : (
           <>
             {commitGroups.map((g) => (
               <Section key={g.title} title={g.title} count={g.files.length}>
-                <FileTree files={g.files} mode="path" selected={selectedFile} onSelect={onSelect} />
+                <FileTree files={g.files} mode="path" selected={selectedFile} onSelect={openUnstaged} />
               </Section>
             ))}
             {commitFiles.length === 0 && <div className="filetree-empty">No files</div>}
