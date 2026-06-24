@@ -50,6 +50,36 @@ pub fn push(path: &str) -> AppResult<()> {
     run(path, &["push"], true)
 }
 
+/// Merge `refname` into the current branch (no editor; conflicts surface as an error).
+pub fn merge(path: &str, refname: &str) -> AppResult<()> {
+    run(path, &["merge", "--no-edit", refname], false)
+}
+
+/// Create a branch at `at` (a commit sha or ref), optionally checking it out.
+pub fn create_branch_at(path: &str, name: &str, at: &str, checkout: bool) -> AppResult<()> {
+    if checkout {
+        run(path, &["checkout", "-b", name, at], false)
+    } else {
+        run(path, &["branch", name, at], false)
+    }
+}
+
+pub fn branch_delete(path: &str, name: &str, force: bool) -> AppResult<()> {
+    run(path, &["branch", if force { "-D" } else { "-d" }, name], false)
+}
+
+pub fn branch_rename(path: &str, old: &str, new: &str) -> AppResult<()> {
+    run(path, &["branch", "-m", old, new], false)
+}
+
+pub fn tag_create(path: &str, name: &str, at: &str) -> AppResult<()> {
+    run(path, &["tag", name, at], false)
+}
+
+pub fn tag_delete(path: &str, name: &str) -> AppResult<()> {
+    run(path, &["tag", "-d", name], false)
+}
+
 /// Local branch short names.
 pub fn list_branches(path: &str) -> AppResult<Vec<String>> {
     let out = Command::new("git")

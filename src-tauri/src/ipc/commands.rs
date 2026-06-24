@@ -135,6 +135,41 @@ pub async fn push(path: String) -> AppResult<()> {
 }
 
 #[tauri::command]
+pub async fn merge(path: String, refname: String) -> AppResult<()> {
+    git::merge(&path, &refname)
+}
+
+#[tauri::command]
+pub async fn create_branch_at(
+    path: String,
+    name: String,
+    at: String,
+    checkout: bool,
+) -> AppResult<()> {
+    git::create_branch_at(&path, &name, &at, checkout)
+}
+
+#[tauri::command]
+pub async fn branch_delete(path: String, name: String, force: bool) -> AppResult<()> {
+    git::branch_delete(&path, &name, force)
+}
+
+#[tauri::command]
+pub async fn branch_rename(path: String, old: String, new: String) -> AppResult<()> {
+    git::branch_rename(&path, &old, &new)
+}
+
+#[tauri::command]
+pub async fn tag_create(path: String, name: String, at: String) -> AppResult<()> {
+    git::tag_create(&path, &name, &at)
+}
+
+#[tauri::command]
+pub async fn tag_delete(path: String, name: String) -> AppResult<()> {
+    git::tag_delete(&path, &name)
+}
+
+#[tauri::command]
 pub fn watch_repo(path: String, app: AppHandle, watchers: State<Watchers>) -> AppResult<()> {
     watcher::watch(&app, &watchers, &path)
 }

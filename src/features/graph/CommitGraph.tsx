@@ -1,5 +1,8 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { type MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import { useRepos } from "../../store/repos";
+import type { GraphRow } from "../../types/git";
+import { ContextMenu, type MenuItem } from "../ContextMenu";
+import { PromptModal } from "../PromptModal";
 
 const ROW_H = 26;
 const COL_W = 14;
@@ -35,6 +38,16 @@ function refKind(name: string): string {
   return "ref--local";
 }
 
+type RefKind = "tag" | "remote" | "local" | "head";
+
+function parseRef(r: string): { kind: RefKind; name: string } {
+  if (r.startsWith("tag:")) return { kind: "tag", name: r.slice(4).trim() };
+  if (r.startsWith("HEAD ->")) return { kind: "local", name: r.slice(7).trim() };
+  if (r === "HEAD") return { kind: "head", name: "HEAD" };
+  if (r.includes("/")) return { kind: "remote", name: r };
+  return { kind: "local", name: r };
+}
+
 export function CommitGraph() {
   const graph = useRepos((s) => s.graph);
   const graphLoading = useRepos((s) => s.graphLoading);
@@ -42,12 +55,94 @@ export function CommitGraph() {
   const selectNode = useRepos((s) => s.selectNode);
   const status = useRepos((s) => s.status);
   const error = useRepos((s) => s.error);
+  const checkout = useRepos((s) => s.checkout);
+  const merge = useRepos((s) => s.merge);
+  const createBranchAt = useRepos((s) => s.createBranchAt);
+  const branchDelete = useRepos((s) => s.branchDelete);
+  const branchRename = useRepos((s) => s.branchRename);
+  const tagCreate = useRepos((s) => s.tagCreate);
+  const tagDelete = useRepos((s) => s.tagDelete);
+  const currentBranch = status?.branch ?? null;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportH, setViewportH] = useState(0);
   const rafRef = useRef<number | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const [prompt, setPrompt] = useState<{
+    title: string;
+    placeholder?: string;
+    initial?: string;
+    submitLabel?: string;
+    onSubmit: (v: string) => void;
+  } | null>(null);
+
+  function commitMenu(e: MouseEvent, row: GraphRow) {
+    e.preventDefault();
+    const sha = row.sha;
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        {
+          label: "Create branch here…",
+          onClick: () =>
+            setPrompt({
+              title: "New branch",
+              placeholder: "branch name",
+              submitLabel: "Create",
+              onSubmit: (n) => createBranchAt(n, sha, true),
+            }),
+        },
+        {
+          label: "Create tag here…",
+          onClick: () =>
+            setPrompt({
+              title: "New tag",
+              placeholder: "tag name",
+              submitLabel: "Create",
+              onSubmit: (n) => tagCreate(n, sha),
+            }),
+        },
+        { label: "Checkout commit", onClick: () => checkout(sha) },
+        { label: "Copy SHA", onClick: () => navigator.clipboard?.writeText(sha) },
+      ],
+    });
+  }
+
+  function refMenu(e: MouseEvent, refString: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const { kind, name } = parseRef(refString);
+    const items: MenuItem[] = [];
+    if (kind === "local") {
+      items.push({ label: `Checkout ${name}`, onClick: () => checkout(name) });
+      if (name !== currentBranch) {
+        items.push({ label: `Merge into ${currentBranch ?? "current"}`, onClick: () => merge(name) });
+      }
+      items.push({
+        label: "Rename…",
+        onClick: () =>
+          setPrompt({
+            title: "Rename branch",
+            initial: name,
+            submitLabel: "Rename",
+            onSubmit: (nn) => branchRename(name, nn),
+          }),
+      });
+      items.push({ label: "Delete branch", danger: true, onClick: () => branchDelete(name, false) });
+    } else if (kind === "remote") {
+      const short = name.split("/").slice(1).join("/");
+      items.push({ label: `Checkout ${short}`, onClick: () => checkout(short) });
+      items.push({ label: `Merge into ${currentBranch ?? "current"}`, onClick: () => merge(name) });
+    } else if (kind === "tag") {
+      items.push({ label: "Delete tag", danger: true, onClick: () => tagDelete(name) });
+    } else {
+      return;
+    }
+    setMenu({ x: e.clientX, y: e.clientY, items });
+  }
 
   const changeCount = status
     ? status.staged.length + status.unstaged.length + status.untracked.length
@@ -153,7 +248,8 @@ export function CommitGraph() {
   for (let i = first; i <= last; i++) visibleIdx.push(i);
 
   return (
-    <div className="graph-scroll" ref={scrollRef} onScroll={onScroll}>
+    <>
+      <div className="graph-scroll" ref={scrollRef} onScroll={onScroll}>
       <canvas
         ref={canvasRef}
         className="graph-canvas"
@@ -182,10 +278,15 @@ export function CommitGraph() {
               className={"commit-row" + (active ? " commit-row--active" : "")}
               style={{ top: i * ROW_H, left: graphW, height: ROW_H }}
               onClick={() => selectNode(row.sha)}
+              onContextMenu={(e) => commitMenu(e, row)}
             >
               <div className="commit-row__main">
                 {row.refs.map((r) => (
-                  <span key={r} className={"ref " + refKind(r)}>
+                  <span
+                    key={r}
+                    className={"ref " + refKind(r)}
+                    onContextMenu={(e) => refMenu(e, r)}
+                  >
                     {r.replace("tag: ", "").replace("HEAD -> ", "")}
                   </span>
                 ))}
@@ -198,6 +299,23 @@ export function CommitGraph() {
           );
         })}
       </div>
-    </div>
+      </div>
+      {menu && (
+        <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />
+      )}
+      {prompt && (
+        <PromptModal
+          title={prompt.title}
+          placeholder={prompt.placeholder}
+          initial={prompt.initial}
+          submitLabel={prompt.submitLabel}
+          onSubmit={(v) => {
+            prompt.onSubmit(v);
+            setPrompt(null);
+          }}
+          onCancel={() => setPrompt(null)}
+        />
+      )}
+    </>
   );
 }

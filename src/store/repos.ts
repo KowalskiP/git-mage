@@ -33,6 +33,12 @@ interface ReposState {
   fetch: () => Promise<void>;
   pull: () => Promise<void>;
   push: () => Promise<void>;
+  merge: (refname: string) => Promise<void>;
+  createBranchAt: (name: string, at: string, checkout: boolean) => Promise<void>;
+  branchDelete: (name: string, force: boolean) => Promise<void>;
+  branchRename: (oldName: string, newName: string) => Promise<void>;
+  tagCreate: (name: string, at: string) => Promise<void>;
+  tagDelete: (name: string) => Promise<void>;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -216,6 +222,84 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  merge: async (refname) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Merging ${refname}…`, error: null });
+    try {
+      await api.merge(sel.path, refname);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  createBranchAt: async (name, at, checkout) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Creating ${name}…`, error: null });
+    try {
+      await api.createBranchAt(sel.path, name, at, checkout);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  branchDelete: async (name, force) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Deleting ${name}…`, error: null });
+    try {
+      await api.branchDelete(sel.path, name, force);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  branchRename: async (oldName, newName) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Renaming ${oldName}…`, error: null });
+    try {
+      await api.branchRename(sel.path, oldName, newName);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  tagCreate: async (name, at) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Tagging ${name}…`, error: null });
+    try {
+      await api.tagCreate(sel.path, name, at);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadGraph();
+    set({ busy: null });
+  },
+
+  tagDelete: async (name) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Deleting tag ${name}…`, error: null });
+    try {
+      await api.tagDelete(sel.path, name);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadGraph();
     set({ busy: null });
   },
 

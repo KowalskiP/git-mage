@@ -45,6 +45,12 @@ pub fn run() {
             ipc::commands::fetch,
             ipc::commands::pull,
             ipc::commands::push,
+            ipc::commands::merge,
+            ipc::commands::create_branch_at,
+            ipc::commands::branch_delete,
+            ipc::commands::branch_rename,
+            ipc::commands::tag_create,
+            ipc::commands::tag_delete,
             ipc::commands::watch_repo,
             ipc::commands::unwatch_repo,
         ])

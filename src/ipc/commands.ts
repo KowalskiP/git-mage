@@ -49,6 +49,19 @@ export const fetch = (path: string) => invoke<void>("fetch", { path });
 export const pull = (path: string) => invoke<void>("pull", { path });
 export const push = (path: string) => invoke<void>("push", { path });
 
+export const merge = (path: string, refname: string) =>
+  invoke<void>("merge", { path, refname });
+export const createBranchAt = (path: string, name: string, at: string, checkout: boolean) =>
+  invoke<void>("create_branch_at", { path, name, at, checkout });
+export const branchDelete = (path: string, name: string, force: boolean) =>
+  invoke<void>("branch_delete", { path, name, force });
+export const branchRename = (path: string, oldName: string, newName: string) =>
+  invoke<void>("branch_rename", { path, old: oldName, new: newName });
+export const tagCreate = (path: string, name: string, at: string) =>
+  invoke<void>("tag_create", { path, name, at });
+export const tagDelete = (path: string, name: string) =>
+  invoke<void>("tag_delete", { path, name });
+
 export const watchRepo = (path: string) => invoke<void>("watch_repo", { path });
 
 export const unwatchRepo = (path: string) => invoke<void>("unwatch_repo", { path });
