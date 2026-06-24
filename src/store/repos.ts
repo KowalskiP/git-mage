@@ -45,6 +45,9 @@ interface ReposState {
   stashApply: (id: string) => Promise<void>;
   stashPop: (id: string) => Promise<void>;
   stashDrop: (id: string) => Promise<void>;
+  resolveConflict: (file: string, ours: boolean) => Promise<void>;
+  mergeContinue: () => Promise<void>;
+  mergeAbort: () => Promise<void>;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -374,6 +377,45 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await get().loadStashes();
+    set({ busy: null });
+  },
+
+  resolveConflict: async (file, ours) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Resolving ${file}…`, error: null });
+    try {
+      await api.resolveConflict(sel.path, file, ours);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  mergeContinue: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Completing merge…", error: null });
+    try {
+      await api.mergeContinue(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  mergeAbort: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Aborting merge…", error: null });
+    try {
+      await api.mergeAbort(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
     set({ busy: null });
   },
 

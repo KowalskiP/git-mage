@@ -24,6 +24,8 @@ export interface RepoStatus {
   staged: FileEntry[];
   unstaged: FileEntry[];
   untracked: FileEntry[];
+  conflicted: FileEntry[];
+  mergeInProgress: boolean;
 }
 
 export interface GraphEdge {

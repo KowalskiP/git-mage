@@ -55,6 +55,82 @@ pub fn merge(path: &str, refname: &str) -> AppResult<()> {
     run(path, &["merge", "--no-edit", refname], false)
 }
 
+/// Resolve a conflicted file by taking one side, then mark it resolved (`git add`).
+pub fn resolve_side(path: &str, file: &str, ours: bool) -> AppResult<()> {
+    let side = if ours { "--ours" } else { "--theirs" };
+    run(path, &["checkout", side, "--", file], false)?;
+    run(path, &["add", "--", file], false)
+}
+
+/// Finish an in-progress merge (uses the prepared MERGE_MSG; fails if unresolved).
+pub fn merge_continue(path: &str) -> AppResult<()> {
+    run(path, &["commit", "--no-edit"], false)
+}
+
+pub fn merge_abort(path: &str) -> AppResult<()> {
+    run(path, &["merge", "--abort"], false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    fn g(dir: &Path, args: &[&str]) {
+        let ok = Command::new("git")
+            .current_dir(dir)
+            .args(args)
+            .output()
+            .unwrap()
+            .status
+            .success();
+        assert!(ok, "git {args:?} failed");
+    }
+
+    #[test]
+    fn merge_conflict_resolve_round_trip() {
+        let dir = std::env::temp_dir().join(format!("gitmage-merge-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+
+        g(&dir, &["init", "-q"]);
+        g(&dir, &["config", "user.email", "t@t"]);
+        g(&dir, &["config", "user.name", "t"]);
+        std::fs::write(dir.join("f.txt"), "base\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "base"]);
+
+        // feature branch changes the line one way…
+        g(&dir, &["checkout", "-q", "-b", "feature"]);
+        std::fs::write(dir.join("f.txt"), "feature\n").unwrap();
+        g(&dir, &["commit", "-qam", "feat"]);
+
+        // …the default branch changes the same line differently.
+        g(&dir, &["checkout", "-q", "-"]);
+        std::fs::write(dir.join("f.txt"), "mainline\n").unwrap();
+        g(&dir, &["commit", "-qam", "main change"]);
+
+        // Merge conflicts.
+        assert!(merge(p, "feature").is_err(), "merge should conflict");
+
+        let st = crate::git::status(p).unwrap();
+        assert!(st.merge_in_progress, "merge should be in progress");
+        assert_eq!(st.conflicted.len(), 1, "one conflicted file");
+
+        // Resolve with ours, then complete the merge.
+        resolve_side(p, "f.txt", true).unwrap();
+        assert_eq!(crate::git::status(p).unwrap().conflicted.len(), 0);
+        merge_continue(p).unwrap();
+
+        let done = crate::git::status(p).unwrap();
+        assert!(!done.merge_in_progress, "merge complete");
+        assert_eq!(std::fs::read_to_string(dir.join("f.txt")).unwrap(), "mainline\n");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
 /// Create a branch at `at` (a commit sha or ref), optionally checking it out.
 pub fn create_branch_at(path: &str, name: &str, at: &str, checkout: bool) -> AppResult<()> {
     if checkout {

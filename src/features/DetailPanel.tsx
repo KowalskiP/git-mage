@@ -88,6 +88,9 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
   const unstage = useRepos((s) => s.unstage);
   const stageAll = useRepos((s) => s.stageAll);
   const unstageAll = useRepos((s) => s.unstageAll);
+  const resolveConflict = useRepos((s) => s.resolveConflict);
+  const mergeContinue = useRepos((s) => s.mergeContinue);
+  const mergeAbort = useRepos((s) => s.mergeAbort);
 
   const [mode, setMode] = useState<"path" | "tree">("path");
   const [detail, setDetail] = useState<CommitDetail | null>(null);
@@ -133,6 +136,8 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
     ? status.staged.length + status.unstaged.length + status.untracked.length
     : 0;
   const headerCount = isWip ? wipTotal : commitFiles.length;
+  const conflicted = status?.conflicted ?? [];
+  const mergeInProgress = status?.mergeInProgress ?? false;
 
   return (
     <div className="detail-panel">
@@ -193,11 +198,70 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
         </div>
       </div>
 
+      {isWip && mergeInProgress && (
+        <div className="merge-banner">
+          <span className="merge-banner__label">
+            Merge in progress
+            {conflicted.length > 0
+              ? ` — ${conflicted.length} conflict${conflicted.length === 1 ? "" : "s"} left`
+              : " — all resolved"}
+          </span>
+          <div className="merge-banner__actions">
+            <button className="tbtn" onClick={() => mergeAbort()}>
+              Abort
+            </button>
+            <button
+              className="tbtn tbtn--primary"
+              disabled={conflicted.length > 0}
+              onClick={() => mergeContinue()}
+            >
+              Commit merge
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="detail-files">
         {loading ? (
           <div className="graph-msg">Loading…</div>
         ) : isWip ? (
           <>
+            {conflicted.length > 0 && (
+              <section className="status-section">
+                <h3>
+                  Conflicted <span className="count count--danger">{conflicted.length}</span>
+                </h3>
+                <ul className="file-list">
+                  {conflicted.map((f) => (
+                    <li
+                      key={f.path}
+                      className={"file-row" + (f.path === selectedFile ? " file-row--active" : "")}
+                      title={f.path}
+                    >
+                      <span className="fstat fstat-D">!</span>
+                      <span className="file-row__path" onClick={() => openUnstaged(f.path)}>
+                        {f.path}
+                      </span>
+                      <span className="conflict-actions">
+                        <button className="link-btn" onClick={() => resolveConflict(f.path, true)}>
+                          ours
+                        </button>
+                        <button className="link-btn" onClick={() => resolveConflict(f.path, false)}>
+                          theirs
+                        </button>
+                        <button
+                          className="link-btn"
+                          title="Mark resolved"
+                          onClick={() => stage([f.path])}
+                        >
+                          ✓
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             <Section title="Staged" count={status?.staged.length ?? 0}>
               <FileTree
                 files={status?.staged ?? []}

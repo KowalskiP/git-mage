@@ -29,6 +29,9 @@ pub struct RepoStatus {
     pub staged: Vec<FileEntry>,
     pub unstaged: Vec<FileEntry>,
     pub untracked: Vec<FileEntry>,
+    pub conflicted: Vec<FileEntry>,
+    /// True when a merge is in progress (MERGE_HEAD present).
+    pub merge_in_progress: bool,
 }
 
 /// One line segment in the commit graph, drawn from this row toward the next.

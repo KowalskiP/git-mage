@@ -170,6 +170,21 @@ pub async fn tag_delete(path: String, name: String) -> AppResult<()> {
 }
 
 #[tauri::command]
+pub async fn resolve_conflict(path: String, file: String, ours: bool) -> AppResult<()> {
+    git::resolve_side(&path, &file, ours)
+}
+
+#[tauri::command]
+pub async fn merge_continue(path: String) -> AppResult<()> {
+    git::merge_continue(&path)
+}
+
+#[tauri::command]
+pub async fn merge_abort(path: String) -> AppResult<()> {
+    git::merge_abort(&path)
+}
+
+#[tauri::command]
 pub async fn stash_list(path: String) -> AppResult<Vec<StashEntry>> {
     git::stash_list(&path)
 }

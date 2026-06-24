@@ -46,6 +46,13 @@ pub fn status(path: &str) -> AppResult<RepoStatus> {
         st.branch = Some(b);
     }
 
+    st.merge_in_progress = Command::new("git")
+        .current_dir(path)
+        .args(["rev-parse", "-q", "--verify", "MERGE_HEAD"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+
     Ok(st)
 }
 
@@ -98,6 +105,20 @@ fn classify(line: &str, st: &mut RepoStatus) {
     }
     if index == '!' && worktree == '!' {
         return; // ignored
+    }
+
+    // Unmerged (conflicted) entries: UU, AA, DD, AU, UA, DU, UD.
+    let conflicted = index == 'U'
+        || worktree == 'U'
+        || (index == 'A' && worktree == 'A')
+        || (index == 'D' && worktree == 'D');
+    if conflicted {
+        st.conflicted.push(FileEntry {
+            path,
+            status: format!("{index}{worktree}"),
+            staged: false,
+        });
+        return;
     }
 
     // Renames/copies are reported as "orig -> new"; keep the new path.

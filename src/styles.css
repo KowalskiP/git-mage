@@ -1093,3 +1093,32 @@ body {
 .link-btn--danger {
   color: var(--red);
 }
+
+/* Conflict resolution */
+.count--danger {
+  background: var(--red);
+  color: #fff;
+}
+.merge-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(224, 108, 117, 0.12);
+  border-bottom: 1px solid var(--border);
+}
+.merge-banner__label {
+  font-size: 12px;
+  color: var(--red);
+}
+.merge-banner__actions {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.conflict-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}

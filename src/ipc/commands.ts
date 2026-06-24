@@ -70,6 +70,11 @@ export const tagCreate = (path: string, name: string, at: string) =>
 export const tagDelete = (path: string, name: string) =>
   invoke<void>("tag_delete", { path, name });
 
+export const resolveConflict = (path: string, file: string, ours: boolean) =>
+  invoke<void>("resolve_conflict", { path, file, ours });
+export const mergeContinue = (path: string) => invoke<void>("merge_continue", { path });
+export const mergeAbort = (path: string) => invoke<void>("merge_abort", { path });
+
 export const stashList = (path: string) => invoke<StashEntry[]>("stash_list", { path });
 export const stashSave = (path: string, message: string | null, untracked: boolean) =>
   invoke<void>("stash_save", { path, message, untracked });
