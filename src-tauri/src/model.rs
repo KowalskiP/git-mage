@@ -63,6 +63,19 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// A git worktree (the base unit for agent sessions, SPEC §6.7 / §10).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Worktree {
+    pub path: String,
+    /// Short branch name, or None when detached.
+    pub branch: Option<String>,
+    pub head: String,
+    pub locked: bool,
+    /// The primary worktree (the original repo checkout).
+    pub is_main: bool,
+}
+
 /// One commit in a rebase todo range (base..HEAD), oldest first.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

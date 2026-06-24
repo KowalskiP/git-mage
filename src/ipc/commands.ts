@@ -9,6 +9,7 @@ import type {
   RepoMeta,
   RepoStatus,
   StashEntry,
+  Worktree,
 } from "../types/git";
 
 export const listRepos = () => invoke<RepoMeta[]>("list_repos");
@@ -90,6 +91,12 @@ export const rebaseTodoCommits = (path: string, base: string) =>
   invoke<RebaseCommit[]>("rebase_todo_commits", { path, base });
 export const rebaseInteractive = (path: string, base: string, todo: string) =>
   invoke<void>("rebase_interactive", { path, base, todo });
+
+export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
+export const worktreeAdd = (path: string, name: string, create: boolean) =>
+  invoke<string>("worktree_add", { path, name, create });
+export const worktreeRemove = (path: string, wtPath: string, force: boolean) =>
+  invoke<void>("worktree_remove", { path, wtPath, force });
 
 export const stashList = (path: string) => invoke<StashEntry[]>("stash_list", { path });
 export const stashSave = (path: string, message: string | null, untracked: boolean) =>

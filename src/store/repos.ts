@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { GraphRow, RepoMeta, RepoStatus, StashEntry } from "../types/git";
+import type { GraphRow, RepoMeta, RepoStatus, StashEntry, Worktree } from "../types/git";
 import * as api from "../ipc/commands";
 
 interface ReposState {
@@ -11,6 +11,7 @@ interface ReposState {
   selectedSha: string | null;
   branches: string[];
   stashes: StashEntry[];
+  worktrees: Worktree[];
   busy: string | null;
   loading: boolean;
   error: string | null;
@@ -40,6 +41,9 @@ interface ReposState {
   branchRename: (oldName: string, newName: string) => Promise<void>;
   tagCreate: (name: string, at: string) => Promise<void>;
   tagDelete: (name: string) => Promise<void>;
+  loadWorktrees: () => Promise<void>;
+  addWorktree: (name: string, create: boolean) => Promise<void>;
+  removeWorktree: (wtPath: string, force: boolean) => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -68,6 +72,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   selectedSha: null,
   branches: [],
   stashes: [],
+  worktrees: [],
   busy: null,
   loading: false,
   error: null,
@@ -98,13 +103,22 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (prev && prev.path !== repo.path) {
       await api.unwatchRepo(prev.path).catch(() => {});
     }
-    set({ selected: repo, status: null, graph: [], selectedSha: null, branches: [], stashes: [] });
+    set({
+      selected: repo,
+      status: null,
+      graph: [],
+      selectedSha: null,
+      branches: [],
+      stashes: [],
+      worktrees: [],
+    });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
       get().refreshStatus(),
       get().loadGraph(),
       get().loadBranches(),
       get().loadStashes(),
+      get().loadWorktrees(),
     ]);
   },
 
@@ -325,6 +339,42 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await get().loadGraph();
+    set({ busy: null });
+  },
+
+  loadWorktrees: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ worktrees: await api.worktreeList(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  addWorktree: async (name, create) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Creating worktree ${name}…`, error: null });
+    try {
+      await api.worktreeAdd(sel.path, name, create);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadWorktrees(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  removeWorktree: async (wtPath, force) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Removing worktree…", error: null });
+    try {
+      await api.worktreeRemove(sel.path, wtPath, force);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadWorktrees(), get().loadGraph()]);
     set({ busy: null });
   },
 

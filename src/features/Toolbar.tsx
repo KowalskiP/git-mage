@@ -16,11 +16,24 @@ export function Toolbar() {
   const stashApply = useRepos((s) => s.stashApply);
   const stashPop = useRepos((s) => s.stashPop);
   const stashDrop = useRepos((s) => s.stashDrop);
+  const worktrees = useRepos((s) => s.worktrees);
+  const addWorktree = useRepos((s) => s.addWorktree);
+  const removeWorktree = useRepos((s) => s.removeWorktree);
 
   const [open, setOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
+  const [wtOpen, setWtOpen] = useState(false);
+  const [wtName, setWtName] = useState("");
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+
+  async function createWorktree() {
+    const n = wtName.trim();
+    if (!n) return;
+    setWtName("");
+    setWtOpen(false);
+    await addWorktree(n, true);
+  }
 
   const current = status?.branch ?? "—";
 
@@ -137,6 +150,52 @@ export function Toolbar() {
                       Drop
                     </button>
                   </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+
+      <div className="branch-picker">
+        <button className="tbtn" onClick={() => setWtOpen((o) => !o)} disabled={!!busy}>
+          Worktrees {worktrees.length} ▾
+        </button>
+        {wtOpen && (
+          <>
+            <div className="dropdown-backdrop" onClick={() => setWtOpen(false)} />
+            <ul className="dropdown dropdown--wide">
+              <li className="wt-new">
+                <input
+                  autoFocus
+                  className="new-branch__input"
+                  placeholder="new branch → worktree"
+                  value={wtName}
+                  onChange={(e) => setWtName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") createWorktree();
+                    if (e.key === "Escape") setWtOpen(false);
+                  }}
+                />
+                <button className="tbtn tbtn--primary" onClick={createWorktree}>
+                  Create
+                </button>
+              </li>
+              {worktrees.map((w) => (
+                <li key={w.path} className="wt-row" title={w.path}>
+                  <span className="wt-branch">
+                    {w.branch ?? w.head.slice(0, 7)}
+                    {w.isMain && <span className="wt-tag">main</span>}
+                    {w.locked && <span className="wt-tag">🔒</span>}
+                  </span>
+                  {!w.isMain && (
+                    <button
+                      className="link-btn link-btn--danger"
+                      onClick={() => removeWorktree(w.path, true)}
+                    >
+                      Remove
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

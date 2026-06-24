@@ -59,6 +59,14 @@ export interface RebaseCommit {
   subject: string;
 }
 
+export interface Worktree {
+  path: string;
+  branch: string | null;
+  head: string;
+  locked: boolean;
+  isMain: boolean;
+}
+
 export interface Hunk {
   header: string;
   lines: string[];

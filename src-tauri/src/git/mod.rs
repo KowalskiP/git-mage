@@ -12,11 +12,15 @@ mod ops;
 mod stage;
 mod stash;
 mod status;
+mod worktree;
 
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
 pub use graph::graph;
 pub use hunk::{apply_hunk, file_hunks};
 pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
+pub use worktree::{
+    worktree_add, worktree_list, worktree_lock, worktree_prune, worktree_remove,
+};
 pub use ops::{
     branch_delete, branch_rename, checkout, conflict_content, create_branch, create_branch_at,
     fetch, launch_difftool, launch_mergetool, list_branches, merge, merge_abort, merge_continue,

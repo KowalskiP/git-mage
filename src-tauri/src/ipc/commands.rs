@@ -12,6 +12,7 @@ use crate::error::AppResult;
 use crate::git;
 use crate::model::{
     CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus, StashEntry,
+    Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -229,6 +230,31 @@ pub async fn rebase_todo_commits(path: String, base: String) -> AppResult<Vec<Re
 #[tauri::command]
 pub async fn rebase_interactive(path: String, base: String, todo: String) -> AppResult<()> {
     git::rebase_interactive(&path, &base, &todo)
+}
+
+#[tauri::command]
+pub async fn worktree_list(path: String) -> AppResult<Vec<Worktree>> {
+    git::worktree_list(&path)
+}
+
+#[tauri::command]
+pub async fn worktree_add(path: String, name: String, create: bool) -> AppResult<String> {
+    git::worktree_add(&path, &name, create)
+}
+
+#[tauri::command]
+pub async fn worktree_remove(path: String, wt_path: String, force: bool) -> AppResult<()> {
+    git::worktree_remove(&path, &wt_path, force)
+}
+
+#[tauri::command]
+pub async fn worktree_lock(path: String, wt_path: String, lock: bool) -> AppResult<()> {
+    git::worktree_lock(&path, &wt_path, lock)
+}
+
+#[tauri::command]
+pub async fn worktree_prune(path: String) -> AppResult<()> {
+    git::worktree_prune(&path)
 }
 
 #[tauri::command]
