@@ -18,9 +18,10 @@ pub use graph::graph;
 pub use hunk::{apply_hunk, file_hunks};
 pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
 pub use ops::{
-    branch_delete, branch_rename, checkout, create_branch, create_branch_at, fetch,
-    list_branches, merge, merge_abort, merge_continue, pull, push, rebase, rebase_abort,
+    branch_delete, branch_rename, checkout, conflict_content, create_branch, create_branch_at,
+    fetch, list_branches, merge, merge_abort, merge_continue, pull, push, rebase, rebase_abort,
     rebase_continue, rebase_interactive, rebase_todo_commits, resolve_side, tag_create, tag_delete,
+    write_resolution,
 };
 pub use stage::{commit, stage, stage_all, unstage, unstage_all};
 pub use status::status;

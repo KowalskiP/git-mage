@@ -6,6 +6,7 @@ import { FileTree } from "./FileTree";
 
 interface Props {
   onOpenFile: (file: string, sha: string, wip: boolean, staged: boolean) => void;
+  onOpenConflict: (file: string) => void;
   selectedFile: string | null;
 }
 
@@ -79,7 +80,7 @@ function CommitBox() {
   );
 }
 
-export function DetailPanel({ onOpenFile, selectedFile }: Props) {
+export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props) {
   const selectedSha = useRepos((s) => s.selectedSha);
   const graph = useRepos((s) => s.graph);
   const status = useRepos((s) => s.status);
@@ -245,7 +246,7 @@ export function DetailPanel({ onOpenFile, selectedFile }: Props) {
                       title={f.path}
                     >
                       <span className="fstat fstat-D">!</span>
-                      <span className="file-row__path" onClick={() => openUnstaged(f.path)}>
+                      <span className="file-row__path" onClick={() => onOpenConflict(f.path)}>
                         {f.path}
                       </span>
                       <span className="conflict-actions">

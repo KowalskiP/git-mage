@@ -65,6 +65,19 @@ pub fn resolve_side(path: &str, file: &str, ours: bool) -> AppResult<()> {
     run(path, &["add", "--", file], false)
 }
 
+/// Raw contents of a (conflicted) working-tree file, including conflict markers.
+pub fn conflict_content(path: &str, file: &str) -> AppResult<String> {
+    let full = std::path::Path::new(path).join(file);
+    std::fs::read_to_string(&full).map_err(|e| AppError::Git(format!("read {file}: {e}")))
+}
+
+/// Write a resolved file and mark it resolved (`git add`).
+pub fn write_resolution(path: &str, file: &str, content: &str) -> AppResult<()> {
+    let full = std::path::Path::new(path).join(file);
+    std::fs::write(&full, content).map_err(|e| AppError::Git(format!("write {file}: {e}")))?;
+    run(path, &["add", "--", file], false)
+}
+
 /// Finish an in-progress merge (uses the prepared MERGE_MSG; fails if unresolved).
 pub fn merge_continue(path: &str) -> AppResult<()> {
     run(path, &["commit", "--no-edit"], false)
@@ -306,6 +319,43 @@ mod tests {
         assert_eq!(count, "2", "base + one squashed commit");
         assert_eq!(std::fs::read_to_string(dir.join("a.txt")).unwrap(), "1\n2\n3\n");
         assert!(!crate::git::status(p).unwrap().rebase_in_progress);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn conflict_editor_round_trip() {
+        let dir = std::env::temp_dir().join(format!("gitmage-cflt-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+
+        g(&dir, &["init", "-q"]);
+        g(&dir, &["config", "user.email", "t@t"]);
+        g(&dir, &["config", "user.name", "t"]);
+        std::fs::write(dir.join("f.txt"), "base\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "base"]);
+        g(&dir, &["checkout", "-q", "-b", "feature"]);
+        std::fs::write(dir.join("f.txt"), "feature\n").unwrap();
+        g(&dir, &["commit", "-qam", "feat"]);
+        g(&dir, &["checkout", "-q", "-"]);
+        std::fs::write(dir.join("f.txt"), "mainline\n").unwrap();
+        g(&dir, &["commit", "-qam", "main change"]);
+        assert!(merge(p, "feature").is_err(), "merge should conflict");
+
+        // The working file has conflict markers we can parse + edit.
+        let content = conflict_content(p, "f.txt").unwrap();
+        assert!(content.contains("<<<<<<<") && content.contains(">>>>>>>"), "markers present");
+
+        // Write a hand-resolved version and mark it resolved.
+        write_resolution(p, "f.txt", "resolved\n").unwrap();
+        let st = crate::git::status(p).unwrap();
+        assert_eq!(st.conflicted.len(), 0, "no conflicts after resolution");
+        assert_eq!(std::fs::read_to_string(dir.join("f.txt")).unwrap(), "resolved\n");
+
+        merge_continue(p).unwrap();
+        assert!(!crate::git::status(p).unwrap().merge_in_progress, "merge complete");
 
         let _ = std::fs::remove_dir_all(&dir);
     }

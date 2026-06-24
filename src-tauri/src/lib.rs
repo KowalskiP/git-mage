@@ -52,6 +52,8 @@ pub fn run() {
             ipc::commands::tag_create,
             ipc::commands::tag_delete,
             ipc::commands::resolve_conflict,
+            ipc::commands::conflict_content,
+            ipc::commands::write_resolution,
             ipc::commands::merge_continue,
             ipc::commands::merge_abort,
             ipc::commands::rebase,

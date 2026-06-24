@@ -177,6 +177,16 @@ pub async fn resolve_conflict(path: String, file: String, ours: bool) -> AppResu
 }
 
 #[tauri::command]
+pub async fn conflict_content(path: String, file: String) -> AppResult<String> {
+    git::conflict_content(&path, &file)
+}
+
+#[tauri::command]
+pub async fn write_resolution(path: String, file: String, content: String) -> AppResult<()> {
+    git::write_resolution(&path, &file, &content)
+}
+
+#[tauri::command]
 pub async fn merge_continue(path: String) -> AppResult<()> {
     git::merge_continue(&path)
 }

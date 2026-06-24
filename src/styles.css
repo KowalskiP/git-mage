@@ -1179,3 +1179,55 @@ body {
   white-space: nowrap;
   flex: 1;
 }
+
+/* Conflict editor */
+.cflt-context {
+  margin: 0;
+  padding: 2px 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+}
+.cflt {
+  margin: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cflt-actions {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+}
+.cflt-ours,
+.cflt-theirs {
+  margin: 0;
+  padding: 4px 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.cflt-ours {
+  background: rgba(66, 196, 120, 0.14);
+  color: #b6e6c2;
+}
+.cflt-theirs {
+  background: rgba(97, 175, 239, 0.14);
+  color: #9bd0ff;
+  border-top: 1px solid var(--border);
+}
+.cflt-dim {
+  opacity: 0.4;
+}
+.cflt-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  flex: 0 0 auto;
+}

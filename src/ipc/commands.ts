@@ -73,6 +73,10 @@ export const tagDelete = (path: string, name: string) =>
 
 export const resolveConflict = (path: string, file: string, ours: boolean) =>
   invoke<void>("resolve_conflict", { path, file, ours });
+export const conflictContent = (path: string, file: string) =>
+  invoke<string>("conflict_content", { path, file });
+export const writeResolution = (path: string, file: string, content: string) =>
+  invoke<void>("write_resolution", { path, file, content });
 export const mergeContinue = (path: string) => invoke<void>("merge_continue", { path });
 export const mergeAbort = (path: string) => invoke<void>("merge_abort", { path });
 export const rebase = (path: string, onto: string) => invoke<void>("rebase", { path, onto });

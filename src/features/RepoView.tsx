@@ -4,6 +4,7 @@ import { CommitGraph } from "./graph/CommitGraph";
 import { DetailPanel } from "./DetailPanel";
 import { DiffView } from "./DiffView";
 import { HunkView } from "./HunkView";
+import { ConflictEditor } from "./ConflictEditor";
 import { Toolbar } from "./Toolbar";
 
 export function RepoView() {
@@ -16,10 +17,12 @@ export function RepoView() {
     wip: boolean;
     staged: boolean;
   } | null>(null);
+  const [conflictFile, setConflictFile] = useState<string | null>(null);
 
-  // Close the diff overlay when the selected commit changes.
+  // Close overlays when the selected commit changes.
   useEffect(() => {
     setOpen(null);
+    setConflictFile(null);
   }, [selectedSha]);
 
   if (!selected) return null;
@@ -30,11 +33,24 @@ export function RepoView() {
       <div className="repo-view__body">
         <CommitGraph />
         <DetailPanel
-          onOpenFile={(file, sha, wip, staged) => setOpen({ file, sha, wip, staged })}
-          selectedFile={open?.file ?? null}
+          onOpenFile={(file, sha, wip, staged) => {
+            setConflictFile(null);
+            setOpen({ file, sha, wip, staged });
+          }}
+          onOpenConflict={(file) => {
+            setOpen(null);
+            setConflictFile(file);
+          }}
+          selectedFile={conflictFile ?? open?.file ?? null}
         />
-        {open &&
-          (open.wip ? (
+        {conflictFile ? (
+          <ConflictEditor
+            repoPath={selected.path}
+            file={conflictFile}
+            onClose={() => setConflictFile(null)}
+          />
+        ) : open ? (
+          open.wip ? (
             <HunkView
               repoPath={selected.path}
               file={open.file}
@@ -48,7 +64,8 @@ export function RepoView() {
               file={open.file}
               onClose={() => setOpen(null)}
             />
-          ))}
+          )
+        ) : null}
       </div>
     </div>
   );

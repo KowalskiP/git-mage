@@ -46,6 +46,7 @@ interface ReposState {
   stashPop: (id: string) => Promise<void>;
   stashDrop: (id: string) => Promise<void>;
   resolveConflict: (file: string, ours: boolean) => Promise<void>;
+  saveResolution: (file: string, content: string) => Promise<void>;
   mergeContinue: () => Promise<void>;
   mergeAbort: () => Promise<void>;
   rebase: (onto: string) => Promise<void>;
@@ -393,6 +394,19 @@ export const useRepos = create<ReposState>((set, get) => ({
     set({ busy: `Resolving ${file}…`, error: null });
     try {
       await api.resolveConflict(sel.path, file, ours);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  saveResolution: async (file, content) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Resolving ${file}…`, error: null });
+    try {
+      await api.writeResolution(sel.path, file, content);
     } catch (e) {
       set({ error: String(e) });
     }
