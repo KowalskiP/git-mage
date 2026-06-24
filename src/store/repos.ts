@@ -109,7 +109,10 @@ export const useRepos = create<ReposState>((set, get) => ({
     const sel = get().selected;
     if (!sel) return;
     try {
-      set({ status: await api.repoStatus(sel.path), error: null });
+      // Don't clear `error` here: a failed mutation sets it and then calls this
+      // refresh — clearing on success would hide the failure. Errors clear when
+      // the next user action starts.
+      set({ status: await api.repoStatus(sel.path) });
     } catch (e) {
       set({ error: String(e) });
     }
@@ -124,7 +127,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       // Keep the current selection if still present, else select the top node.
       const cur = get().selectedSha;
       const keep = cur && graph.some((r) => r.sha === cur) ? cur : graph[0]?.sha ?? null;
-      set({ graph, selectedSha: keep, error: null });
+      set({ graph, selectedSha: keep });
     } catch (e) {
       set({ error: String(e) });
     } finally {

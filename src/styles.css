@@ -325,6 +325,7 @@ body {
   font-size: 12px;
   cursor: pointer;
   border-radius: 4px;
+  user-select: none;
 }
 .commit-row:hover {
   background: var(--bg-hover);

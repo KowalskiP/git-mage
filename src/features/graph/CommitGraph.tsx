@@ -84,6 +84,7 @@ export function CommitGraph() {
 
   function commitMenu(e: MouseEvent, row: GraphRow) {
     e.preventDefault();
+    e.stopPropagation();
     const sha = row.sha;
     setMenu({
       x: e.clientX,
