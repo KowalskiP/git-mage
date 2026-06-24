@@ -54,6 +54,11 @@ export interface StashEntry {
   message: string;
 }
 
+export interface RebaseCommit {
+  sha: string;
+  subject: string;
+}
+
 export interface Hunk {
   header: string;
   lines: string[];

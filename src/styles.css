@@ -1122,3 +1122,59 @@ body {
   gap: 8px;
   flex: 0 0 auto;
 }
+
+/* Interactive rebase modal */
+.modal--wide {
+  width: 560px;
+  max-width: 90vw;
+}
+.rebase-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.rebase-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.rebase-row:last-child {
+  border-bottom: none;
+}
+.rebase-row--drop {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.rebase-move {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.rebase-move .link-btn {
+  font-size: 10px;
+}
+.rebase-action {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 2px 4px;
+}
+.rebase-sha {
+  font-family: ui-monospace, monospace;
+  color: var(--text-dim);
+}
+.rebase-subject {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}

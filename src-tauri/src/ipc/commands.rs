@@ -10,7 +10,9 @@ use tauri::{AppHandle, State};
 use crate::db::Db;
 use crate::error::AppResult;
 use crate::git;
-use crate::model::{CommitDetail, DiffSides, GraphRow, Hunk, RepoMeta, RepoStatus, StashEntry};
+use crate::model::{
+    CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus, StashEntry,
+};
 use crate::watcher::{self, Watchers};
 
 #[tauri::command]
@@ -197,6 +199,16 @@ pub async fn rebase_continue(path: String) -> AppResult<()> {
 #[tauri::command]
 pub async fn rebase_abort(path: String) -> AppResult<()> {
     git::rebase_abort(&path)
+}
+
+#[tauri::command]
+pub async fn rebase_todo_commits(path: String, base: String) -> AppResult<Vec<RebaseCommit>> {
+    git::rebase_todo_commits(&path, &base)
+}
+
+#[tauri::command]
+pub async fn rebase_interactive(path: String, base: String, todo: String) -> AppResult<()> {
+    git::rebase_interactive(&path, &base, &todo)
 }
 
 #[tauri::command]

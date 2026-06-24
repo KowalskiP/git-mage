@@ -63,6 +63,14 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// One commit in a rebase todo range (base..HEAD), oldest first.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RebaseCommit {
+    pub sha: String,
+    pub subject: String,
+}
+
 /// One stash entry.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

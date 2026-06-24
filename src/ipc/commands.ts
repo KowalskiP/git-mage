@@ -5,6 +5,7 @@ import type {
   DiffSides,
   GraphRow,
   Hunk,
+  RebaseCommit,
   RepoMeta,
   RepoStatus,
   StashEntry,
@@ -77,6 +78,10 @@ export const mergeAbort = (path: string) => invoke<void>("merge_abort", { path }
 export const rebase = (path: string, onto: string) => invoke<void>("rebase", { path, onto });
 export const rebaseContinue = (path: string) => invoke<void>("rebase_continue", { path });
 export const rebaseAbort = (path: string) => invoke<void>("rebase_abort", { path });
+export const rebaseTodoCommits = (path: string, base: string) =>
+  invoke<RebaseCommit[]>("rebase_todo_commits", { path, base });
+export const rebaseInteractive = (path: string, base: string, todo: string) =>
+  invoke<void>("rebase_interactive", { path, base, todo });
 
 export const stashList = (path: string) => invoke<StashEntry[]>("stash_list", { path });
 export const stashSave = (path: string, message: string | null, untracked: boolean) =>

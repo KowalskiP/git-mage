@@ -57,6 +57,8 @@ pub fn run() {
             ipc::commands::rebase,
             ipc::commands::rebase_continue,
             ipc::commands::rebase_abort,
+            ipc::commands::rebase_todo_commits,
+            ipc::commands::rebase_interactive,
             ipc::commands::stash_list,
             ipc::commands::stash_save,
             ipc::commands::stash_apply,

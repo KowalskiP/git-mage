@@ -51,6 +51,7 @@ interface ReposState {
   rebase: (onto: string) => Promise<void>;
   rebaseContinue: () => Promise<void>;
   rebaseAbort: () => Promise<void>;
+  rebaseInteractive: (base: string, todo: string) => Promise<void>;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -458,6 +459,19 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  rebaseInteractive: async (base, todo) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Rebasing…", error: null });
+    try {
+      await api.rebaseInteractive(sel.path, base, todo);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
     set({ busy: null });
   },
 

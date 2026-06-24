@@ -3,6 +3,7 @@ import { useRepos } from "../../store/repos";
 import type { GraphRow } from "../../types/git";
 import { ContextMenu, type MenuItem } from "../ContextMenu";
 import { PromptModal } from "../PromptModal";
+import { RebaseModal } from "../RebaseModal";
 
 const ROW_H = 26;
 const COL_W = 14;
@@ -63,6 +64,7 @@ export function CommitGraph() {
   const branchRename = useRepos((s) => s.branchRename);
   const tagCreate = useRepos((s) => s.tagCreate);
   const tagDelete = useRepos((s) => s.tagDelete);
+  const repoPath = useRepos((s) => s.selected?.path ?? "");
   const currentBranch = status?.branch ?? null;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -78,6 +80,7 @@ export function CommitGraph() {
     submitLabel?: string;
     onSubmit: (v: string) => void;
   } | null>(null);
+  const [rebaseBase, setRebaseBase] = useState<string | null>(null);
 
   function commitMenu(e: MouseEvent, row: GraphRow) {
     e.preventDefault();
@@ -107,6 +110,7 @@ export function CommitGraph() {
             }),
         },
         { label: "Checkout commit", onClick: () => checkout(sha) },
+        { label: "Interactive rebase from here…", onClick: () => setRebaseBase(sha) },
         { label: "Copy SHA", onClick: () => navigator.clipboard?.writeText(sha) },
       ],
     });
@@ -324,6 +328,9 @@ export function CommitGraph() {
           }}
           onCancel={() => setPrompt(null)}
         />
+      )}
+      {rebaseBase && (
+        <RebaseModal repoPath={repoPath} base={rebaseBase} onClose={() => setRebaseBase(null)} />
       )}
     </>
   );
