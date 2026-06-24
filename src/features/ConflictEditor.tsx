@@ -64,6 +64,7 @@ export function ConflictEditor({
   onClose: () => void;
 }) {
   const saveResolution = useRepos((s) => s.saveResolution);
+  const openMergetool = useRepos((s) => s.openMergetool);
   const [segs, setSegs] = useState<Seg[] | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -103,6 +104,9 @@ export function ConflictEditor({
       <div className="diff-header">
         <span className="diff-title">{file}</span>
         <span className="hunk-mode">Resolve conflicts — pick a side per block</span>
+        <button className="tbtn" onClick={() => openMergetool(file)} title="Open in external merge tool">
+          External tool
+        </button>
         <button className="diff-close" onClick={onClose} title="Close">
           ✕
         </button>

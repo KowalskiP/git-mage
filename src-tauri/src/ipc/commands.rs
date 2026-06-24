@@ -177,6 +177,16 @@ pub async fn resolve_conflict(path: String, file: String, ours: bool) -> AppResu
 }
 
 #[tauri::command]
+pub async fn launch_difftool(path: String, file: String) -> AppResult<()> {
+    git::launch_difftool(&path, &file)
+}
+
+#[tauri::command]
+pub async fn launch_mergetool(path: String, file: String) -> AppResult<()> {
+    git::launch_mergetool(&path, &file)
+}
+
+#[tauri::command]
 pub async fn conflict_content(path: String, file: String) -> AppResult<String> {
     git::conflict_content(&path, &file)
 }

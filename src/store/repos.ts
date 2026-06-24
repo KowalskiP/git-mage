@@ -47,6 +47,8 @@ interface ReposState {
   stashDrop: (id: string) => Promise<void>;
   resolveConflict: (file: string, ours: boolean) => Promise<void>;
   saveResolution: (file: string, content: string) => Promise<void>;
+  openDifftool: (file: string) => Promise<void>;
+  openMergetool: (file: string) => Promise<void>;
   mergeContinue: () => Promise<void>;
   mergeAbort: () => Promise<void>;
   rebase: (onto: string) => Promise<void>;
@@ -412,6 +414,28 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
     await Promise.all([get().refreshStatus(), get().loadGraph()]);
     set({ busy: null });
+  },
+
+  openDifftool: async (file) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ error: null });
+    try {
+      await api.launchDifftool(sel.path, file);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  openMergetool: async (file) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ error: null });
+    try {
+      await api.launchMergetool(sel.path, file);
+    } catch (e) {
+      set({ error: String(e) });
+    }
   },
 
   mergeContinue: async () => {

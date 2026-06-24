@@ -20,6 +20,18 @@ export function RebaseModal({ repoPath, base, onClose }: Props) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  function drop(target: number) {
+    setRows((r) => {
+      if (!r || dragIdx === null || dragIdx === target) return r;
+      const copy = [...r];
+      const [moved] = copy.splice(dragIdx, 1);
+      copy.splice(target, 0, moved);
+      return copy;
+    });
+    setDragIdx(null);
+  }
 
   useEffect(() => {
     rebaseTodoCommits(repoPath, base)
@@ -69,8 +81,20 @@ export function RebaseModal({ repoPath, base, onClose }: Props) {
             {rows.map((row, i) => (
               <li
                 key={row.sha}
-                className={"rebase-row" + (row.action === "drop" ? " rebase-row--drop" : "")}
+                className={
+                  "rebase-row" +
+                  (row.action === "drop" ? " rebase-row--drop" : "") +
+                  (dragIdx === i ? " rebase-row--dragging" : "")
+                }
+                draggable
+                onDragStart={() => setDragIdx(i)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => drop(i)}
+                onDragEnd={() => setDragIdx(null)}
               >
+                <span className="rebase-grip" title="Drag to reorder">
+                  ⠿
+                </span>
                 <span className="rebase-move">
                   <button className="link-btn" disabled={i === 0} onClick={() => move(i, -1)}>
                     ↑

@@ -23,6 +23,7 @@ export function HunkView({ repoPath, file, staged, onClose }: Props) {
   const stageHunk = useRepos((s) => s.stageHunk);
   const unstageHunk = useRepos((s) => s.unstageHunk);
   const stageFile = useRepos((s) => s.stage);
+  const openDifftool = useRepos((s) => s.openDifftool);
 
   const load = useCallback(() => {
     setHunks(null);
@@ -47,6 +48,9 @@ export function HunkView({ repoPath, file, staged, onClose }: Props) {
       <div className="diff-header">
         <span className="diff-title">{file}</span>
         <span className="hunk-mode">{staged ? "Staged — unstage hunks" : "Unstaged — stage hunks"}</span>
+        <button className="tbtn" onClick={() => openDifftool(file)} title="Open in external diff tool">
+          External
+        </button>
         <button className="diff-close" onClick={onClose} title="Close">
           ✕
         </button>

@@ -73,6 +73,10 @@ export const tagDelete = (path: string, name: string) =>
 
 export const resolveConflict = (path: string, file: string, ours: boolean) =>
   invoke<void>("resolve_conflict", { path, file, ours });
+export const launchDifftool = (path: string, file: string) =>
+  invoke<void>("launch_difftool", { path, file });
+export const launchMergetool = (path: string, file: string) =>
+  invoke<void>("launch_mergetool", { path, file });
 export const conflictContent = (path: string, file: string) =>
   invoke<string>("conflict_content", { path, file });
 export const writeResolution = (path: string, file: string, content: string) =>

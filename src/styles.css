@@ -1153,6 +1153,16 @@ body {
   opacity: 0.5;
   text-decoration: line-through;
 }
+.rebase-row--dragging {
+  opacity: 0.4;
+  background: var(--bg-hover);
+}
+.rebase-grip {
+  cursor: grab;
+  color: var(--text-dim);
+  user-select: none;
+  font-size: 11px;
+}
 .rebase-move {
   display: flex;
   flex-direction: column;

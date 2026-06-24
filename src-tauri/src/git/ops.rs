@@ -65,6 +65,45 @@ pub fn resolve_side(path: &str, file: &str, ours: bool) -> AppResult<()> {
     run(path, &["add", "--", file], false)
 }
 
+fn tool_configured(path: &str, key: &str) -> bool {
+    Command::new("git")
+        .current_dir(path)
+        .args(["config", "--get", key])
+        .output()
+        .map(|o| o.status.success() && !o.stdout.is_empty())
+        .unwrap_or(false)
+}
+
+/// Launch the configured external diff tool for a file (fire-and-forget).
+pub fn launch_difftool(path: &str, file: &str) -> AppResult<()> {
+    if !tool_configured(path, "diff.tool") && !tool_configured(path, "merge.tool") {
+        return Err(AppError::Msg(
+            "No external diff tool configured (set git config diff.tool)".into(),
+        ));
+    }
+    Command::new("git")
+        .current_dir(path)
+        .args(["difftool", "--no-prompt", "--", file])
+        .spawn()
+        .map_err(|e| AppError::Git(format!("difftool: {e}")))?;
+    Ok(())
+}
+
+/// Launch the configured external merge tool for a conflicted file (fire-and-forget).
+pub fn launch_mergetool(path: &str, file: &str) -> AppResult<()> {
+    if !tool_configured(path, "merge.tool") {
+        return Err(AppError::Msg(
+            "No external merge tool configured (set git config merge.tool)".into(),
+        ));
+    }
+    Command::new("git")
+        .current_dir(path)
+        .args(["mergetool", "--no-prompt", file])
+        .spawn()
+        .map_err(|e| AppError::Git(format!("mergetool: {e}")))?;
+    Ok(())
+}
+
 /// Raw contents of a (conflicted) working-tree file, including conflict markers.
 pub fn conflict_content(path: &str, file: &str) -> AppResult<String> {
     let full = std::path::Path::new(path).join(file);
