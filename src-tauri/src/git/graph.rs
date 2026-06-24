@@ -26,6 +26,92 @@ struct Commit {
 
 /// Load up to `limit` commits across all refs and compute their graph layout.
 pub fn graph(path: &str, limit: usize) -> AppResult<Vec<GraphRow>> {
+    // Prefer gix (no process spawn); fall back to the git CLI on any gix error.
+    let mut commits = match collect_commits_gix(path, limit) {
+        Ok(c) => c,
+        Err(_) => collect_commits_cli(path, limit)?,
+    };
+
+    // Prepend a synthetic working-directory node when the tree is dirty, so the
+    // graph shows uncommitted changes as a node off HEAD (GitKraken-style).
+    if let Some(wip) = working_dir_node(path) {
+        commits.insert(0, wip);
+    }
+
+    Ok(layout(commits))
+}
+
+/// Commit data via `gix` revwalk across all refs (no process spawn).
+fn collect_commits_gix(path: &str, limit: usize) -> AppResult<Vec<Commit>> {
+    use std::collections::HashMap;
+
+    let repo = gix::open(path).map_err(|e| AppError::Git(format!("gix open: {e}")))?;
+
+    // Decorations (ref names per commit) and the set of tips to walk from.
+    let mut decorations: HashMap<gix::ObjectId, Vec<String>> = HashMap::new();
+    let mut tips: Vec<gix::ObjectId> = Vec::new();
+    let platform = repo
+        .references()
+        .map_err(|e| AppError::Git(format!("gix refs: {e}")))?;
+    for r in platform
+        .all()
+        .map_err(|e| AppError::Git(format!("gix refs: {e}")))?
+    {
+        let mut r = r.map_err(|e| AppError::Git(format!("gix ref: {e}")))?;
+        let name = r.name().shorten().to_string();
+        if let Ok(id) = r.peel_to_id() {
+            let oid = id.detach();
+            decorations.entry(oid).or_default().push(name);
+            tips.push(oid);
+        }
+    }
+    if let Ok(head) = repo.head() {
+        if let Some(id) = head.id() {
+            decorations.entry(id.detach()).or_default().insert(0, "HEAD".to_string());
+        }
+    }
+
+    let walk = repo
+        .rev_walk(tips)
+        .sorting(gix::revision::walk::Sorting::ByCommitTime(
+            gix::traverse::commit::simple::CommitTimeOrder::NewestFirst,
+        ))
+        .all()
+        .map_err(|e| AppError::Git(format!("gix revwalk: {e}")))?;
+
+    let mut commits = Vec::new();
+    for info in walk {
+        if commits.len() >= limit {
+            break;
+        }
+        let info = info.map_err(|e| AppError::Git(format!("gix walk: {e}")))?;
+        let oid = info.id;
+        let commit = repo
+            .find_commit(oid)
+            .map_err(|e| AppError::Git(format!("gix commit: {e}")))?;
+        let parents: Vec<String> = commit.parent_ids().map(|p| p.detach().to_string()).collect();
+        let author = commit
+            .author()
+            .map_err(|e| AppError::Git(format!("gix author: {e}")))?;
+        let time = author.time().map(|t| t.seconds).unwrap_or(0);
+        let summary = commit
+            .message()
+            .map(|m| m.summary().to_string())
+            .unwrap_or_default();
+        commits.push(Commit {
+            sha: oid.to_string(),
+            parents,
+            author: author.name.to_string(),
+            time,
+            refs: decorations.get(&oid).cloned().unwrap_or_default(),
+            summary,
+        });
+    }
+    Ok(commits)
+}
+
+/// Commit data via the git CLI (`git log --all`) — fallback for `collect_commits_gix`.
+fn collect_commits_cli(path: &str, limit: usize) -> AppResult<Vec<Commit>> {
     let fmt = format!("{US}%H{US}%P{US}%an{US}%at{US}%D{US}%s{RS}");
     let out = Command::new("git")
         .current_dir(path)
@@ -53,16 +139,7 @@ pub fn graph(path: &str, limit: usize) -> AppResult<Vec<GraphRow>> {
         return Err(AppError::Git(err.trim().to_string()));
     }
 
-    let text = String::from_utf8_lossy(&out.stdout);
-    let mut commits = parse(&text);
-
-    // Prepend a synthetic working-directory node when the tree is dirty, so the
-    // graph shows uncommitted changes as a node off HEAD (GitKraken-style).
-    if let Some(wip) = working_dir_node(path) {
-        commits.insert(0, wip);
-    }
-
-    Ok(layout(commits))
+    Ok(parse(&String::from_utf8_lossy(&out.stdout)))
 }
 
 /// A WIP commit (parent = HEAD) when the working tree has changes, else None.
@@ -258,6 +335,29 @@ mod tests {
         assert!(rows.iter().all(|r| r.column == 0), "all commits share lane 0");
         // c1 is a root: no outgoing parent edge.
         assert!(rows[2].edges.is_empty());
+    }
+
+    #[test]
+    fn gix_matches_cli_on_real_repo() {
+        // Only runs on a machine that has this repo checked out.
+        let r = "/Users/kowalski/Projects/done-it-ai";
+        if !std::path::Path::new(r).join(".git").exists() {
+            return;
+        }
+        let mut g: Vec<String> = collect_commits_gix(r, 5000)
+            .unwrap()
+            .into_iter()
+            .map(|c| c.sha)
+            .collect();
+        let mut c: Vec<String> = collect_commits_cli(r, 5000)
+            .unwrap()
+            .into_iter()
+            .map(|c| c.sha)
+            .collect();
+        assert!(!g.is_empty(), "gix returned no commits");
+        g.sort();
+        c.sort();
+        assert_eq!(g, c, "gix and cli commit sets differ");
     }
 
     #[test]
