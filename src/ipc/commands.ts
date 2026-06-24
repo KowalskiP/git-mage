@@ -74,6 +74,9 @@ export const resolveConflict = (path: string, file: string, ours: boolean) =>
   invoke<void>("resolve_conflict", { path, file, ours });
 export const mergeContinue = (path: string) => invoke<void>("merge_continue", { path });
 export const mergeAbort = (path: string) => invoke<void>("merge_abort", { path });
+export const rebase = (path: string, onto: string) => invoke<void>("rebase", { path, onto });
+export const rebaseContinue = (path: string) => invoke<void>("rebase_continue", { path });
+export const rebaseAbort = (path: string) => invoke<void>("rebase_abort", { path });
 
 export const stashList = (path: string) => invoke<StashEntry[]>("stash_list", { path });
 export const stashSave = (path: string, message: string | null, untracked: boolean) =>

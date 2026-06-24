@@ -53,7 +53,30 @@ pub fn status(path: &str) -> AppResult<RepoStatus> {
         .map(|o| o.status.success())
         .unwrap_or(false);
 
+    st.rebase_in_progress = rebase_in_progress(path);
+
     Ok(st)
+}
+
+/// True when a rebase is mid-flight (a rebase-merge / rebase-apply state dir exists).
+fn rebase_in_progress(path: &str) -> bool {
+    let Ok(out) = Command::new("git")
+        .current_dir(path)
+        .args(["rev-parse", "--git-dir"])
+        .output()
+    else {
+        return false;
+    };
+    if !out.status.success() {
+        return false;
+    }
+    let gd = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    let base = if std::path::Path::new(&gd).is_absolute() {
+        std::path::PathBuf::from(gd)
+    } else {
+        std::path::Path::new(path).join(gd)
+    };
+    base.join("rebase-merge").exists() || base.join("rebase-apply").exists()
 }
 
 /// Parse the `## ` branch header (already stripped of the prefix) into

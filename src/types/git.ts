@@ -26,6 +26,7 @@ export interface RepoStatus {
   untracked: FileEntry[];
   conflicted: FileEntry[];
   mergeInProgress: boolean;
+  rebaseInProgress: boolean;
 }
 
 export interface GraphEdge {

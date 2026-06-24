@@ -32,6 +32,8 @@ pub struct RepoStatus {
     pub conflicted: Vec<FileEntry>,
     /// True when a merge is in progress (MERGE_HEAD present).
     pub merge_in_progress: bool,
+    /// True when a rebase is in progress (rebase-merge/rebase-apply present).
+    pub rebase_in_progress: bool,
 }
 
 /// One line segment in the commit graph, drawn from this row toward the next.

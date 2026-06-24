@@ -48,6 +48,9 @@ interface ReposState {
   resolveConflict: (file: string, ours: boolean) => Promise<void>;
   mergeContinue: () => Promise<void>;
   mergeAbort: () => Promise<void>;
+  rebase: (onto: string) => Promise<void>;
+  rebaseContinue: () => Promise<void>;
+  rebaseAbort: () => Promise<void>;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -412,6 +415,45 @@ export const useRepos = create<ReposState>((set, get) => ({
     set({ busy: "Aborting merge…", error: null });
     try {
       await api.mergeAbort(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  rebase: async (onto) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Rebasing onto ${onto}…`, error: null });
+    try {
+      await api.rebase(sel.path, onto);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  rebaseContinue: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Continuing rebase…", error: null });
+    try {
+      await api.rebaseContinue(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  rebaseAbort: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Aborting rebase…", error: null });
+    try {
+      await api.rebaseAbort(sel.path);
     } catch (e) {
       set({ error: String(e) });
     }

@@ -71,6 +71,20 @@ pub fn merge_abort(path: &str) -> AppResult<()> {
     run(path, &["merge", "--abort"], false)
 }
 
+/// Rebase the current branch onto `onto` (conflicts surface as an error).
+pub fn rebase(path: &str, onto: &str) -> AppResult<()> {
+    // network=true sets GIT_EDITOR=true so a replay never blocks on an editor.
+    run(path, &["rebase", onto], true)
+}
+
+pub fn rebase_continue(path: &str) -> AppResult<()> {
+    run(path, &["rebase", "--continue"], true)
+}
+
+pub fn rebase_abort(path: &str) -> AppResult<()> {
+    run(path, &["rebase", "--abort"], false)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -126,6 +140,59 @@ mod tests {
         let done = crate::git::status(p).unwrap();
         assert!(!done.merge_in_progress, "merge complete");
         assert_eq!(std::fs::read_to_string(dir.join("f.txt")).unwrap(), "mainline\n");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn rebase_conflict_round_trip() {
+        let dir = std::env::temp_dir().join(format!("gitmage-rebase-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+
+        g(&dir, &["init", "-q"]);
+        g(&dir, &["config", "user.email", "t@t"]);
+        g(&dir, &["config", "user.name", "t"]);
+        std::fs::write(dir.join("f.txt"), "base\n").unwrap();
+        std::fs::write(dir.join("g.txt"), "g\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "base"]);
+
+        let out = Command::new("git")
+            .current_dir(&dir)
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
+            .output()
+            .unwrap();
+        let default = String::from_utf8_lossy(&out.stdout).trim().to_string();
+
+        // feature: conflicting change to f.txt + a clean change to g.txt
+        g(&dir, &["checkout", "-q", "-b", "feature"]);
+        std::fs::write(dir.join("f.txt"), "feature\n").unwrap();
+        std::fs::write(dir.join("g.txt"), "g-feature\n").unwrap();
+        g(&dir, &["commit", "-qam", "feat"]);
+
+        // default branch changes f.txt differently
+        g(&dir, &["checkout", "-q", &default]);
+        std::fs::write(dir.join("f.txt"), "mainline\n").unwrap();
+        g(&dir, &["commit", "-qam", "main change"]);
+
+        // rebase feature onto default -> conflict on f.txt
+        g(&dir, &["checkout", "-q", "feature"]);
+        assert!(rebase(p, &default).is_err(), "rebase should conflict");
+
+        let st = crate::git::status(p).unwrap();
+        assert!(st.rebase_in_progress, "rebase should be in progress");
+        assert_eq!(st.conflicted.len(), 1, "one conflicted file");
+
+        // take "ours" (the rebased-onto side = mainline), continue (g.txt keeps it non-empty)
+        resolve_side(p, "f.txt", true).unwrap();
+        rebase_continue(p).unwrap();
+
+        let done = crate::git::status(p).unwrap();
+        assert!(!done.rebase_in_progress, "rebase complete");
+        assert_eq!(std::fs::read_to_string(dir.join("f.txt")).unwrap(), "mainline\n");
+        assert_eq!(std::fs::read_to_string(dir.join("g.txt")).unwrap(), "g-feature\n");
 
         let _ = std::fs::remove_dir_all(&dir);
     }

@@ -57,6 +57,7 @@ export function CommitGraph() {
   const error = useRepos((s) => s.error);
   const checkout = useRepos((s) => s.checkout);
   const merge = useRepos((s) => s.merge);
+  const rebase = useRepos((s) => s.rebase);
   const createBranchAt = useRepos((s) => s.createBranchAt);
   const branchDelete = useRepos((s) => s.branchDelete);
   const branchRename = useRepos((s) => s.branchRename);
@@ -120,6 +121,10 @@ export function CommitGraph() {
       items.push({ label: `Checkout ${name}`, onClick: () => checkout(name) });
       if (name !== currentBranch) {
         items.push({ label: `Merge into ${currentBranch ?? "current"}`, onClick: () => merge(name) });
+        items.push({
+          label: `Rebase ${currentBranch ?? "current"} onto ${name}`,
+          onClick: () => rebase(name),
+        });
       }
       items.push({
         label: "Rename…",
@@ -136,6 +141,10 @@ export function CommitGraph() {
       const short = name.split("/").slice(1).join("/");
       items.push({ label: `Checkout ${short}`, onClick: () => checkout(short) });
       items.push({ label: `Merge into ${currentBranch ?? "current"}`, onClick: () => merge(name) });
+      items.push({
+        label: `Rebase ${currentBranch ?? "current"} onto ${name}`,
+        onClick: () => rebase(name),
+      });
     } else if (kind === "tag") {
       items.push({ label: "Delete tag", danger: true, onClick: () => tagDelete(name) });
     } else {

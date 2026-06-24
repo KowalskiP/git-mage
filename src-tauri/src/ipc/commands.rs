@@ -185,6 +185,21 @@ pub async fn merge_abort(path: String) -> AppResult<()> {
 }
 
 #[tauri::command]
+pub async fn rebase(path: String, onto: String) -> AppResult<()> {
+    git::rebase(&path, &onto)
+}
+
+#[tauri::command]
+pub async fn rebase_continue(path: String) -> AppResult<()> {
+    git::rebase_continue(&path)
+}
+
+#[tauri::command]
+pub async fn rebase_abort(path: String) -> AppResult<()> {
+    git::rebase_abort(&path)
+}
+
+#[tauri::command]
 pub async fn stash_list(path: String) -> AppResult<Vec<StashEntry>> {
     git::stash_list(&path)
 }
