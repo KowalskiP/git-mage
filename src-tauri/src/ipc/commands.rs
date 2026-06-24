@@ -10,7 +10,7 @@ use tauri::{AppHandle, State};
 use crate::db::Db;
 use crate::error::AppResult;
 use crate::git;
-use crate::model::{CommitDetail, DiffSides, GraphRow, Hunk, RepoMeta, RepoStatus};
+use crate::model::{CommitDetail, DiffSides, GraphRow, Hunk, RepoMeta, RepoStatus, StashEntry};
 use crate::watcher::{self, Watchers};
 
 #[tauri::command]
@@ -167,6 +167,31 @@ pub async fn tag_create(path: String, name: String, at: String) -> AppResult<()>
 #[tauri::command]
 pub async fn tag_delete(path: String, name: String) -> AppResult<()> {
     git::tag_delete(&path, &name)
+}
+
+#[tauri::command]
+pub async fn stash_list(path: String) -> AppResult<Vec<StashEntry>> {
+    git::stash_list(&path)
+}
+
+#[tauri::command]
+pub async fn stash_save(path: String, message: Option<String>, untracked: bool) -> AppResult<()> {
+    git::stash_save(&path, message.as_deref(), untracked)
+}
+
+#[tauri::command]
+pub async fn stash_apply(path: String, id: String) -> AppResult<()> {
+    git::stash_apply(&path, &id)
+}
+
+#[tauri::command]
+pub async fn stash_pop(path: String, id: String) -> AppResult<()> {
+    git::stash_pop(&path, &id)
+}
+
+#[tauri::command]
+pub async fn stash_drop(path: String, id: String) -> AppResult<()> {
+    git::stash_drop(&path, &id)
 }
 
 #[tauri::command]

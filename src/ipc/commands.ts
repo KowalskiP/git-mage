@@ -1,6 +1,14 @@
 // Typed wrappers around Tauri commands (src-tauri/src/ipc/commands.rs).
 import { invoke } from "@tauri-apps/api/core";
-import type { CommitDetail, DiffSides, GraphRow, Hunk, RepoMeta, RepoStatus } from "../types/git";
+import type {
+  CommitDetail,
+  DiffSides,
+  GraphRow,
+  Hunk,
+  RepoMeta,
+  RepoStatus,
+  StashEntry,
+} from "../types/git";
 
 export const listRepos = () => invoke<RepoMeta[]>("list_repos");
 
@@ -61,6 +69,14 @@ export const tagCreate = (path: string, name: string, at: string) =>
   invoke<void>("tag_create", { path, name, at });
 export const tagDelete = (path: string, name: string) =>
   invoke<void>("tag_delete", { path, name });
+
+export const stashList = (path: string) => invoke<StashEntry[]>("stash_list", { path });
+export const stashSave = (path: string, message: string | null, untracked: boolean) =>
+  invoke<void>("stash_save", { path, message, untracked });
+export const stashApply = (path: string, id: string) =>
+  invoke<void>("stash_apply", { path, id });
+export const stashPop = (path: string, id: string) => invoke<void>("stash_pop", { path, id });
+export const stashDrop = (path: string, id: string) => invoke<void>("stash_drop", { path, id });
 
 export const watchRepo = (path: string) => invoke<void>("watch_repo", { path });
 

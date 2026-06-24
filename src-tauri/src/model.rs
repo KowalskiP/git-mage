@@ -58,6 +58,15 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// One stash entry.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct StashEntry {
+    /// Stash ref, e.g. "stash@{0}".
+    pub id: String,
+    pub message: String,
+}
+
 /// One hunk of a file's diff, plus a self-contained patch that stages/unstages it.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

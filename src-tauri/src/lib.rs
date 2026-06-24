@@ -51,6 +51,11 @@ pub fn run() {
             ipc::commands::branch_rename,
             ipc::commands::tag_create,
             ipc::commands::tag_delete,
+            ipc::commands::stash_list,
+            ipc::commands::stash_save,
+            ipc::commands::stash_apply,
+            ipc::commands::stash_pop,
+            ipc::commands::stash_drop,
             ipc::commands::watch_repo,
             ipc::commands::unwatch_repo,
         ])

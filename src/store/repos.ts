@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { GraphRow, RepoMeta, RepoStatus } from "../types/git";
+import type { GraphRow, RepoMeta, RepoStatus, StashEntry } from "../types/git";
 import * as api from "../ipc/commands";
 
 interface ReposState {
@@ -10,6 +10,7 @@ interface ReposState {
   graphLoading: boolean;
   selectedSha: string | null;
   branches: string[];
+  stashes: StashEntry[];
   busy: string | null;
   loading: boolean;
   error: string | null;
@@ -39,6 +40,11 @@ interface ReposState {
   branchRename: (oldName: string, newName: string) => Promise<void>;
   tagCreate: (name: string, at: string) => Promise<void>;
   tagDelete: (name: string) => Promise<void>;
+  loadStashes: () => Promise<void>;
+  stashSave: (message: string | null, untracked: boolean) => Promise<void>;
+  stashApply: (id: string) => Promise<void>;
+  stashPop: (id: string) => Promise<void>;
+  stashDrop: (id: string) => Promise<void>;
   remove: (id: number) => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
@@ -51,6 +57,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   graphLoading: false,
   selectedSha: null,
   branches: [],
+  stashes: [],
   busy: null,
   loading: false,
   error: null,
@@ -81,9 +88,14 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (prev && prev.path !== repo.path) {
       await api.unwatchRepo(prev.path).catch(() => {});
     }
-    set({ selected: repo, status: null, graph: [], selectedSha: null, branches: [] });
+    set({ selected: repo, status: null, graph: [], selectedSha: null, branches: [], stashes: [] });
     await api.watchRepo(repo.path).catch(() => {});
-    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    await Promise.all([
+      get().refreshStatus(),
+      get().loadGraph(),
+      get().loadBranches(),
+      get().loadStashes(),
+    ]);
   },
 
   refreshStatus: async () => {
@@ -300,6 +312,68 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await get().loadGraph();
+    set({ busy: null });
+  },
+
+  loadStashes: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ stashes: await api.stashList(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  stashSave: async (message, untracked) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Stashing…", error: null });
+    try {
+      await api.stashSave(sel.path, message, untracked);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadStashes()]);
+    set({ busy: null });
+  },
+
+  stashApply: async (id) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Applying ${id}…`, error: null });
+    try {
+      await api.stashApply(sel.path, id);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadStashes()]);
+    set({ busy: null });
+  },
+
+  stashPop: async (id) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Popping ${id}…`, error: null });
+    try {
+      await api.stashPop(sel.path, id);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadStashes()]);
+    set({ busy: null });
+  },
+
+  stashDrop: async (id) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Dropping ${id}…`, error: null });
+    try {
+      await api.stashDrop(sel.path, id);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadStashes();
     set({ busy: null });
   },
 

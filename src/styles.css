@@ -1063,3 +1063,33 @@ body {
   gap: 8px;
   margin-top: 14px;
 }
+
+/* Stashes dropdown */
+.dropdown--wide {
+  min-width: 320px;
+}
+.stash-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.stash-row:hover {
+  background: var(--bg-hover);
+}
+.stash-msg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.stash-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.link-btn--danger {
+  color: var(--red);
+}

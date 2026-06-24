@@ -46,6 +46,11 @@ export interface GraphRow {
   wip: boolean;
 }
 
+export interface StashEntry {
+  id: string;
+  message: string;
+}
+
 export interface Hunk {
   header: string;
   lines: string[];

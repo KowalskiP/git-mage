@@ -10,11 +10,13 @@ mod graph;
 mod hunk;
 mod ops;
 mod stage;
+mod stash;
 mod status;
 
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
 pub use graph::graph;
 pub use hunk::{apply_hunk, file_hunks};
+pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
 pub use ops::{
     branch_delete, branch_rename, checkout, create_branch, create_branch_at, fetch,
     list_branches, merge, pull, push, tag_create, tag_delete,

@@ -11,8 +11,14 @@ export function Toolbar() {
   const fetch = useRepos((s) => s.fetch);
   const pull = useRepos((s) => s.pull);
   const push = useRepos((s) => s.push);
+  const stashes = useRepos((s) => s.stashes);
+  const stashSave = useRepos((s) => s.stashSave);
+  const stashApply = useRepos((s) => s.stashApply);
+  const stashPop = useRepos((s) => s.stashPop);
+  const stashDrop = useRepos((s) => s.stashDrop);
 
   const [open, setOpen] = useState(false);
+  const [stashOpen, setStashOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
@@ -89,6 +95,54 @@ export function Toolbar() {
           + Branch
         </button>
       )}
+
+      <button className="tbtn" onClick={() => stashSave(null, false)} disabled={!!busy}>
+        Stash
+      </button>
+
+      <div className="branch-picker">
+        <button
+          className="tbtn"
+          onClick={() => setStashOpen((o) => !o)}
+          disabled={!!busy || stashes.length === 0}
+        >
+          Stashes{stashes.length > 0 ? ` ${stashes.length}` : ""} ▾
+        </button>
+        {stashOpen && stashes.length > 0 && (
+          <>
+            <div className="dropdown-backdrop" onClick={() => setStashOpen(false)} />
+            <ul className="dropdown dropdown--wide">
+              {stashes.map((s) => (
+                <li key={s.id} className="stash-row">
+                  <span className="stash-msg" title={s.message}>
+                    {s.message}
+                  </span>
+                  <span className="stash-actions">
+                    <button className="link-btn" onClick={() => stashApply(s.id)}>
+                      Apply
+                    </button>
+                    <button
+                      className="link-btn"
+                      onClick={() => {
+                        setStashOpen(false);
+                        stashPop(s.id);
+                      }}
+                    >
+                      Pop
+                    </button>
+                    <button
+                      className="link-btn link-btn--danger"
+                      onClick={() => stashDrop(s.id)}
+                    >
+                      Drop
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
 
       <div className="toolbar__spacer" />
 
