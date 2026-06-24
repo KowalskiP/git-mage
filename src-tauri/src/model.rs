@@ -63,6 +63,18 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// A coding agent CLI that can run inside a worktree (SPEC §10.2).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AgentInfo {
+    pub id: String,
+    pub name: String,
+    pub command: String,
+    pub available: bool,
+    /// Resolved absolute path when available.
+    pub path: Option<String>,
+}
+
 /// A git worktree (the base unit for agent sessions, SPEC §6.7 / §10).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

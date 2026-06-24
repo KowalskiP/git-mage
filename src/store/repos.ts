@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { GraphRow, RepoMeta, RepoStatus, StashEntry, Worktree } from "../types/git";
+import type { AgentInfo, GraphRow, RepoMeta, RepoStatus, StashEntry, Worktree } from "../types/git";
 import * as api from "../ipc/commands";
 
 interface ReposState {
@@ -12,6 +12,7 @@ interface ReposState {
   branches: string[];
   stashes: StashEntry[];
   worktrees: Worktree[];
+  agents: AgentInfo[];
   busy: string | null;
   loading: boolean;
   error: string | null;
@@ -41,6 +42,7 @@ interface ReposState {
   branchRename: (oldName: string, newName: string) => Promise<void>;
   tagCreate: (name: string, at: string) => Promise<void>;
   tagDelete: (name: string) => Promise<void>;
+  loadAgents: () => Promise<void>;
   loadWorktrees: () => Promise<void>;
   addWorktree: (name: string, create: boolean) => Promise<void>;
   removeWorktree: (wtPath: string, force: boolean) => Promise<void>;
@@ -73,6 +75,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   branches: [],
   stashes: [],
   worktrees: [],
+  agents: [],
   busy: null,
   loading: false,
   error: null,
@@ -340,6 +343,14 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
     await get().loadGraph();
     set({ busy: null });
+  },
+
+  loadAgents: async () => {
+    try {
+      set({ agents: await api.detectAgents() });
+    } catch (e) {
+      set({ error: String(e) });
+    }
   },
 
   loadWorktrees: async () => {

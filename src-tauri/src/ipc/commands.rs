@@ -10,9 +10,10 @@ use tauri::{AppHandle, State};
 use crate::db::Db;
 use crate::error::AppResult;
 use crate::git;
+use crate::agents;
 use crate::model::{
-    CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus, StashEntry,
-    Worktree,
+    AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus,
+    StashEntry, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -230,6 +231,11 @@ pub async fn rebase_todo_commits(path: String, base: String) -> AppResult<Vec<Re
 #[tauri::command]
 pub async fn rebase_interactive(path: String, base: String, todo: String) -> AppResult<()> {
     git::rebase_interactive(&path, &base, &todo)
+}
+
+#[tauri::command]
+pub fn detect_agents() -> Vec<AgentInfo> {
+    agents::detect_agents()
 }
 
 #[tauri::command]

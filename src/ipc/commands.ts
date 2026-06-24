@@ -1,6 +1,7 @@
 // Typed wrappers around Tauri commands (src-tauri/src/ipc/commands.rs).
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  AgentInfo,
   CommitDetail,
   DiffSides,
   GraphRow,
@@ -91,6 +92,8 @@ export const rebaseTodoCommits = (path: string, base: string) =>
   invoke<RebaseCommit[]>("rebase_todo_commits", { path, base });
 export const rebaseInteractive = (path: string, base: string, todo: string) =>
   invoke<void>("rebase_interactive", { path, base, todo });
+
+export const detectAgents = () => invoke<AgentInfo[]>("detect_agents");
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

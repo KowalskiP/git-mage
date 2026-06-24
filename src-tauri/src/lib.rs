@@ -1,3 +1,4 @@
+mod agents;
 mod db;
 mod error;
 mod git;
@@ -63,6 +64,7 @@ pub fn run() {
             ipc::commands::rebase_abort,
             ipc::commands::rebase_todo_commits,
             ipc::commands::rebase_interactive,
+            ipc::commands::detect_agents,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

@@ -67,6 +67,14 @@ export interface Worktree {
   isMain: boolean;
 }
 
+export interface AgentInfo {
+  id: string;
+  name: string;
+  command: string;
+  available: boolean;
+  path: string | null;
+}
+
 export interface Hunk {
   header: string;
   lines: string[];

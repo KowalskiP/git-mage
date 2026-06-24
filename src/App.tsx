@@ -6,6 +6,7 @@ import { RepoView } from "./features/RepoView";
 
 export function App() {
   const loadRepos = useRepos((s) => s.loadRepos);
+  const loadAgents = useRepos((s) => s.loadAgents);
   const refreshStatus = useRepos((s) => s.refreshStatus);
   const loadGraph = useRepos((s) => s.loadGraph);
   const selected = useRepos((s) => s.selected);
@@ -15,7 +16,8 @@ export function App() {
 
   useEffect(() => {
     loadRepos();
-  }, [loadRepos]);
+    loadAgents();
+  }, [loadRepos, loadAgents]);
 
   useEffect(() => {
     const unlisten = onFsChange((repoPath) => {

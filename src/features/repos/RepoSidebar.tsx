@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../../store/repos";
+import { AgentsPanel } from "../agents/AgentsPanel";
 
 export function RepoSidebar() {
   const { repos, selected, openRepo, select, remove, toggleFavorite, loading } = useRepos();
+  const [nav, setNav] = useState<"repos" | "agents">("repos");
 
   async function pickRepo() {
     const dir = await open({ directory: true, multiple: false, title: "Open repository" });
@@ -22,7 +25,25 @@ export function RepoSidebar() {
         </button>
       </div>
 
-      <ul className="repo-list">
+      <div className="sidebar-nav">
+        <button
+          className={"navbtn" + (nav === "repos" ? " navbtn--on" : "")}
+          onClick={() => setNav("repos")}
+        >
+          Repos
+        </button>
+        <button
+          className={"navbtn" + (nav === "agents" ? " navbtn--on" : "")}
+          onClick={() => setNav("agents")}
+        >
+          Agents
+        </button>
+      </div>
+
+      {nav === "agents" ? (
+        <AgentsPanel />
+      ) : (
+        <ul className="repo-list">
         {sorted.map((repo) => (
           <li
             key={repo.id}
@@ -52,8 +73,9 @@ export function RepoSidebar() {
             </button>
           </li>
         ))}
-        {repos.length === 0 && <li className="repo-list__empty">No repositories yet.</li>}
-      </ul>
+          {repos.length === 0 && <li className="repo-list__empty">No repositories yet.</li>}
+        </ul>
+      )}
     </aside>
   );
 }
