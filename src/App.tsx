@@ -5,6 +5,7 @@ import { onFsChange } from "./ipc/events";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { RepoView } from "./features/RepoView";
 import { AgentSessionView } from "./features/agents/AgentSessionView";
+import { CommandPalette } from "./features/palette/CommandPalette";
 
 export function App() {
   const loadRepos = useRepos((s) => s.loadRepos);
@@ -40,6 +41,21 @@ export function App() {
     };
   }, [refreshStatus, loadGraph]);
 
+  // Global ⌘K / ⌘P opens the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Use physical key codes so non-Latin keyboard layouts (e.g. Cyrillic,
+      // where Cmd+K reports e.key "л") still trigger the palette.
+      if ((e.metaKey || e.ctrlKey) && (e.code === "KeyK" || e.code === "KeyP")) {
+        e.preventDefault();
+        const st = useRepos.getState();
+        st.setPalette(!st.paletteOpen);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Live agent status (from Claude Code hooks) + process exit.
   useEffect(() => {
     const onStatus = listen<{ id: string; status: string }>("agent:status", (e) =>
@@ -67,6 +83,7 @@ export function App() {
           </div>
         )}
       </main>
+      <CommandPalette />
     </div>
   );
 }

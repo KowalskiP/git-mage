@@ -29,8 +29,10 @@ interface ReposState {
   loading: boolean;
   error: string | null;
   showTerminal: boolean;
+  paletteOpen: boolean;
 
   toggleTerminal: () => void;
+  setPalette: (open: boolean) => void;
   loadRepos: () => Promise<void>;
   openRepo: (path: string) => Promise<void>;
   select: (repo: RepoMeta) => Promise<void>;
@@ -105,8 +107,10 @@ export const useRepos = create<ReposState>((set, get) => ({
   loading: false,
   error: null,
   showTerminal: false,
+  paletteOpen: false,
 
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
+  setPalette: (open) => set({ paletteOpen: open }),
 
   loadRepos: async () => {
     try {

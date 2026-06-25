@@ -24,6 +24,7 @@ export function Toolbar() {
   const syncSubmodules = useRepos((s) => s.syncSubmodules);
   const showTerminal = useRepos((s) => s.showTerminal);
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
+  const setPalette = useRepos((s) => s.setPalette);
 
   const [open, setOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
@@ -280,6 +281,14 @@ export function Toolbar() {
           {error.split("\n")[0]}
         </span>
       )}
+
+      <button
+        className="tbtn"
+        onClick={() => setPalette(true)}
+        title="Command palette (⌘K)"
+      >
+        ⌘K
+      </button>
 
       <button
         className={"tbtn" + (showTerminal ? " tbtn--on" : "")}
