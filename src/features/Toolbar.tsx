@@ -19,9 +19,13 @@ export function Toolbar() {
   const worktrees = useRepos((s) => s.worktrees);
   const addWorktree = useRepos((s) => s.addWorktree);
   const removeWorktree = useRepos((s) => s.removeWorktree);
+  const submodules = useRepos((s) => s.submodules);
+  const updateSubmodule = useRepos((s) => s.updateSubmodule);
+  const syncSubmodules = useRepos((s) => s.syncSubmodules);
 
   const [open, setOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
+  const [smOpen, setSmOpen] = useState(false);
   const [wtOpen, setWtOpen] = useState(false);
   const [wtName, setWtName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -214,6 +218,57 @@ export function Toolbar() {
           </>
         )}
       </div>
+
+      {submodules.length > 0 && (
+        <div className="branch-picker">
+          <button className="tbtn" onClick={() => setSmOpen((o) => !o)} disabled={!!busy}>
+            Submodules {submodules.length} ▾
+          </button>
+          {smOpen && (
+            <>
+              <div className="dropdown-backdrop" onClick={() => setSmOpen(false)} />
+              <ul className="dropdown dropdown--wide">
+                <li className="sm-head">
+                  <button
+                    className="link-btn"
+                    onClick={() => updateSubmodule(null, true)}
+                    title="git submodule update --init (all)"
+                  >
+                    Update all
+                  </button>
+                  <button
+                    className="link-btn"
+                    onClick={() => syncSubmodules()}
+                    title="git submodule sync (refresh remote URLs)"
+                  >
+                    Sync
+                  </button>
+                </li>
+                {submodules.map((sm) => (
+                  <li key={sm.path} className="sm-row" title={`${sm.sha} ${sm.describe}`}>
+                    <span className={"sm-dot sm-dot--" + sm.status} />
+                    <span className="sm-path">{sm.path}</span>
+                    <span className="sm-desc">{sm.describe || sm.sha.slice(0, 7)}</span>
+                    <span className="sm-actions">
+                      <button
+                        className="link-btn"
+                        onClick={() => updateSubmodule(sm.path, sm.status === "uninitialized")}
+                        title={
+                          sm.status === "uninitialized"
+                            ? "git submodule update --init <path>"
+                            : "git submodule update <path>"
+                        }
+                      >
+                        {sm.status === "uninitialized" ? "Init" : "Update"}
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="toolbar__spacer" />
 

@@ -63,6 +63,18 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// A git submodule and its working state (SPEC §6.8).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Submodule {
+    pub path: String,
+    pub sha: String,
+    /// "ok" | "modified" | "uninitialized" | "conflict"
+    pub status: String,
+    /// The `(heads/main)`-style description, parens stripped.
+    pub describe: String,
+}
+
 /// A coding agent CLI that can run inside a worktree (SPEC §10.2).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

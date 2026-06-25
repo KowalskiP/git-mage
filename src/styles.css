@@ -1137,6 +1137,60 @@ body {
   padding: 0 5px;
 }
 
+/* Submodules dropdown */
+.sm-head {
+  display: flex;
+  gap: 12px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.sm-row:hover {
+  background: var(--bg-hover);
+}
+.sm-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+.sm-dot--ok {
+  background: var(--green);
+}
+.sm-dot--modified {
+  background: var(--yellow);
+}
+.sm-dot--uninitialized {
+  background: var(--text-dim);
+}
+.sm-dot--conflict {
+  background: var(--red);
+}
+.sm-path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sm-desc {
+  flex: 0 1 auto;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+.sm-actions {
+  flex: 0 0 auto;
+}
+
 /* Sidebar nav (Repos | Agents) */
 .sidebar-nav {
   display: flex;

@@ -70,6 +70,13 @@ export interface Worktree {
   changes: number;
 }
 
+export interface Submodule {
+  path: string;
+  sha: string;
+  status: string; // ok | modified | uninitialized | conflict
+  describe: string;
+}
+
 export interface AgentInfo {
   id: string;
   name: string;

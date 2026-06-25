@@ -14,7 +14,7 @@ use crate::agents;
 use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::model::{
     AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus,
-    StashEntry, Worktree,
+    StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -348,6 +348,21 @@ pub fn agent_sessions(supervisor: State<Supervisor>) -> Vec<AgentSession> {
 #[tauri::command]
 pub fn agent_buffer(supervisor: State<Supervisor>, id: String) -> String {
     supervisor.buffer(&id)
+}
+
+#[tauri::command]
+pub async fn submodule_list(path: String) -> AppResult<Vec<Submodule>> {
+    git::submodule_list(&path)
+}
+
+#[tauri::command]
+pub async fn submodule_update(path: String, sub: Option<String>, init: bool) -> AppResult<()> {
+    git::submodule_update(&path, sub.as_deref(), init)
+}
+
+#[tauri::command]
+pub async fn submodule_sync(path: String) -> AppResult<()> {
+    git::submodule_sync(&path)
 }
 
 #[tauri::command]

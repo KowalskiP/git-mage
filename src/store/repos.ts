@@ -6,6 +6,7 @@ import type {
   RepoMeta,
   RepoStatus,
   StashEntry,
+  Submodule,
   Worktree,
 } from "../types/git";
 import * as api from "../ipc/commands";
@@ -20,6 +21,7 @@ interface ReposState {
   branches: string[];
   stashes: StashEntry[];
   worktrees: Worktree[];
+  submodules: Submodule[];
   agents: AgentInfo[];
   sessions: AgentSession[];
   openSessionId: string | null;
@@ -61,6 +63,9 @@ interface ReposState {
   loadWorktrees: () => Promise<void>;
   addWorktree: (name: string, create: boolean) => Promise<void>;
   removeWorktree: (wtPath: string, force: boolean, deleteBranch?: string) => Promise<void>;
+  loadSubmodules: () => Promise<void>;
+  updateSubmodule: (sub: string | null, init: boolean) => Promise<void>;
+  syncSubmodules: () => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -90,6 +95,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   branches: [],
   stashes: [],
   worktrees: [],
+  submodules: [],
   agents: [],
   sessions: [],
   openSessionId: null,
@@ -131,6 +137,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       branches: [],
       stashes: [],
       worktrees: [],
+      submodules: [],
     });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
@@ -139,6 +146,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadBranches(),
       get().loadStashes(),
       get().loadWorktrees(),
+      get().loadSubmodules(),
     ]);
   },
 
@@ -444,6 +452,42 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await Promise.all([get().loadWorktrees(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  loadSubmodules: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ submodules: await api.submoduleList(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  updateSubmodule: async (sub, init) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: sub ? `Updating ${sub}…` : "Updating submodules…", error: null });
+    try {
+      await api.submoduleUpdate(sel.path, sub, init);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadSubmodules()]);
+    set({ busy: null });
+  },
+
+  syncSubmodules: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Syncing submodules…", error: null });
+    try {
+      await api.submoduleSync(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadSubmodules();
     set({ busy: null });
   },
 

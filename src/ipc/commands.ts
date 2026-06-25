@@ -11,6 +11,7 @@ import type {
   RepoMeta,
   RepoStatus,
   StashEntry,
+  Submodule,
   Worktree,
 } from "../types/git";
 
@@ -108,6 +109,11 @@ export const agentResize = (id: string, rows: number, cols: number) =>
   invoke<void>("agent_resize", { id, rows, cols });
 export const agentKill = (id: string) => invoke<void>("agent_kill", { id });
 export const agentBuffer = (id: string) => invoke<string>("agent_buffer", { id });
+
+export const submoduleList = (path: string) => invoke<Submodule[]>("submodule_list", { path });
+export const submoduleUpdate = (path: string, sub: string | null, init: boolean) =>
+  invoke<void>("submodule_update", { path, sub, init });
+export const submoduleSync = (path: string) => invoke<void>("submodule_sync", { path });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

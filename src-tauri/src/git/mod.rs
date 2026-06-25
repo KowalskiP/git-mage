@@ -12,12 +12,14 @@ mod ops;
 mod stage;
 mod stash;
 mod status;
+mod submodule;
 mod worktree;
 
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
 pub use graph::graph;
 pub use hunk::{apply_hunk, file_hunks};
 pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
+pub use submodule::{submodule_list, submodule_sync, submodule_update};
 pub use worktree::{
     worktree_add, worktree_list, worktree_lock, worktree_prune, worktree_remove,
 };
