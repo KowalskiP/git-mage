@@ -243,6 +243,7 @@ pub fn detect_agents() -> Vec<AgentInfo> {
 pub fn new_agent_session(
     app: AppHandle,
     supervisor: State<Supervisor>,
+    db: State<Db>,
     path: String,
     agent_id: String,
     branch: String,
@@ -273,6 +274,30 @@ pub fn new_agent_session(
         status_file = Some(sf_str);
     }
 
+    // Optional setup commands (Preferences > Agents): run them in the new worktree
+    // before the agent by wrapping the spawn in a shell script that execs the agent.
+    let setup = db.get_setting("agent.setup")?.unwrap_or_default();
+    let setup_lines: Vec<&str> = setup
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty() && !l.starts_with('#'))
+        .collect();
+
+    let (command, args) = if setup_lines.is_empty() {
+        (command, args)
+    } else {
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let script = std::env::temp_dir().join(format!("gitmage-setup-{stamp}.sh"));
+        let body = format!("#!/bin/sh\nset -e\n{}\nexec \"$@\"\n", setup_lines.join("\n"));
+        std::fs::write(&script, body).map_err(|e| AppError::Msg(format!("write setup: {e}")))?;
+        let mut wrapped = vec![script.to_string_lossy().into_owned(), command];
+        wrapped.extend(args);
+        ("sh".to_string(), wrapped)
+    };
+
     supervisor.start(
         &app,
         &agent.id,
@@ -283,6 +308,16 @@ pub fn new_agent_session(
         &worktree,
         status_file.as_deref(),
     )
+}
+
+#[tauri::command]
+pub fn get_setting(db: State<Db>, key: String) -> AppResult<Option<String>> {
+    db.get_setting(&key)
+}
+
+#[tauri::command]
+pub fn set_setting(db: State<Db>, key: String, value: String) -> AppResult<()> {
+    db.set_setting(&key, &value)
 }
 
 #[tauri::command]

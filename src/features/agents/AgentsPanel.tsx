@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRepos } from "../../store/repos";
+import { getSetting, setSetting } from "../../ipc/commands";
 import { statusLabel } from "./status";
 
 export function AgentsPanel() {
@@ -16,6 +17,11 @@ export function AgentsPanel() {
   const available = agents.filter((a) => a.available);
   const [agentId, setAgentId] = useState("");
   const [branch, setBranch] = useState("");
+  const [setup, setSetup] = useState("");
+
+  useEffect(() => {
+    getSetting("agent.setup").then((v) => setSetup(v ?? ""));
+  }, []);
 
   if (!selected) {
     return <div className="agents-hint agents-hint--pad">Select a repository to manage agent sessions.</div>;
@@ -63,6 +69,19 @@ export function AgentsPanel() {
           </div>
         )}
       </div>
+
+      <details className="agents-section setup-section">
+        <summary>Setup commands</summary>
+        <textarea
+          className="setup-textarea"
+          placeholder={"# run in the worktree before the agent\nnpm install"}
+          value={setup}
+          rows={3}
+          onChange={(e) => setSetup(e.target.value)}
+          onBlur={() => setSetting("agent.setup", setup)}
+        />
+        <div className="agents-hint">One per line; runs in the new worktree, then the agent starts.</div>
+      </details>
 
       {sessions.length > 0 && (
         <div className="agents-section">

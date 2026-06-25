@@ -67,6 +67,8 @@ pub fn run() {
             ipc::commands::rebase_abort,
             ipc::commands::rebase_todo_commits,
             ipc::commands::rebase_interactive,
+            ipc::commands::get_setting,
+            ipc::commands::set_setting,
             ipc::commands::detect_agents,
             ipc::commands::new_agent_session,
             ipc::commands::agent_write,

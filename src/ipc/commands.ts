@@ -94,6 +94,10 @@ export const rebaseTodoCommits = (path: string, base: string) =>
 export const rebaseInteractive = (path: string, base: string, todo: string) =>
   invoke<void>("rebase_interactive", { path, base, todo });
 
+export const getSetting = (key: string) => invoke<string | null>("get_setting", { key });
+export const setSetting = (key: string, value: string) =>
+  invoke<void>("set_setting", { key, value });
+
 export const detectAgents = () => invoke<AgentInfo[]>("detect_agents");
 
 export const newAgentSession = (path: string, agentId: string, branch: string) =>

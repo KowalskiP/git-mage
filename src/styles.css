@@ -1246,6 +1246,30 @@ body {
 .agents-hint--pad {
   padding: 16px;
 }
+.setup-section summary {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.setup-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 8px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  resize: vertical;
+}
+.setup-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 
 /* New agent session form */
 .new-session {

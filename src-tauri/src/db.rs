@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS repos (
   favorite    INTEGER NOT NULL DEFAULT 0,
   last_opened INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 ";
 
 fn row_to_meta(r: &rusqlite::Row) -> rusqlite::Result<RepoMeta> {
@@ -79,6 +83,23 @@ impl Db {
         self.0.lock().unwrap().execute(
             "UPDATE repos SET favorite = ?2 WHERE id = ?1",
             params![id, fav as i64],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_setting(&self, key: &str) -> AppResult<Option<String>> {
+        let conn = self.0.lock().unwrap();
+        let v = conn
+            .query_row("SELECT value FROM settings WHERE key = ?1", params![key], |r| r.get(0))
+            .ok();
+        Ok(v)
+    }
+
+    pub fn set_setting(&self, key: &str, value: &str) -> AppResult<()> {
+        self.0.lock().unwrap().execute(
+            "INSERT INTO settings (key, value) VALUES (?1, ?2)
+             ON CONFLICT(key) DO UPDATE SET value = ?2",
+            params![key, value],
         )?;
         Ok(())
     }
