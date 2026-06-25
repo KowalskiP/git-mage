@@ -1191,6 +1191,78 @@ body {
   flex: 0 0 auto;
 }
 
+/* LFS dropdown */
+.lfs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.lfs-ver {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.lfs-track {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.lfs-track .new-branch__input {
+  flex: 1;
+}
+.lfs-patterns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.lfs-pat {
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 6px;
+}
+.lfs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.lfs-row:hover {
+  background: var(--bg-hover);
+}
+.lfs-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.lfs-dot--ok {
+  background: var(--green);
+}
+.lfs-dot--pointer {
+  background: var(--yellow);
+}
+.lfs-path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lfs-lock {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.lfs-actions {
+  flex: 0 0 auto;
+}
+
 /* Sidebar nav (Repos | Agents) */
 .sidebar-nav {
   display: flex;

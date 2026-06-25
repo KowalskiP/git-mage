@@ -14,8 +14,8 @@ use crate::agents;
 use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
 use crate::model::{
-    AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus,
-    StashEntry, Submodule, Worktree,
+    AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, LfsStatus, RebaseCommit, RepoMeta,
+    RepoStatus, StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -404,6 +404,31 @@ pub async fn submodule_update(path: String, sub: Option<String>, init: bool) -> 
 #[tauri::command]
 pub async fn submodule_sync(path: String) -> AppResult<()> {
     git::submodule_sync(&path)
+}
+
+#[tauri::command]
+pub async fn lfs_status(path: String) -> AppResult<LfsStatus> {
+    git::lfs_status(&path)
+}
+
+#[tauri::command]
+pub async fn lfs_pull(path: String) -> AppResult<()> {
+    git::lfs_pull(&path)
+}
+
+#[tauri::command]
+pub async fn lfs_track(path: String, pattern: String) -> AppResult<()> {
+    git::lfs_track(&path, &pattern)
+}
+
+#[tauri::command]
+pub async fn lfs_lock(path: String, file: String) -> AppResult<()> {
+    git::lfs_lock(&path, &file)
+}
+
+#[tauri::command]
+pub async fn lfs_unlock(path: String, file: String) -> AppResult<()> {
+    git::lfs_unlock(&path, &file)
 }
 
 #[tauri::command]

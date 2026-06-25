@@ -22,6 +22,10 @@ export function Toolbar() {
   const submodules = useRepos((s) => s.submodules);
   const updateSubmodule = useRepos((s) => s.updateSubmodule);
   const syncSubmodules = useRepos((s) => s.syncSubmodules);
+  const lfs = useRepos((s) => s.lfs);
+  const lfsPull = useRepos((s) => s.lfsPull);
+  const lfsTrack = useRepos((s) => s.lfsTrack);
+  const lfsLock = useRepos((s) => s.lfsLock);
   const showTerminal = useRepos((s) => s.showTerminal);
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
   const setPalette = useRepos((s) => s.setPalette);
@@ -29,6 +33,8 @@ export function Toolbar() {
   const [open, setOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
   const [smOpen, setSmOpen] = useState(false);
+  const [lfsOpen, setLfsOpen] = useState(false);
+  const [lfsPattern, setLfsPattern] = useState("");
   const [wtOpen, setWtOpen] = useState(false);
   const [wtName, setWtName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -40,6 +46,13 @@ export function Toolbar() {
     setWtName("");
     setWtOpen(false);
     await addWorktree(n, true);
+  }
+
+  async function trackPattern() {
+    const p = lfsPattern.trim();
+    if (!p) return;
+    setLfsPattern("");
+    await lfsTrack(p);
   }
 
   const current = status?.branch ?? "—";
@@ -263,6 +276,73 @@ export function Toolbar() {
                         }
                       >
                         {sm.status === "uninitialized" ? "Init" : "Update"}
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+
+      {lfs?.used && (
+        <div className="branch-picker">
+          <button className="tbtn" onClick={() => setLfsOpen((o) => !o)} disabled={!!busy}>
+            LFS {lfs.files.length} ▾
+          </button>
+          {lfsOpen && (
+            <>
+              <div className="dropdown-backdrop" onClick={() => setLfsOpen(false)} />
+              <ul className="dropdown dropdown--wide">
+                <li className="lfs-head">
+                  <span className="lfs-ver" title={lfs.version}>
+                    {lfs.version.split(" ")[0] || "git-lfs"}
+                  </span>
+                  <button className="link-btn" onClick={() => lfsPull()} title="git lfs pull">
+                    Pull
+                  </button>
+                </li>
+                <li className="lfs-track">
+                  <input
+                    className="new-branch__input"
+                    placeholder="track pattern, e.g. *.psd"
+                    value={lfsPattern}
+                    onChange={(e) => setLfsPattern(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") trackPattern();
+                      if (e.key === "Escape") setLfsOpen(false);
+                    }}
+                  />
+                  <button className="tbtn tbtn--primary" onClick={trackPattern}>
+                    Track
+                  </button>
+                </li>
+                {lfs.patterns.length > 0 && (
+                  <li className="lfs-patterns">
+                    {lfs.patterns.map((p) => (
+                      <span key={p} className="lfs-pat">
+                        {p}
+                      </span>
+                    ))}
+                  </li>
+                )}
+                {lfs.files.length === 0 && <li className="dropdown__empty">No LFS files</li>}
+                {lfs.files.map((f) => (
+                  <li key={f.path} className="lfs-row" title={f.oid}>
+                    <span
+                      className={"lfs-dot " + (f.downloaded ? "lfs-dot--ok" : "lfs-dot--pointer")}
+                      title={f.downloaded ? "downloaded" : "pointer only (run Pull)"}
+                    />
+                    <span className="lfs-path">{f.path}</span>
+                    {f.lockOwner && <span className="lfs-lock">🔒 {f.lockOwner}</span>}
+                    <span className="lfs-actions">
+                      <button
+                        className="link-btn"
+                        onClick={() => lfsLock(f.path, !f.lockOwner)}
+                        title={f.lockOwner ? "git lfs unlock" : "git lfs lock"}
+                      >
+                        {f.lockOwner ? "Unlock" : "Lock"}
                       </button>
                     </span>
                   </li>

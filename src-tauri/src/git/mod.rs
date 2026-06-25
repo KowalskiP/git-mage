@@ -8,6 +8,7 @@
 mod commit;
 mod graph;
 mod hunk;
+mod lfs;
 mod ops;
 mod stage;
 mod stash;
@@ -18,6 +19,7 @@ mod worktree;
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
 pub use graph::graph;
 pub use hunk::{apply_hunk, file_hunks};
+pub use lfs::{lfs_lock, lfs_pull, lfs_status, lfs_track, lfs_unlock};
 pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
 pub use submodule::{submodule_list, submodule_sync, submodule_update};
 pub use worktree::{

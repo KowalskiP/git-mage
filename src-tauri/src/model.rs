@@ -75,6 +75,34 @@ pub struct Submodule {
     pub describe: String,
 }
 
+/// A Git LFS-tracked file (`git lfs ls-files`).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LfsFile {
+    pub path: String,
+    pub oid: String,
+    /// True when the object is present locally (ls-files `*` marker); false for
+    /// a not-yet-downloaded pointer (`-`).
+    pub downloaded: bool,
+    /// Lock owner when this path is locked on the remote, else empty.
+    pub lock_owner: String,
+}
+
+/// Aggregate Git LFS state for a repo (SPEC §M5).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LfsStatus {
+    /// Whether the `git lfs` extension is installed.
+    pub installed: bool,
+    /// `git lfs version` string (empty if not installed).
+    pub version: String,
+    /// True when this repo actually uses LFS (has tracked patterns or files).
+    pub used: bool,
+    /// Tracked patterns from `.gitattributes` (e.g. `*.psd`).
+    pub patterns: Vec<String>,
+    pub files: Vec<LfsFile>,
+}
+
 /// A coding agent CLI that can run inside a worktree (SPEC §10.2).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

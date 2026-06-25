@@ -77,6 +77,21 @@ export interface Submodule {
   describe: string;
 }
 
+export interface LfsFile {
+  path: string;
+  oid: string;
+  downloaded: boolean;
+  lockOwner: string;
+}
+
+export interface LfsStatus {
+  installed: boolean;
+  version: string;
+  used: boolean;
+  patterns: string[];
+  files: LfsFile[];
+}
+
 export interface AgentInfo {
   id: string;
   name: string;

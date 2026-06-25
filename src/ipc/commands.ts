@@ -10,6 +10,7 @@ import type {
   RebaseCommit,
   RepoMeta,
   RepoStatus,
+  LfsStatus,
   StashEntry,
   Submodule,
   TermSession,
@@ -125,6 +126,14 @@ export const submoduleList = (path: string) => invoke<Submodule[]>("submodule_li
 export const submoduleUpdate = (path: string, sub: string | null, init: boolean) =>
   invoke<void>("submodule_update", { path, sub, init });
 export const submoduleSync = (path: string) => invoke<void>("submodule_sync", { path });
+
+export const lfsStatus = (path: string) => invoke<LfsStatus>("lfs_status", { path });
+export const lfsPull = (path: string) => invoke<void>("lfs_pull", { path });
+export const lfsTrack = (path: string, pattern: string) =>
+  invoke<void>("lfs_track", { path, pattern });
+export const lfsLock = (path: string, file: string) => invoke<void>("lfs_lock", { path, file });
+export const lfsUnlock = (path: string, file: string) =>
+  invoke<void>("lfs_unlock", { path, file });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

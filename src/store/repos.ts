@@ -3,6 +3,7 @@ import type {
   AgentInfo,
   AgentSession,
   GraphRow,
+  LfsStatus,
   RepoMeta,
   RepoStatus,
   StashEntry,
@@ -22,6 +23,7 @@ interface ReposState {
   stashes: StashEntry[];
   worktrees: Worktree[];
   submodules: Submodule[];
+  lfs: LfsStatus | null;
   agents: AgentInfo[];
   sessions: AgentSession[];
   openSessionId: string | null;
@@ -70,6 +72,10 @@ interface ReposState {
   loadSubmodules: () => Promise<void>;
   updateSubmodule: (sub: string | null, init: boolean) => Promise<void>;
   syncSubmodules: () => Promise<void>;
+  loadLfs: () => Promise<void>;
+  lfsPull: () => Promise<void>;
+  lfsTrack: (pattern: string) => Promise<void>;
+  lfsLock: (file: string, lock: boolean) => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -100,6 +106,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   stashes: [],
   worktrees: [],
   submodules: [],
+  lfs: null,
   agents: [],
   sessions: [],
   openSessionId: null,
@@ -147,6 +154,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       stashes: [],
       worktrees: [],
       submodules: [],
+      lfs: null,
     });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
@@ -156,6 +164,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadStashes(),
       get().loadWorktrees(),
       get().loadSubmodules(),
+      get().loadLfs(),
     ]);
   },
 
@@ -497,6 +506,56 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await get().loadSubmodules();
+    set({ busy: null });
+  },
+
+  loadLfs: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ lfs: await api.lfsStatus(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  lfsPull: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Pulling LFS objects…", error: null });
+    try {
+      await api.lfsPull(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadLfs();
+    set({ busy: null });
+  },
+
+  lfsTrack: async (pattern) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Tracking ${pattern}…`, error: null });
+    try {
+      await api.lfsTrack(sel.path, pattern);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadLfs(), get().refreshStatus()]);
+    set({ busy: null });
+  },
+
+  lfsLock: async (file, lock) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: lock ? `Locking ${file}…` : `Unlocking ${file}…`, error: null });
+    try {
+      if (lock) await api.lfsLock(sel.path, file);
+      else await api.lfsUnlock(sel.path, file);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadLfs();
     set({ busy: null });
   },
 
