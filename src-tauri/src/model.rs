@@ -189,6 +189,27 @@ pub struct CommitDetail {
     pub signer: String,
 }
 
+/// Gitflow branching state for a repo (SPEC §M5).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GitflowConfig {
+    /// Whether a develop branch exists (treated as "gitflow initialised").
+    pub initialized: bool,
+    /// Production branch (gitflow.branch.master or detected main/master).
+    pub main: String,
+    /// Integration branch (gitflow.branch.develop, default "develop").
+    pub develop: String,
+    pub feature_prefix: String,
+    pub release_prefix: String,
+    pub hotfix_prefix: String,
+    /// Current branch name.
+    pub current: String,
+    /// Flow kind of the current branch: "feature" | "release" | "hotfix" | "".
+    pub current_kind: String,
+    /// Name part of the current flow branch (after its prefix).
+    pub current_name: String,
+}
+
 /// Commit-signing configuration for a repo (SPEC §M5).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

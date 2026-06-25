@@ -147,5 +147,17 @@ export interface SigningConfig {
   key: string;
 }
 
+export interface GitflowConfig {
+  initialized: boolean;
+  main: string;
+  develop: string;
+  featurePrefix: string;
+  releasePrefix: string;
+  hotfixPrefix: string;
+  current: string;
+  currentKind: string; // "feature" | "release" | "hotfix" | ""
+  currentName: string;
+}
+
 /** Sentinel sha of the working-directory (WIP) node; matches the Rust backend. */
 export const WIP_SHA = "0000000000000000000000000000000000000000";

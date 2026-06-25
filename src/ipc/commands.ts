@@ -10,6 +10,7 @@ import type {
   RebaseCommit,
   RepoMeta,
   RepoStatus,
+  GitflowConfig,
   LfsStatus,
   SigningConfig,
   StashEntry,
@@ -140,6 +141,14 @@ export const signingConfig = (path: string) =>
   invoke<SigningConfig>("signing_config", { path });
 export const setSigning = (path: string, sign: boolean, format: string, key: string) =>
   invoke<void>("set_signing", { path, sign, format, key });
+
+export const gitflowStatus = (path: string) =>
+  invoke<GitflowConfig>("gitflow_status", { path });
+export const gitflowInit = (path: string) => invoke<void>("gitflow_init", { path });
+export const gitflowStart = (path: string, kind: string, name: string) =>
+  invoke<void>("gitflow_start", { path, kind, name });
+export const gitflowFinish = (path: string, kind: string, name: string) =>
+  invoke<void>("gitflow_finish", { path, kind, name });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

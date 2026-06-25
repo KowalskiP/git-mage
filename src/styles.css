@@ -1298,6 +1298,38 @@ body {
   flex: 1;
 }
 
+/* Gitflow dropdown */
+.flow-init,
+.flow-current,
+.flow-start,
+.flow-bases {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.flow-init,
+.flow-current,
+.flow-bases {
+  border-bottom: 1px solid var(--border);
+}
+.flow-init {
+  flex-direction: column;
+  align-items: stretch;
+}
+.flow-hint {
+  flex: 1;
+  color: var(--text-dim);
+}
+.flow-hint code {
+  color: var(--text);
+  font-family: ui-monospace, Menlo, monospace;
+}
+.flow-start .new-branch__input {
+  flex: 1;
+}
+
 /* Commit signature badge */
 .sig-badge {
   font-size: 10px;

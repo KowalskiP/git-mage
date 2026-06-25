@@ -28,6 +28,10 @@ export function Toolbar() {
   const lfsLock = useRepos((s) => s.lfsLock);
   const signing = useRepos((s) => s.signing);
   const saveSigning = useRepos((s) => s.saveSigning);
+  const gitflow = useRepos((s) => s.gitflow);
+  const gitflowInit = useRepos((s) => s.gitflowInit);
+  const gitflowStart = useRepos((s) => s.gitflowStart);
+  const gitflowFinish = useRepos((s) => s.gitflowFinish);
   const showTerminal = useRepos((s) => s.showTerminal);
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
   const setPalette = useRepos((s) => s.setPalette);
@@ -41,8 +45,19 @@ export function Toolbar() {
   const [signEnabled, setSignEnabled] = useState(false);
   const [signFormat, setSignFormat] = useState("openpgp");
   const [signKey, setSignKey] = useState("");
+  const [flowOpen, setFlowOpen] = useState(false);
+  const [flowKind, setFlowKind] = useState("feature");
+  const [flowName, setFlowName] = useState("");
   const [wtOpen, setWtOpen] = useState(false);
   const [wtName, setWtName] = useState("");
+
+  async function startFlow() {
+    const n = flowName.trim();
+    if (!n) return;
+    setFlowName("");
+    setFlowOpen(false);
+    await gitflowStart(flowKind, n);
+  }
 
   // Seed the signing form from config whenever the dropdown opens.
   useEffect(() => {
@@ -54,6 +69,15 @@ export function Toolbar() {
   }, [signOpen, signing]);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
+
+  // Branch names, LFS patterns and signing keys are case/format-sensitive —
+  // suppress the webview's auto-capitalize/correct so typed text is verbatim.
+  const inputProps = {
+    autoComplete: "off",
+    autoCorrect: "off",
+    autoCapitalize: "off",
+    spellCheck: false,
+  } as const;
 
   async function createWorktree() {
     const n = wtName.trim();
@@ -113,7 +137,7 @@ export function Toolbar() {
         <div className="new-branch">
           <input
             autoFocus
-            className="new-branch__input"
+            className="new-branch__input" {...inputProps}
             placeholder="new branch name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -203,7 +227,7 @@ export function Toolbar() {
               <li className="wt-new">
                 <input
                   autoFocus
-                  className="new-branch__input"
+                  className="new-branch__input" {...inputProps}
                   placeholder="new branch → worktree"
                   value={wtName}
                   onChange={(e) => setWtName(e.target.value)}
@@ -320,7 +344,7 @@ export function Toolbar() {
                 </li>
                 <li className="lfs-track">
                   <input
-                    className="new-branch__input"
+                    className="new-branch__input" {...inputProps}
                     placeholder="track pattern, e.g. *.psd"
                     value={lfsPattern}
                     onChange={(e) => setLfsPattern(e.target.value)}
@@ -404,7 +428,7 @@ export function Toolbar() {
               </li>
               <li className="sign-row">
                 <input
-                  className="new-branch__input"
+                  className="new-branch__input" {...inputProps}
                   placeholder={signFormat === "ssh" ? "~/.ssh/id_ed25519.pub" : "GPG key id"}
                   value={signKey}
                   onChange={(e) => setSignKey(e.target.value)}
@@ -421,6 +445,83 @@ export function Toolbar() {
                   Save
                 </button>
               </li>
+            </ul>
+          </>
+        )}
+      </div>
+
+      <div className="branch-picker">
+        <button
+          className={"tbtn" + (gitflow?.currentKind ? " tbtn--on" : "")}
+          onClick={() => setFlowOpen((o) => !o)}
+          disabled={!!busy}
+          title="Gitflow"
+        >
+          Gitflow ▾
+        </button>
+        {flowOpen && (
+          <>
+            <div className="dropdown-backdrop" onClick={() => setFlowOpen(false)} />
+            <ul className="dropdown dropdown--wide">
+              {!gitflow?.initialized ? (
+                <li className="flow-init">
+                  <span className="flow-hint">
+                    No <code>develop</code> branch yet. Initialize gitflow to create it from{" "}
+                    <code>{gitflow?.main ?? "main"}</code>.
+                  </span>
+                  <button className="tbtn tbtn--primary" onClick={() => gitflowInit()}>
+                    Initialize
+                  </button>
+                </li>
+              ) : (
+                <>
+                  <li className="flow-bases">
+                    <span className="ref ref--local">{gitflow.main}</span>
+                    <span className="ref ref--local">{gitflow.develop}</span>
+                  </li>
+                  {gitflow.currentKind && (
+                    <li className="flow-current">
+                      <span className="flow-hint">
+                        On {gitflow.currentKind} <b>{gitflow.currentName}</b>
+                      </span>
+                      <button
+                        className="tbtn tbtn--primary"
+                        onClick={() => {
+                          setFlowOpen(false);
+                          gitflowFinish(gitflow.currentKind, gitflow.currentName);
+                        }}
+                        title="Merge into target branch(es), tag release/hotfix, delete branch"
+                      >
+                        Finish
+                      </button>
+                    </li>
+                  )}
+                  <li className="flow-start">
+                    <select
+                      className="sign-select"
+                      value={flowKind}
+                      onChange={(e) => setFlowKind(e.target.value)}
+                    >
+                      <option value="feature">feature</option>
+                      <option value="release">release</option>
+                      <option value="hotfix">hotfix</option>
+                    </select>
+                    <input
+                      className="new-branch__input" {...inputProps}
+                      placeholder="name"
+                      value={flowName}
+                      onChange={(e) => setFlowName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") startFlow();
+                        if (e.key === "Escape") setFlowOpen(false);
+                      }}
+                    />
+                    <button className="tbtn tbtn--primary" onClick={startFlow}>
+                      Start
+                    </button>
+                  </li>
+                </>
+              )}
             </ul>
           </>
         )}

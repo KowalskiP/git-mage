@@ -14,8 +14,8 @@ use crate::agents;
 use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
 use crate::model::{
-    AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, LfsStatus, RebaseCommit, RepoMeta,
-    RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
+    AgentInfo, CommitDetail, DiffSides, GitflowConfig, GraphRow, Hunk, LfsStatus, RebaseCommit,
+    RepoMeta, RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -444,6 +444,26 @@ pub async fn set_signing(
     key: String,
 ) -> AppResult<()> {
     git::set_signing(&path, sign, &format, &key)
+}
+
+#[tauri::command]
+pub async fn gitflow_status(path: String) -> AppResult<GitflowConfig> {
+    git::gitflow_status(&path)
+}
+
+#[tauri::command]
+pub async fn gitflow_init(path: String) -> AppResult<()> {
+    git::gitflow_init(&path)
+}
+
+#[tauri::command]
+pub async fn gitflow_start(path: String, kind: String, name: String) -> AppResult<()> {
+    git::gitflow_start(&path, &kind, &name)
+}
+
+#[tauri::command]
+pub async fn gitflow_finish(path: String, kind: String, name: String) -> AppResult<()> {
+    git::gitflow_finish(&path, &kind, &name)
 }
 
 #[tauri::command]

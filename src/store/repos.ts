@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
   AgentInfo,
   AgentSession,
+  GitflowConfig,
   GraphRow,
   LfsStatus,
   RepoMeta,
@@ -26,6 +27,7 @@ interface ReposState {
   submodules: Submodule[];
   lfs: LfsStatus | null;
   signing: SigningConfig | null;
+  gitflow: GitflowConfig | null;
   agents: AgentInfo[];
   sessions: AgentSession[];
   openSessionId: string | null;
@@ -80,6 +82,10 @@ interface ReposState {
   lfsLock: (file: string, lock: boolean) => Promise<void>;
   loadSigning: () => Promise<void>;
   saveSigning: (sign: boolean, format: string, key: string) => Promise<void>;
+  loadGitflow: () => Promise<void>;
+  gitflowInit: () => Promise<void>;
+  gitflowStart: (kind: string, name: string) => Promise<void>;
+  gitflowFinish: (kind: string, name: string) => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -112,6 +118,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   submodules: [],
   lfs: null,
   signing: null,
+  gitflow: null,
   agents: [],
   sessions: [],
   openSessionId: null,
@@ -161,6 +168,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       submodules: [],
       lfs: null,
       signing: null,
+      gitflow: null,
     });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
@@ -172,6 +180,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadSubmodules(),
       get().loadLfs(),
       get().loadSigning(),
+      get().loadGitflow(),
     ]);
   },
 
@@ -586,6 +595,65 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await get().loadSigning();
+    set({ busy: null });
+  },
+
+  loadGitflow: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ gitflow: await api.gitflowStatus(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  gitflowInit: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Initializing gitflow…", error: null });
+    try {
+      await api.gitflowInit(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadGitflow(), get().loadBranches(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  gitflowStart: async (kind, name) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Starting ${kind}/${name}…`, error: null });
+    try {
+      await api.gitflowStart(sel.path, kind, name);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([
+      get().refreshStatus(),
+      get().loadGraph(),
+      get().loadBranches(),
+      get().loadGitflow(),
+    ]);
+    set({ busy: null });
+  },
+
+  gitflowFinish: async (kind, name) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Finishing ${kind}/${name}…`, error: null });
+    try {
+      await api.gitflowFinish(sel.path, kind, name);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([
+      get().refreshStatus(),
+      get().loadGraph(),
+      get().loadBranches(),
+      get().loadGitflow(),
+    ]);
     set({ busy: null });
   },
 

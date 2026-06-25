@@ -6,6 +6,7 @@
 //! M1 will move status onto `gix::status` (see `status.rs`).
 
 mod commit;
+mod gitflow;
 mod graph;
 mod hunk;
 mod lfs;
@@ -19,6 +20,7 @@ mod worktree;
 
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
 pub use graph::graph;
+pub use gitflow::{gitflow_finish, gitflow_init, gitflow_start, gitflow_status};
 pub use hunk::{apply_hunk, file_hunks};
 pub use lfs::{lfs_lock, lfs_pull, lfs_status, lfs_track, lfs_unlock};
 pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
