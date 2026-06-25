@@ -2,6 +2,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   AgentInfo,
+  AgentSession,
   CommitDetail,
   DiffSides,
   GraphRow,
@@ -94,6 +95,14 @@ export const rebaseInteractive = (path: string, base: string, todo: string) =>
   invoke<void>("rebase_interactive", { path, base, todo });
 
 export const detectAgents = () => invoke<AgentInfo[]>("detect_agents");
+
+export const newAgentSession = (path: string, agentId: string, branch: string) =>
+  invoke<AgentSession>("new_agent_session", { path, agentId, branch });
+export const agentSessions = () => invoke<AgentSession[]>("agent_sessions");
+export const agentWrite = (id: string, data: string) => invoke<void>("agent_write", { id, data });
+export const agentResize = (id: string, rows: number, cols: number) =>
+  invoke<void>("agent_resize", { id, rows, cols });
+export const agentKill = (id: string) => invoke<void>("agent_kill", { id });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

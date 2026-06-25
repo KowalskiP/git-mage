@@ -1,5 +1,13 @@
 import { create } from "zustand";
-import type { AgentInfo, GraphRow, RepoMeta, RepoStatus, StashEntry, Worktree } from "../types/git";
+import type {
+  AgentInfo,
+  AgentSession,
+  GraphRow,
+  RepoMeta,
+  RepoStatus,
+  StashEntry,
+  Worktree,
+} from "../types/git";
 import * as api from "../ipc/commands";
 
 interface ReposState {
@@ -13,6 +21,8 @@ interface ReposState {
   stashes: StashEntry[];
   worktrees: Worktree[];
   agents: AgentInfo[];
+  sessions: AgentSession[];
+  openSessionId: string | null;
   busy: string | null;
   loading: boolean;
   error: string | null;
@@ -43,6 +53,10 @@ interface ReposState {
   tagCreate: (name: string, at: string) => Promise<void>;
   tagDelete: (name: string) => Promise<void>;
   loadAgents: () => Promise<void>;
+  loadSessions: () => Promise<void>;
+  newSession: (agentId: string, branch: string) => Promise<void>;
+  killSession: (id: string) => Promise<void>;
+  openSession: (id: string | null) => void;
   loadWorktrees: () => Promise<void>;
   addWorktree: (name: string, create: boolean) => Promise<void>;
   removeWorktree: (wtPath: string, force: boolean) => Promise<void>;
@@ -76,6 +90,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   stashes: [],
   worktrees: [],
   agents: [],
+  sessions: [],
+  openSessionId: null,
   busy: null,
   loading: false,
   error: null,
@@ -352,6 +368,41 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
   },
+
+  loadSessions: async () => {
+    try {
+      set({ sessions: await api.agentSessions() });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  newSession: async (agentId, branch) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Starting ${agentId} on ${branch}…`, error: null });
+    try {
+      const session = await api.newAgentSession(sel.path, agentId, branch);
+      set({ openSessionId: session.id });
+      await Promise.all([get().loadSessions(), get().loadWorktrees(), get().loadGraph()]);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    set({ busy: null });
+  },
+
+  killSession: async (id) => {
+    try {
+      await api.agentKill(id);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    const open = get().openSessionId === id ? null : get().openSessionId;
+    set({ openSessionId: open });
+    await get().loadSessions();
+  },
+
+  openSession: (id) => set({ openSessionId: id }),
 
   loadWorktrees: async () => {
     const sel = get().selected;

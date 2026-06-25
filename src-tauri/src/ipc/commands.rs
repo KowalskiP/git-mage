@@ -8,9 +8,10 @@
 use tauri::{AppHandle, State};
 
 use crate::db::Db;
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::git;
 use crate::agents;
+use crate::supervisor::{AgentSession, Supervisor};
 use crate::model::{
     AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus,
     StashEntry, Worktree,
@@ -236,6 +237,48 @@ pub async fn rebase_interactive(path: String, base: String, todo: String) -> App
 #[tauri::command]
 pub fn detect_agents() -> Vec<AgentInfo> {
     agents::detect_agents()
+}
+
+#[tauri::command]
+pub fn new_agent_session(
+    app: AppHandle,
+    supervisor: State<Supervisor>,
+    path: String,
+    agent_id: String,
+    branch: String,
+) -> AppResult<AgentSession> {
+    let agent = agents::detect_agents()
+        .into_iter()
+        .find(|a| a.id == agent_id && a.available)
+        .ok_or_else(|| AppError::Msg(format!("agent '{agent_id}' not available")))?;
+    let command = agent.path.clone().unwrap_or_else(|| agent.command.clone());
+    let worktree = git::worktree_add(&path, &branch, true)?;
+    supervisor.start(&app, &agent.id, &agent.name, &command, &branch, &worktree)
+}
+
+#[tauri::command]
+pub fn agent_write(supervisor: State<Supervisor>, id: String, data: String) -> AppResult<()> {
+    supervisor.write(&id, &data)
+}
+
+#[tauri::command]
+pub fn agent_resize(
+    supervisor: State<Supervisor>,
+    id: String,
+    rows: u16,
+    cols: u16,
+) -> AppResult<()> {
+    supervisor.resize(&id, rows, cols)
+}
+
+#[tauri::command]
+pub fn agent_kill(supervisor: State<Supervisor>, id: String) -> AppResult<()> {
+    supervisor.kill(&id)
+}
+
+#[tauri::command]
+pub fn agent_sessions(supervisor: State<Supervisor>) -> Vec<AgentSession> {
+    supervisor.list()
 }
 
 #[tauri::command]

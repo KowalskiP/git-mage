@@ -1,15 +1,19 @@
 import { useEffect, useRef } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { useRepos } from "./store/repos";
 import { onFsChange } from "./ipc/events";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { RepoView } from "./features/RepoView";
+import { AgentSessionView } from "./features/agents/AgentSessionView";
 
 export function App() {
   const loadRepos = useRepos((s) => s.loadRepos);
   const loadAgents = useRepos((s) => s.loadAgents);
+  const loadSessions = useRepos((s) => s.loadSessions);
   const refreshStatus = useRepos((s) => s.refreshStatus);
   const loadGraph = useRepos((s) => s.loadGraph);
   const selected = useRepos((s) => s.selected);
+  const openSessionId = useRepos((s) => s.openSessionId);
 
   // Throttle fs-change-driven refreshes (SPEC NFR: refresh ≤100ms, but coalesce bursts).
   const throttle = useRef<number | null>(null);
@@ -17,7 +21,8 @@ export function App() {
   useEffect(() => {
     loadRepos();
     loadAgents();
-  }, [loadRepos, loadAgents]);
+    loadSessions();
+  }, [loadRepos, loadAgents, loadSessions]);
 
   useEffect(() => {
     const unlisten = onFsChange((repoPath) => {
@@ -34,11 +39,21 @@ export function App() {
     };
   }, [refreshStatus, loadGraph]);
 
+  // Refresh session statuses when an agent process exits.
+  useEffect(() => {
+    const unlisten = listen("agent:exited", () => loadSessions());
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [loadSessions]);
+
   return (
     <div className="app">
       <RepoSidebar />
       <main className="main">
-        {selected ? (
+        {openSessionId ? (
+          <AgentSessionView sessionId={openSessionId} />
+        ) : selected ? (
           <RepoView />
         ) : (
           <div className="empty">

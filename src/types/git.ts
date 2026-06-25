@@ -75,6 +75,15 @@ export interface AgentInfo {
   path: string | null;
 }
 
+export interface AgentSession {
+  id: string;
+  agentId: string;
+  agentName: string;
+  branch: string;
+  worktreePath: string;
+  status: string; // "running" | "exited"
+}
+
 export interface Hunk {
   header: string;
   lines: string[];

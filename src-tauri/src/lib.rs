@@ -4,9 +4,11 @@ mod error;
 mod git;
 mod ipc;
 mod model;
+mod supervisor;
 mod watcher;
 
 use db::Db;
+use supervisor::Supervisor;
 use tauri::Manager;
 use watcher::Watchers;
 
@@ -15,6 +17,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(Watchers::default())
+        .manage(Supervisor::default())
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
@@ -65,6 +68,11 @@ pub fn run() {
             ipc::commands::rebase_todo_commits,
             ipc::commands::rebase_interactive,
             ipc::commands::detect_agents,
+            ipc::commands::new_agent_session,
+            ipc::commands::agent_write,
+            ipc::commands::agent_resize,
+            ipc::commands::agent_kill,
+            ipc::commands::agent_sessions,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,
