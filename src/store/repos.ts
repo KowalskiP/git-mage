@@ -28,7 +28,9 @@ interface ReposState {
   busy: string | null;
   loading: boolean;
   error: string | null;
+  showTerminal: boolean;
 
+  toggleTerminal: () => void;
   loadRepos: () => Promise<void>;
   openRepo: (path: string) => Promise<void>;
   select: (repo: RepoMeta) => Promise<void>;
@@ -102,6 +104,9 @@ export const useRepos = create<ReposState>((set, get) => ({
   busy: null,
   loading: false,
   error: null,
+  showTerminal: false,
+
+  toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
 
   loadRepos: async () => {
     try {

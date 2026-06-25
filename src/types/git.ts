@@ -94,6 +94,12 @@ export interface AgentSession {
   status: string; // "running" | "exited"
 }
 
+export interface TermSession {
+  id: string;
+  cwd: string;
+  title: string;
+}
+
 export interface Hunk {
   header: string;
   lines: string[];

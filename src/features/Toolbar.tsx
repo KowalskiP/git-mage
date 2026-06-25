@@ -22,6 +22,8 @@ export function Toolbar() {
   const submodules = useRepos((s) => s.submodules);
   const updateSubmodule = useRepos((s) => s.updateSubmodule);
   const syncSubmodules = useRepos((s) => s.syncSubmodules);
+  const showTerminal = useRepos((s) => s.showTerminal);
+  const toggleTerminal = useRepos((s) => s.toggleTerminal);
 
   const [open, setOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
@@ -278,6 +280,14 @@ export function Toolbar() {
           {error.split("\n")[0]}
         </span>
       )}
+
+      <button
+        className={"tbtn" + (showTerminal ? " tbtn--on" : "")}
+        onClick={toggleTerminal}
+        title="Toggle embedded terminal"
+      >
+        Terminal
+      </button>
 
       <button className="tbtn" onClick={() => fetch()} disabled={!!busy}>
         Fetch

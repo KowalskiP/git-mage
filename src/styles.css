@@ -1459,6 +1459,97 @@ body {
   height: 100%;
 }
 
+/* Embedded terminal dock */
+.term-dock {
+  flex: 0 0 auto;
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  background: #16181d;
+}
+.term-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.term-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.term-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.term-tab--on {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.term-tab__close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.term-tab__close:hover {
+  color: var(--red);
+}
+.term-tab__new {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.term-tab__new:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.term-tabs__spacer {
+  flex: 1;
+}
+.term-stack {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.term-pane {
+  position: absolute;
+  inset: 0;
+  padding: 6px 8px;
+  overflow: hidden;
+}
+.term-host {
+  height: 100%;
+}
+.term-host .xterm,
+.term-host .xterm-viewport {
+  height: 100%;
+}
+.term-empty {
+  padding: 16px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.tbtn--on {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
 /* Conflict resolution */
 .count--danger {
   background: var(--red);

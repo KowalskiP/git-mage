@@ -12,6 +12,7 @@ import type {
   RepoStatus,
   StashEntry,
   Submodule,
+  TermSession,
   Worktree,
 } from "../types/git";
 
@@ -109,6 +110,16 @@ export const agentResize = (id: string, rows: number, cols: number) =>
   invoke<void>("agent_resize", { id, rows, cols });
 export const agentKill = (id: string) => invoke<void>("agent_kill", { id });
 export const agentBuffer = (id: string) => invoke<string>("agent_buffer", { id });
+
+export const terminalOpen = (cwd: string, title: string) =>
+  invoke<TermSession>("terminal_open", { cwd, title });
+export const terminalList = () => invoke<TermSession[]>("terminal_list");
+export const terminalWrite = (id: string, data: string) =>
+  invoke<void>("terminal_write", { id, data });
+export const terminalResize = (id: string, rows: number, cols: number) =>
+  invoke<void>("terminal_resize", { id, rows, cols });
+export const terminalKill = (id: string) => invoke<void>("terminal_kill", { id });
+export const terminalBuffer = (id: string) => invoke<string>("terminal_buffer", { id });
 
 export const submoduleList = (path: string) => invoke<Submodule[]>("submodule_list", { path });
 export const submoduleUpdate = (path: string, sub: string | null, init: boolean) =>

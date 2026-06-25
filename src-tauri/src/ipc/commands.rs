@@ -12,6 +12,7 @@ use crate::error::{AppError, AppResult};
 use crate::git;
 use crate::agents;
 use crate::supervisor::{self, AgentSession, Supervisor};
+use crate::terminal::{TermSession, Terminals};
 use crate::model::{
     AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus,
     StashEntry, Submodule, Worktree,
@@ -348,6 +349,46 @@ pub fn agent_sessions(supervisor: State<Supervisor>) -> Vec<AgentSession> {
 #[tauri::command]
 pub fn agent_buffer(supervisor: State<Supervisor>, id: String) -> String {
     supervisor.buffer(&id)
+}
+
+#[tauri::command]
+pub fn terminal_open(
+    terminals: State<Terminals>,
+    app: AppHandle,
+    cwd: String,
+    title: String,
+) -> AppResult<TermSession> {
+    terminals.open(&app, &cwd, &title)
+}
+
+#[tauri::command]
+pub fn terminal_write(terminals: State<Terminals>, id: String, data: String) -> AppResult<()> {
+    terminals.write(&id, &data)
+}
+
+#[tauri::command]
+pub fn terminal_resize(
+    terminals: State<Terminals>,
+    id: String,
+    rows: u16,
+    cols: u16,
+) -> AppResult<()> {
+    terminals.resize(&id, rows, cols)
+}
+
+#[tauri::command]
+pub fn terminal_kill(terminals: State<Terminals>, id: String) -> AppResult<()> {
+    terminals.kill(&id)
+}
+
+#[tauri::command]
+pub fn terminal_list(terminals: State<Terminals>) -> Vec<TermSession> {
+    terminals.list()
+}
+
+#[tauri::command]
+pub fn terminal_buffer(terminals: State<Terminals>, id: String) -> String {
+    terminals.buffer(&id)
 }
 
 #[tauri::command]
