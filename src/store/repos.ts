@@ -60,7 +60,7 @@ interface ReposState {
   setSessionStatus: (id: string, status: string) => void;
   loadWorktrees: () => Promise<void>;
   addWorktree: (name: string, create: boolean) => Promise<void>;
-  removeWorktree: (wtPath: string, force: boolean) => Promise<void>;
+  removeWorktree: (wtPath: string, force: boolean, deleteBranch?: string) => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -433,16 +433,17 @@ export const useRepos = create<ReposState>((set, get) => ({
     set({ busy: null });
   },
 
-  removeWorktree: async (wtPath, force) => {
+  removeWorktree: async (wtPath, force, deleteBranch) => {
     const sel = get().selected;
     if (!sel) return;
     set({ busy: "Removing worktree…", error: null });
     try {
       await api.worktreeRemove(sel.path, wtPath, force);
+      if (deleteBranch) await api.branchDelete(sel.path, deleteBranch, true);
     } catch (e) {
       set({ error: String(e) });
     }
-    await Promise.all([get().loadWorktrees(), get().loadGraph()]);
+    await Promise.all([get().loadWorktrees(), get().loadGraph(), get().loadBranches()]);
     set({ busy: null });
   },
 

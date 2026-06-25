@@ -3,7 +3,7 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { listen } from "@tauri-apps/api/event";
 import "@xterm/xterm/css/xterm.css";
-import { agentResize, agentWrite } from "../../ipc/commands";
+import { agentBuffer, agentResize, agentWrite } from "../../ipc/commands";
 
 export function AgentTerminal({ sessionId }: { sessionId: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -36,18 +36,35 @@ export function AgentTerminal({ sessionId }: { sessionId: string }) {
     const ro = new ResizeObserver(sync);
     ro.observe(host);
 
-    const unlistenOut = listen<{ id: string; data: string }>("agent:output", (e) => {
-      if (e.payload.id === sessionId) term.write(e.payload.data);
-    });
-    const unlistenExit = listen<string>("agent:exited", (e) => {
-      if (e.payload === sessionId) term.write("\r\n\x1b[2m— process exited —\x1b[0m\r\n");
-    });
+    let disposed = false;
+    let unOut: Promise<() => void> | null = null;
+    let unExit: Promise<() => void> | null = null;
+    const attach = () => {
+      unOut = listen<{ id: string; data: string }>("agent:output", (e) => {
+        if (e.payload.id === sessionId) term.write(e.payload.data);
+      });
+      unExit = listen<string>("agent:exited", (e) => {
+        if (e.payload === sessionId) term.write("\r\n\x1b[2m— process exited —\x1b[0m\r\n");
+      });
+    };
+
+    // Prime with captured scrollback, then attach the live stream.
+    agentBuffer(sessionId)
+      .then((b) => {
+        if (disposed) return;
+        if (b) term.write(b);
+        attach();
+      })
+      .catch(() => {
+        if (!disposed) attach();
+      });
 
     return () => {
+      disposed = true;
       onData.dispose();
       ro.disconnect();
-      unlistenOut.then((f) => f());
-      unlistenExit.then((f) => f());
+      unOut?.then((f) => f());
+      unExit?.then((f) => f());
       term.dispose();
     };
   }, [sessionId]);

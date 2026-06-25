@@ -311,6 +311,11 @@ pub fn agent_sessions(supervisor: State<Supervisor>) -> Vec<AgentSession> {
 }
 
 #[tauri::command]
+pub fn agent_buffer(supervisor: State<Supervisor>, id: String) -> String {
+    supervisor.buffer(&id)
+}
+
+#[tauri::command]
 pub async fn worktree_list(path: String) -> AppResult<Vec<Worktree>> {
     git::worktree_list(&path)
 }

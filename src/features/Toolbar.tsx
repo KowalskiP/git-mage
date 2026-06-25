@@ -189,12 +189,24 @@ export function Toolbar() {
                     {w.locked && <span className="wt-tag">🔒</span>}
                   </span>
                   {!w.isMain && (
-                    <button
-                      className="link-btn link-btn--danger"
-                      onClick={() => removeWorktree(w.path, true)}
-                    >
-                      Remove
-                    </button>
+                    <span className="wt-actions">
+                      <button
+                        className="link-btn link-btn--danger"
+                        onClick={() => removeWorktree(w.path, true)}
+                        title="Remove worktree (keep branch)"
+                      >
+                        Remove
+                      </button>
+                      {w.branch && (
+                        <button
+                          className="link-btn link-btn--danger"
+                          onClick={() => removeWorktree(w.path, true, w.branch!)}
+                          title="Remove worktree and delete its branch"
+                        >
+                          +branch
+                        </button>
+                      )}
+                    </span>
                   )}
                 </li>
               ))}

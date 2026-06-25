@@ -32,7 +32,11 @@ struct Running {
     writer: Box<dyn Write + Send>,
     master: Box<dyn MasterPty + Send>,
     stop: Arc<AtomicBool>,
+    /// Recent raw output (capped) so reopening a session shows scrollback.
+    buffer: Arc<Mutex<Vec<u8>>>,
 }
+
+const BUFFER_CAP: usize = 256 * 1024;
 
 #[derive(Default)]
 pub struct Supervisor {
@@ -117,17 +121,27 @@ impl Supervisor {
             SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0)
         );
         let stop = Arc::new(AtomicBool::new(false));
+        let buffer = Arc::new(Mutex::new(Vec::<u8>::new()));
 
-        // Reader: stream output; on EOF mark stopped and notify.
+        // Reader: stream output, retain a capped scrollback buffer; on EOF notify.
         let app2 = app.clone();
         let id2 = id.clone();
         let stop2 = stop.clone();
+        let buffer2 = buffer.clone();
         std::thread::spawn(move || {
             let mut buf = [0u8; 8192];
             loop {
                 match reader.read(&mut buf) {
                     Ok(0) | Err(_) => break,
                     Ok(n) => {
+                        {
+                            let mut b = buffer2.lock().unwrap();
+                            b.extend_from_slice(&buf[..n]);
+                            if b.len() > BUFFER_CAP {
+                                let cut = b.len() - BUFFER_CAP;
+                                b.drain(..cut);
+                            }
+                        }
                         let data = String::from_utf8_lossy(&buf[..n]).into_owned();
                         let _ = app2.emit("agent:output", OutputEvent { id: id2.clone(), data });
                     }
@@ -167,9 +181,17 @@ impl Supervisor {
         };
         self.sessions.lock().unwrap().insert(
             id,
-            Running { session: session.clone(), child, writer, master: pair.master, stop },
+            Running { session: session.clone(), child, writer, master: pair.master, stop, buffer },
         );
         Ok(session)
+    }
+
+    /// Captured scrollback for a session (to prime the terminal on (re)open).
+    pub fn buffer(&self, id: &str) -> String {
+        let map = self.sessions.lock().unwrap();
+        map.get(id)
+            .map(|r| String::from_utf8_lossy(&r.buffer.lock().unwrap()).into_owned())
+            .unwrap_or_default()
     }
 
     pub fn write(&self, id: &str, data: &str) -> AppResult<()> {

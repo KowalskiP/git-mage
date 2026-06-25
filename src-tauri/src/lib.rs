@@ -73,6 +73,7 @@ pub fn run() {
             ipc::commands::agent_resize,
             ipc::commands::agent_kill,
             ipc::commands::agent_sessions,
+            ipc::commands::agent_buffer,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

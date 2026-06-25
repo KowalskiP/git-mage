@@ -1124,6 +1124,11 @@ body {
   align-items: center;
   gap: 6px;
 }
+.wt-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
 .wt-tag {
   font-size: 10px;
   color: var(--text-dim);
