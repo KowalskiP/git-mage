@@ -6,18 +6,25 @@
 //! M1 will move status onto `gix::status` (see `status.rs`).
 
 mod commit;
+mod gitflow;
 mod graph;
 mod hunk;
+mod lfs;
 mod ops;
+mod signing;
 mod stage;
 mod stash;
 mod status;
+mod submodule;
 mod worktree;
 
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
 pub use graph::graph;
+pub use gitflow::{gitflow_finish, gitflow_init, gitflow_start, gitflow_status};
 pub use hunk::{apply_hunk, file_hunks};
+pub use lfs::{lfs_lock, lfs_pull, lfs_status, lfs_track, lfs_unlock};
 pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
+pub use submodule::{submodule_list, submodule_sync, submodule_update};
 pub use worktree::{
     worktree_add, worktree_list, worktree_lock, worktree_prune, worktree_remove,
 };
@@ -27,6 +34,7 @@ pub use ops::{
     pull, push, rebase, rebase_abort, rebase_continue, rebase_interactive, rebase_todo_commits,
     resolve_side, tag_create, tag_delete, write_resolution,
 };
+pub use signing::{set_signing, signing_config};
 pub use stage::{commit, stage, stage_all, unstage, unstage_all};
 pub use status::status;
 

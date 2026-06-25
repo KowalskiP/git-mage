@@ -63,6 +63,46 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// A git submodule and its working state (SPEC §6.8).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Submodule {
+    pub path: String,
+    pub sha: String,
+    /// "ok" | "modified" | "uninitialized" | "conflict"
+    pub status: String,
+    /// The `(heads/main)`-style description, parens stripped.
+    pub describe: String,
+}
+
+/// A Git LFS-tracked file (`git lfs ls-files`).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LfsFile {
+    pub path: String,
+    pub oid: String,
+    /// True when the object is present locally (ls-files `*` marker); false for
+    /// a not-yet-downloaded pointer (`-`).
+    pub downloaded: bool,
+    /// Lock owner when this path is locked on the remote, else empty.
+    pub lock_owner: String,
+}
+
+/// Aggregate Git LFS state for a repo (SPEC §M5).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LfsStatus {
+    /// Whether the `git lfs` extension is installed.
+    pub installed: bool,
+    /// `git lfs version` string (empty if not installed).
+    pub version: String,
+    /// True when this repo actually uses LFS (has tracked patterns or files).
+    pub used: bool,
+    /// Tracked patterns from `.gitattributes` (e.g. `*.psd`).
+    pub patterns: Vec<String>,
+    pub files: Vec<LfsFile>,
+}
+
 /// A coding agent CLI that can run inside a worktree (SPEC §10.2).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -142,4 +182,42 @@ pub struct CommitDetail {
     pub time: i64,
     pub parents: Vec<String>,
     pub files: Vec<FileEntry>,
+    /// Signature state mapped from git's `%G?`: "good" | "bad" | "unknown" |
+    /// "expired" | "revoked" | "" (none/uncheckable).
+    pub signature: String,
+    /// Signer identity from `%GS` (empty when unsigned).
+    pub signer: String,
+}
+
+/// Gitflow branching state for a repo (SPEC §M5).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GitflowConfig {
+    /// Whether a develop branch exists (treated as "gitflow initialised").
+    pub initialized: bool,
+    /// Production branch (gitflow.branch.master or detected main/master).
+    pub main: String,
+    /// Integration branch (gitflow.branch.develop, default "develop").
+    pub develop: String,
+    pub feature_prefix: String,
+    pub release_prefix: String,
+    pub hotfix_prefix: String,
+    /// Current branch name.
+    pub current: String,
+    /// Flow kind of the current branch: "feature" | "release" | "hotfix" | "".
+    pub current_kind: String,
+    /// Name part of the current flow branch (after its prefix).
+    pub current_name: String,
+}
+
+/// Commit-signing configuration for a repo (SPEC §M5).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SigningConfig {
+    /// `commit.gpgsign` — sign new commits by default.
+    pub sign: bool,
+    /// `gpg.format` — "openpgp" (GPG) or "ssh".
+    pub format: String,
+    /// `user.signingkey` — key id (GPG) or public-key path (SSH).
+    pub key: String,
 }

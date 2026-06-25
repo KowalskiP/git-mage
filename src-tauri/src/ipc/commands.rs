@@ -12,9 +12,10 @@ use crate::error::{AppError, AppResult};
 use crate::git;
 use crate::agents;
 use crate::supervisor::{self, AgentSession, Supervisor};
+use crate::terminal::{TermSession, Terminals};
 use crate::model::{
-    AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus,
-    StashEntry, Worktree,
+    AgentInfo, CommitDetail, DiffSides, GitflowConfig, GraphRow, Hunk, LfsStatus, RebaseCommit,
+    RepoMeta, RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -348,6 +349,121 @@ pub fn agent_sessions(supervisor: State<Supervisor>) -> Vec<AgentSession> {
 #[tauri::command]
 pub fn agent_buffer(supervisor: State<Supervisor>, id: String) -> String {
     supervisor.buffer(&id)
+}
+
+#[tauri::command]
+pub fn terminal_open(
+    terminals: State<Terminals>,
+    app: AppHandle,
+    cwd: String,
+    title: String,
+) -> AppResult<TermSession> {
+    terminals.open(&app, &cwd, &title)
+}
+
+#[tauri::command]
+pub fn terminal_write(terminals: State<Terminals>, id: String, data: String) -> AppResult<()> {
+    terminals.write(&id, &data)
+}
+
+#[tauri::command]
+pub fn terminal_resize(
+    terminals: State<Terminals>,
+    id: String,
+    rows: u16,
+    cols: u16,
+) -> AppResult<()> {
+    terminals.resize(&id, rows, cols)
+}
+
+#[tauri::command]
+pub fn terminal_kill(terminals: State<Terminals>, id: String) -> AppResult<()> {
+    terminals.kill(&id)
+}
+
+#[tauri::command]
+pub fn terminal_list(terminals: State<Terminals>) -> Vec<TermSession> {
+    terminals.list()
+}
+
+#[tauri::command]
+pub fn terminal_buffer(terminals: State<Terminals>, id: String) -> String {
+    terminals.buffer(&id)
+}
+
+#[tauri::command]
+pub async fn submodule_list(path: String) -> AppResult<Vec<Submodule>> {
+    git::submodule_list(&path)
+}
+
+#[tauri::command]
+pub async fn submodule_update(path: String, sub: Option<String>, init: bool) -> AppResult<()> {
+    git::submodule_update(&path, sub.as_deref(), init)
+}
+
+#[tauri::command]
+pub async fn submodule_sync(path: String) -> AppResult<()> {
+    git::submodule_sync(&path)
+}
+
+#[tauri::command]
+pub async fn lfs_status(path: String) -> AppResult<LfsStatus> {
+    git::lfs_status(&path)
+}
+
+#[tauri::command]
+pub async fn lfs_pull(path: String) -> AppResult<()> {
+    git::lfs_pull(&path)
+}
+
+#[tauri::command]
+pub async fn lfs_track(path: String, pattern: String) -> AppResult<()> {
+    git::lfs_track(&path, &pattern)
+}
+
+#[tauri::command]
+pub async fn lfs_lock(path: String, file: String) -> AppResult<()> {
+    git::lfs_lock(&path, &file)
+}
+
+#[tauri::command]
+pub async fn lfs_unlock(path: String, file: String) -> AppResult<()> {
+    git::lfs_unlock(&path, &file)
+}
+
+#[tauri::command]
+pub async fn signing_config(path: String) -> AppResult<SigningConfig> {
+    git::signing_config(&path)
+}
+
+#[tauri::command]
+pub async fn set_signing(
+    path: String,
+    sign: bool,
+    format: String,
+    key: String,
+) -> AppResult<()> {
+    git::set_signing(&path, sign, &format, &key)
+}
+
+#[tauri::command]
+pub async fn gitflow_status(path: String) -> AppResult<GitflowConfig> {
+    git::gitflow_status(&path)
+}
+
+#[tauri::command]
+pub async fn gitflow_init(path: String) -> AppResult<()> {
+    git::gitflow_init(&path)
+}
+
+#[tauri::command]
+pub async fn gitflow_start(path: String, kind: String, name: String) -> AppResult<()> {
+    git::gitflow_start(&path, &kind, &name)
+}
+
+#[tauri::command]
+pub async fn gitflow_finish(path: String, kind: String, name: String) -> AppResult<()> {
+    git::gitflow_finish(&path, &kind, &name)
 }
 
 #[tauri::command]

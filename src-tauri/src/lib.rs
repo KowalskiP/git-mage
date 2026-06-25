@@ -5,10 +5,12 @@ mod git;
 mod ipc;
 mod model;
 mod supervisor;
+mod terminal;
 mod watcher;
 
 use db::Db;
 use supervisor::Supervisor;
+use terminal::Terminals;
 use tauri::Manager;
 use watcher::Watchers;
 
@@ -18,6 +20,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(Watchers::default())
         .manage(Supervisor::default())
+        .manage(Terminals::default())
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
@@ -76,6 +79,26 @@ pub fn run() {
             ipc::commands::agent_kill,
             ipc::commands::agent_sessions,
             ipc::commands::agent_buffer,
+            ipc::commands::terminal_open,
+            ipc::commands::terminal_write,
+            ipc::commands::terminal_resize,
+            ipc::commands::terminal_kill,
+            ipc::commands::terminal_list,
+            ipc::commands::terminal_buffer,
+            ipc::commands::submodule_list,
+            ipc::commands::submodule_update,
+            ipc::commands::submodule_sync,
+            ipc::commands::lfs_status,
+            ipc::commands::lfs_pull,
+            ipc::commands::lfs_track,
+            ipc::commands::lfs_lock,
+            ipc::commands::lfs_unlock,
+            ipc::commands::signing_config,
+            ipc::commands::set_signing,
+            ipc::commands::gitflow_status,
+            ipc::commands::gitflow_init,
+            ipc::commands::gitflow_start,
+            ipc::commands::gitflow_finish,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

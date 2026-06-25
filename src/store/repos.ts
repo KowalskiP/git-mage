@@ -2,10 +2,14 @@ import { create } from "zustand";
 import type {
   AgentInfo,
   AgentSession,
+  GitflowConfig,
   GraphRow,
+  LfsStatus,
   RepoMeta,
   RepoStatus,
+  SigningConfig,
   StashEntry,
+  Submodule,
   Worktree,
 } from "../types/git";
 import * as api from "../ipc/commands";
@@ -20,13 +24,21 @@ interface ReposState {
   branches: string[];
   stashes: StashEntry[];
   worktrees: Worktree[];
+  submodules: Submodule[];
+  lfs: LfsStatus | null;
+  signing: SigningConfig | null;
+  gitflow: GitflowConfig | null;
   agents: AgentInfo[];
   sessions: AgentSession[];
   openSessionId: string | null;
   busy: string | null;
   loading: boolean;
   error: string | null;
+  showTerminal: boolean;
+  paletteOpen: boolean;
 
+  toggleTerminal: () => void;
+  setPalette: (open: boolean) => void;
   loadRepos: () => Promise<void>;
   openRepo: (path: string) => Promise<void>;
   select: (repo: RepoMeta) => Promise<void>;
@@ -61,6 +73,19 @@ interface ReposState {
   loadWorktrees: () => Promise<void>;
   addWorktree: (name: string, create: boolean) => Promise<void>;
   removeWorktree: (wtPath: string, force: boolean, deleteBranch?: string) => Promise<void>;
+  loadSubmodules: () => Promise<void>;
+  updateSubmodule: (sub: string | null, init: boolean) => Promise<void>;
+  syncSubmodules: () => Promise<void>;
+  loadLfs: () => Promise<void>;
+  lfsPull: () => Promise<void>;
+  lfsTrack: (pattern: string) => Promise<void>;
+  lfsLock: (file: string, lock: boolean) => Promise<void>;
+  loadSigning: () => Promise<void>;
+  saveSigning: (sign: boolean, format: string, key: string) => Promise<void>;
+  loadGitflow: () => Promise<void>;
+  gitflowInit: () => Promise<void>;
+  gitflowStart: (kind: string, name: string) => Promise<void>;
+  gitflowFinish: (kind: string, name: string) => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -90,12 +115,21 @@ export const useRepos = create<ReposState>((set, get) => ({
   branches: [],
   stashes: [],
   worktrees: [],
+  submodules: [],
+  lfs: null,
+  signing: null,
+  gitflow: null,
   agents: [],
   sessions: [],
   openSessionId: null,
   busy: null,
   loading: false,
   error: null,
+  showTerminal: false,
+  paletteOpen: false,
+
+  toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
+  setPalette: (open) => set({ paletteOpen: open }),
 
   loadRepos: async () => {
     try {
@@ -131,6 +165,10 @@ export const useRepos = create<ReposState>((set, get) => ({
       branches: [],
       stashes: [],
       worktrees: [],
+      submodules: [],
+      lfs: null,
+      signing: null,
+      gitflow: null,
     });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
@@ -139,6 +177,10 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadBranches(),
       get().loadStashes(),
       get().loadWorktrees(),
+      get().loadSubmodules(),
+      get().loadLfs(),
+      get().loadSigning(),
+      get().loadGitflow(),
     ]);
   },
 
@@ -444,6 +486,174 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await Promise.all([get().loadWorktrees(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  loadSubmodules: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ submodules: await api.submoduleList(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  updateSubmodule: async (sub, init) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: sub ? `Updating ${sub}…` : "Updating submodules…", error: null });
+    try {
+      await api.submoduleUpdate(sel.path, sub, init);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadSubmodules()]);
+    set({ busy: null });
+  },
+
+  syncSubmodules: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Syncing submodules…", error: null });
+    try {
+      await api.submoduleSync(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadSubmodules();
+    set({ busy: null });
+  },
+
+  loadLfs: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ lfs: await api.lfsStatus(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  lfsPull: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Pulling LFS objects…", error: null });
+    try {
+      await api.lfsPull(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadLfs();
+    set({ busy: null });
+  },
+
+  lfsTrack: async (pattern) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Tracking ${pattern}…`, error: null });
+    try {
+      await api.lfsTrack(sel.path, pattern);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadLfs(), get().refreshStatus()]);
+    set({ busy: null });
+  },
+
+  lfsLock: async (file, lock) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: lock ? `Locking ${file}…` : `Unlocking ${file}…`, error: null });
+    try {
+      if (lock) await api.lfsLock(sel.path, file);
+      else await api.lfsUnlock(sel.path, file);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadLfs();
+    set({ busy: null });
+  },
+
+  loadSigning: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ signing: await api.signingConfig(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  saveSigning: async (sign, format, key) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Saving signing config…", error: null });
+    try {
+      await api.setSigning(sel.path, sign, format, key);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadSigning();
+    set({ busy: null });
+  },
+
+  loadGitflow: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ gitflow: await api.gitflowStatus(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  gitflowInit: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Initializing gitflow…", error: null });
+    try {
+      await api.gitflowInit(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadGitflow(), get().loadBranches(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  gitflowStart: async (kind, name) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Starting ${kind}/${name}…`, error: null });
+    try {
+      await api.gitflowStart(sel.path, kind, name);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([
+      get().refreshStatus(),
+      get().loadGraph(),
+      get().loadBranches(),
+      get().loadGitflow(),
+    ]);
+    set({ busy: null });
+  },
+
+  gitflowFinish: async (kind, name) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Finishing ${kind}/${name}…`, error: null });
+    try {
+      await api.gitflowFinish(sel.path, kind, name);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([
+      get().refreshStatus(),
+      get().loadGraph(),
+      get().loadBranches(),
+      get().loadGitflow(),
+    ]);
     set({ busy: null });
   },
 

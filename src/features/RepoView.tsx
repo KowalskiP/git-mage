@@ -6,6 +6,7 @@ import { DiffView } from "./DiffView";
 import { HunkView } from "./HunkView";
 import { ConflictEditor } from "./ConflictEditor";
 import { Toolbar } from "./Toolbar";
+import { TerminalDock } from "./terminal/TerminalDock";
 
 export function RepoView() {
   const selected = useRepos((s) => s.selected);
@@ -67,6 +68,7 @@ export function RepoView() {
           )
         ) : null}
       </div>
+      <TerminalDock />
     </div>
   );
 }

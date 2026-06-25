@@ -70,6 +70,28 @@ export interface Worktree {
   changes: number;
 }
 
+export interface Submodule {
+  path: string;
+  sha: string;
+  status: string; // ok | modified | uninitialized | conflict
+  describe: string;
+}
+
+export interface LfsFile {
+  path: string;
+  oid: string;
+  downloaded: boolean;
+  lockOwner: string;
+}
+
+export interface LfsStatus {
+  installed: boolean;
+  version: string;
+  used: boolean;
+  patterns: string[];
+  files: LfsFile[];
+}
+
 export interface AgentInfo {
   id: string;
   name: string;
@@ -85,6 +107,12 @@ export interface AgentSession {
   branch: string;
   worktreePath: string;
   status: string; // "running" | "exited"
+}
+
+export interface TermSession {
+  id: string;
+  cwd: string;
+  title: string;
 }
 
 export interface Hunk {
@@ -108,6 +136,27 @@ export interface CommitDetail {
   time: number;
   parents: string[];
   files: FileEntry[];
+  /** "good" | "bad" | "unknown" | "expired" | "revoked" | "" (unsigned). */
+  signature: string;
+  signer: string;
+}
+
+export interface SigningConfig {
+  sign: boolean;
+  format: string; // "openpgp" | "ssh"
+  key: string;
+}
+
+export interface GitflowConfig {
+  initialized: boolean;
+  main: string;
+  develop: string;
+  featurePrefix: string;
+  releasePrefix: string;
+  hotfixPrefix: string;
+  current: string;
+  currentKind: string; // "feature" | "release" | "hotfix" | ""
+  currentName: string;
 }
 
 /** Sentinel sha of the working-directory (WIP) node; matches the Rust backend. */
