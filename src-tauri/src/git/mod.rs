@@ -10,6 +10,7 @@ mod graph;
 mod hunk;
 mod lfs;
 mod ops;
+mod signing;
 mod stage;
 mod stash;
 mod status;
@@ -31,6 +32,7 @@ pub use ops::{
     pull, push, rebase, rebase_abort, rebase_continue, rebase_interactive, rebase_todo_commits,
     resolve_side, tag_create, tag_delete, write_resolution,
 };
+pub use signing::{set_signing, signing_config};
 pub use stage::{commit, stage, stage_all, unstage, unstage_all};
 pub use status::status;
 

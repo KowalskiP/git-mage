@@ -136,6 +136,15 @@ export interface CommitDetail {
   time: number;
   parents: string[];
   files: FileEntry[];
+  /** "good" | "bad" | "unknown" | "expired" | "revoked" | "" (unsigned). */
+  signature: string;
+  signer: string;
+}
+
+export interface SigningConfig {
+  sign: boolean;
+  format: string; // "openpgp" | "ssh"
+  key: string;
 }
 
 /** Sentinel sha of the working-directory (WIP) node; matches the Rust backend. */

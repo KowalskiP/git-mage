@@ -11,6 +11,7 @@ import type {
   RepoMeta,
   RepoStatus,
   LfsStatus,
+  SigningConfig,
   StashEntry,
   Submodule,
   TermSession,
@@ -134,6 +135,11 @@ export const lfsTrack = (path: string, pattern: string) =>
 export const lfsLock = (path: string, file: string) => invoke<void>("lfs_lock", { path, file });
 export const lfsUnlock = (path: string, file: string) =>
   invoke<void>("lfs_unlock", { path, file });
+
+export const signingConfig = (path: string) =>
+  invoke<SigningConfig>("signing_config", { path });
+export const setSigning = (path: string, sign: boolean, format: string, key: string) =>
+  invoke<void>("set_signing", { path, sign, format, key });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

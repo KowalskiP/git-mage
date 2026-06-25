@@ -93,6 +93,8 @@ pub fn run() {
             ipc::commands::lfs_track,
             ipc::commands::lfs_lock,
             ipc::commands::lfs_unlock,
+            ipc::commands::signing_config,
+            ipc::commands::set_signing,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

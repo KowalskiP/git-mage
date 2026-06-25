@@ -15,7 +15,7 @@ use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
 use crate::model::{
     AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, LfsStatus, RebaseCommit, RepoMeta,
-    RepoStatus, StashEntry, Submodule, Worktree,
+    RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -429,6 +429,21 @@ pub async fn lfs_lock(path: String, file: String) -> AppResult<()> {
 #[tauri::command]
 pub async fn lfs_unlock(path: String, file: String) -> AppResult<()> {
     git::lfs_unlock(&path, &file)
+}
+
+#[tauri::command]
+pub async fn signing_config(path: String) -> AppResult<SigningConfig> {
+    git::signing_config(&path)
+}
+
+#[tauri::command]
+pub async fn set_signing(
+    path: String,
+    sign: bool,
+    format: String,
+    key: String,
+) -> AppResult<()> {
+    git::set_signing(&path, sign, &format, &key)
 }
 
 #[tauri::command]

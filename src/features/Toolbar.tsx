@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRepos } from "../store/repos";
 
 export function Toolbar() {
@@ -26,6 +26,8 @@ export function Toolbar() {
   const lfsPull = useRepos((s) => s.lfsPull);
   const lfsTrack = useRepos((s) => s.lfsTrack);
   const lfsLock = useRepos((s) => s.lfsLock);
+  const signing = useRepos((s) => s.signing);
+  const saveSigning = useRepos((s) => s.saveSigning);
   const showTerminal = useRepos((s) => s.showTerminal);
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
   const setPalette = useRepos((s) => s.setPalette);
@@ -35,8 +37,21 @@ export function Toolbar() {
   const [smOpen, setSmOpen] = useState(false);
   const [lfsOpen, setLfsOpen] = useState(false);
   const [lfsPattern, setLfsPattern] = useState("");
+  const [signOpen, setSignOpen] = useState(false);
+  const [signEnabled, setSignEnabled] = useState(false);
+  const [signFormat, setSignFormat] = useState("openpgp");
+  const [signKey, setSignKey] = useState("");
   const [wtOpen, setWtOpen] = useState(false);
   const [wtName, setWtName] = useState("");
+
+  // Seed the signing form from config whenever the dropdown opens.
+  useEffect(() => {
+    if (signOpen && signing) {
+      setSignEnabled(signing.sign);
+      setSignFormat(signing.format || "openpgp");
+      setSignKey(signing.key);
+    }
+  }, [signOpen, signing]);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
@@ -352,6 +367,64 @@ export function Toolbar() {
           )}
         </div>
       )}
+
+      <div className="branch-picker">
+        <button
+          className={"tbtn" + (signing?.sign ? " tbtn--on" : "")}
+          onClick={() => setSignOpen((o) => !o)}
+          disabled={!!busy}
+          title="Commit signing"
+        >
+          {signing?.sign ? "Signing ✓" : "Sign"} ▾
+        </button>
+        {signOpen && (
+          <>
+            <div className="dropdown-backdrop" onClick={() => setSignOpen(false)} />
+            <ul className="dropdown dropdown--wide">
+              <li className="sign-row">
+                <label className="sign-check">
+                  <input
+                    type="checkbox"
+                    checked={signEnabled}
+                    onChange={(e) => setSignEnabled(e.target.checked)}
+                  />
+                  Sign commits by default
+                </label>
+              </li>
+              <li className="sign-row">
+                <span className="sign-label">Format</span>
+                <select
+                  className="sign-select"
+                  value={signFormat}
+                  onChange={(e) => setSignFormat(e.target.value)}
+                >
+                  <option value="openpgp">GPG (openpgp)</option>
+                  <option value="ssh">SSH</option>
+                </select>
+              </li>
+              <li className="sign-row">
+                <input
+                  className="new-branch__input"
+                  placeholder={signFormat === "ssh" ? "~/.ssh/id_ed25519.pub" : "GPG key id"}
+                  value={signKey}
+                  onChange={(e) => setSignKey(e.target.value)}
+                />
+              </li>
+              <li className="sign-row sign-row--end">
+                <button
+                  className="tbtn tbtn--primary"
+                  onClick={() => {
+                    setSignOpen(false);
+                    saveSigning(signEnabled, signFormat, signKey.trim());
+                  }}
+                >
+                  Save
+                </button>
+              </li>
+            </ul>
+          </>
+        )}
+      </div>
 
       <div className="toolbar__spacer" />
 

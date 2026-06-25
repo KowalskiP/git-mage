@@ -1263,6 +1263,63 @@ body {
   flex: 0 0 auto;
 }
 
+/* Signing dropdown */
+.sign-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.sign-row--end {
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+}
+.sign-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+.sign-label {
+  flex: 0 0 70px;
+  color: var(--text-dim);
+}
+.sign-select {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+.sign-row .new-branch__input {
+  flex: 1;
+}
+
+/* Commit signature badge */
+.sig-badge {
+  font-size: 10px;
+  border-radius: 8px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+}
+.sig-badge--good {
+  color: var(--green);
+  border-color: var(--green);
+}
+.sig-badge--unknown,
+.sig-badge--expired {
+  color: var(--yellow);
+  border-color: var(--yellow);
+}
+.sig-badge--bad,
+.sig-badge--revoked {
+  color: var(--red);
+  border-color: var(--red);
+}
+
 /* Sidebar nav (Repos | Agents) */
 .sidebar-nav {
   display: flex;

@@ -163,6 +163,17 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
             <div className="detail-meta">
               <span>{detail?.author ?? row.author}</span>
               <span className="detail-sha">{row.sha.slice(0, 7)}</span>
+              {detail?.signature && (
+                <span
+                  className={"sig-badge sig-badge--" + detail.signature}
+                  title={
+                    (detail.signer ? `Signed by ${detail.signer}` : "Signed") +
+                    ` · signature ${detail.signature}`
+                  }
+                >
+                  {detail.signature === "good" ? "🔏 Signed" : `🔏 ${detail.signature}`}
+                </span>
+              )}
             </div>
             {detail && (
               <div className="detail-sub">

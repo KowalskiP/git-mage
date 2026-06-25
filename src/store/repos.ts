@@ -6,6 +6,7 @@ import type {
   LfsStatus,
   RepoMeta,
   RepoStatus,
+  SigningConfig,
   StashEntry,
   Submodule,
   Worktree,
@@ -24,6 +25,7 @@ interface ReposState {
   worktrees: Worktree[];
   submodules: Submodule[];
   lfs: LfsStatus | null;
+  signing: SigningConfig | null;
   agents: AgentInfo[];
   sessions: AgentSession[];
   openSessionId: string | null;
@@ -76,6 +78,8 @@ interface ReposState {
   lfsPull: () => Promise<void>;
   lfsTrack: (pattern: string) => Promise<void>;
   lfsLock: (file: string, lock: boolean) => Promise<void>;
+  loadSigning: () => Promise<void>;
+  saveSigning: (sign: boolean, format: string, key: string) => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -107,6 +111,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   worktrees: [],
   submodules: [],
   lfs: null,
+  signing: null,
   agents: [],
   sessions: [],
   openSessionId: null,
@@ -155,6 +160,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       worktrees: [],
       submodules: [],
       lfs: null,
+      signing: null,
     });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
@@ -165,6 +171,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadWorktrees(),
       get().loadSubmodules(),
       get().loadLfs(),
+      get().loadSigning(),
     ]);
   },
 
@@ -556,6 +563,29 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     await get().loadLfs();
+    set({ busy: null });
+  },
+
+  loadSigning: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ signing: await api.signingConfig(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  saveSigning: async (sign, format, key) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Saving signing config…", error: null });
+    try {
+      await api.setSigning(sel.path, sign, format, key);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadSigning();
     set({ busy: null });
   },
 

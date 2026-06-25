@@ -182,4 +182,21 @@ pub struct CommitDetail {
     pub time: i64,
     pub parents: Vec<String>,
     pub files: Vec<FileEntry>,
+    /// Signature state mapped from git's `%G?`: "good" | "bad" | "unknown" |
+    /// "expired" | "revoked" | "" (none/uncheckable).
+    pub signature: String,
+    /// Signer identity from `%GS` (empty when unsigned).
+    pub signer: String,
+}
+
+/// Commit-signing configuration for a repo (SPEC §M5).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SigningConfig {
+    /// `commit.gpgsign` — sign new commits by default.
+    pub sign: bool,
+    /// `gpg.format` — "openpgp" (GPG) or "ssh".
+    pub format: String,
+    /// `user.signingkey` — key id (GPG) or public-key path (SSH).
+    pub key: String,
 }

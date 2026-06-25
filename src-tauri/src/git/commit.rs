@@ -18,7 +18,7 @@ fn run(path: &str, args: &[&str]) -> AppResult<std::process::Output> {
 
 /// Metadata + changed files for a commit.
 pub fn commit_detail(path: &str, sha: &str) -> AppResult<CommitDetail> {
-    let fmt = format!("%H{US}%s{US}%b{US}%an{US}%ae{US}%at{US}%P");
+    let fmt = format!("%H{US}%s{US}%b{US}%an{US}%ae{US}%at{US}%P{US}%G?{US}%GS");
     let meta = run(path, &["show", "-s", &format!("--format={fmt}"), sha])?;
     if !meta.status.success() {
         return Err(AppError::Git(
@@ -42,8 +42,23 @@ pub fn commit_detail(path: &str, sha: &str) -> AppResult<CommitDetail> {
         email: f.get(4).unwrap_or(&"").to_string(),
         time: f.get(5).and_then(|s| s.trim().parse().ok()).unwrap_or(0),
         parents,
+        signature: signature_label(f.get(7).copied().unwrap_or("")),
+        signer: f.get(8).unwrap_or(&"").trim().to_string(),
         files,
     })
+}
+
+/// Map git's `%G?` signature code to a stable label for the UI.
+fn signature_label(code: &str) -> String {
+    match code.trim() {
+        "G" => "good",
+        "B" => "bad",
+        "U" => "unknown", // good signature, unknown validity
+        "X" | "Y" => "expired",
+        "R" => "revoked",
+        _ => "", // "N" (none) or "E" (cannot check)
+    }
+    .to_string()
 }
 
 /// Files changed by a commit. `--root` makes the first commit list its files;
