@@ -1278,10 +1278,22 @@ body {
   flex: 0 0 auto;
 }
 .session-dot--running {
-  background: var(--green);
+  background: var(--blue);
 }
 .session-dot--exited {
   background: var(--text-dim);
+}
+.session-dot--working {
+  background: var(--yellow);
+}
+.session-dot--tool {
+  background: var(--green);
+}
+.session-dot--waiting {
+  background: var(--blue);
+}
+.session-dot--needs-input {
+  background: var(--red);
 }
 .session-info {
   flex: 1;
@@ -1324,8 +1336,21 @@ body {
   background: var(--bg-hover);
   color: var(--text-dim);
 }
-.agent-view__status--running {
+.agent-view__status--running,
+.agent-view__status--waiting {
+  color: #9bd0ff;
+}
+.agent-view__status--working {
+  color: #e5c07b;
+}
+.agent-view__status--tool {
   color: #98e6ad;
+}
+.agent-view__status--needs-input {
+  color: #f0b3b8;
+}
+.agent-view__status--exited {
+  color: var(--text-dim);
 }
 .agent-view__actions {
   margin-left: auto;

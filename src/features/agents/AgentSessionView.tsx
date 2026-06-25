@@ -1,5 +1,6 @@
 import { useRepos } from "../../store/repos";
 import { AgentTerminal } from "./AgentTerminal";
+import { statusLabel } from "./status";
 
 export function AgentSessionView({ sessionId }: { sessionId: string }) {
   const session = useRepos((s) => s.sessions.find((x) => x.id === sessionId));
@@ -13,7 +14,7 @@ export function AgentSessionView({ sessionId }: { sessionId: string }) {
           {session?.agentName ?? "Agent"} · <span className="ref ref--local">{session?.branch}</span>
         </span>
         <span className={"agent-view__status agent-view__status--" + (session?.status ?? "running")}>
-          {session?.status ?? "running"}
+          {statusLabel(session?.status ?? "running")}
         </span>
         <div className="agent-view__actions">
           <button className="tbtn" onClick={() => openSession(null)}>

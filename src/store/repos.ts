@@ -57,6 +57,7 @@ interface ReposState {
   newSession: (agentId: string, branch: string) => Promise<void>;
   killSession: (id: string) => Promise<void>;
   openSession: (id: string | null) => void;
+  setSessionStatus: (id: string, status: string) => void;
   loadWorktrees: () => Promise<void>;
   addWorktree: (name: string, create: boolean) => Promise<void>;
   removeWorktree: (wtPath: string, force: boolean) => Promise<void>;
@@ -403,6 +404,11 @@ export const useRepos = create<ReposState>((set, get) => ({
   },
 
   openSession: (id) => set({ openSessionId: id }),
+
+  setSessionStatus: (id, status) =>
+    set((s) => ({
+      sessions: s.sessions.map((x) => (x.id === id ? { ...x, status } : x)),
+    })),
 
   loadWorktrees: async () => {
     const sel = get().selected;

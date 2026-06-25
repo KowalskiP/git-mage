@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRepos } from "../../store/repos";
+import { statusLabel } from "./status";
 
 export function AgentsPanel() {
   const agents = useRepos((s) => s.agents);
@@ -76,7 +77,9 @@ export function AgentsPanel() {
                 <span className={"session-dot session-dot--" + s.status} />
                 <span className="session-info">
                   <span className="session-branch">{s.branch}</span>
-                  <span className="session-agent">{s.agentName}</span>
+                  <span className="session-agent">
+                    {s.agentName} · {statusLabel(s.status)}
+                  </span>
                 </span>
                 <button
                   className="link-btn link-btn--danger"

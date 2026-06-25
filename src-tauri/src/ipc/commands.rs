@@ -11,7 +11,7 @@ use crate::db::Db;
 use crate::error::{AppError, AppResult};
 use crate::git;
 use crate::agents;
-use crate::supervisor::{AgentSession, Supervisor};
+use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::model::{
     AgentInfo, CommitDetail, DiffSides, GraphRow, Hunk, RebaseCommit, RepoMeta, RepoStatus,
     StashEntry, Worktree,
@@ -253,7 +253,36 @@ pub fn new_agent_session(
         .ok_or_else(|| AppError::Msg(format!("agent '{agent_id}' not available")))?;
     let command = agent.path.clone().unwrap_or_else(|| agent.command.clone());
     let worktree = git::worktree_add(&path, &branch, true)?;
-    supervisor.start(&app, &agent.id, &agent.name, &command, &branch, &worktree)
+
+    // Claude Code: inject status hooks via --settings so the UI gets live status.
+    let mut args: Vec<String> = Vec::new();
+    let mut status_file: Option<String> = None;
+    if agent.id == "claude" {
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let dir = std::env::temp_dir();
+        let sf = dir.join(format!("gitmage-agent-{stamp}.status"));
+        let settings = dir.join(format!("gitmage-agent-{stamp}.settings.json"));
+        let sf_str = sf.to_string_lossy().into_owned();
+        std::fs::write(&settings, supervisor::claude_hooks_settings(&sf_str))
+            .map_err(|e| AppError::Msg(format!("write settings: {e}")))?;
+        args.push("--settings".into());
+        args.push(settings.to_string_lossy().into_owned());
+        status_file = Some(sf_str);
+    }
+
+    supervisor.start(
+        &app,
+        &agent.id,
+        &agent.name,
+        &command,
+        &args,
+        &branch,
+        &worktree,
+        status_file.as_deref(),
+    )
 }
 
 #[tauri::command]
