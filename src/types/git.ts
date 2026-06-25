@@ -65,6 +65,9 @@ export interface Worktree {
   head: string;
   locked: boolean;
   isMain: boolean;
+  ahead: number;
+  behind: number;
+  changes: number;
 }
 
 export interface AgentInfo {

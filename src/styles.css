@@ -1231,6 +1231,13 @@ body {
   white-space: nowrap;
   margin-top: 2px;
 }
+.wt-card__meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
 .agents-hint {
   font-size: 11px;
   color: var(--text-dim);

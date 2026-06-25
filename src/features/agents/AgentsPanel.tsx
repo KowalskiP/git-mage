@@ -125,6 +125,11 @@ export function AgentsPanel() {
               <div className="wt-card__path" title={w.path}>
                 {w.path}
               </div>
+              <div className="wt-card__meta">
+                {w.ahead > 0 && <span>↑{w.ahead}</span>}
+                {w.behind > 0 && <span>↓{w.behind}</span>}
+                <span>{w.changes > 0 ? `${w.changes} uncommitted` : "clean"}</span>
+              </div>
             </li>
           ))}
         </ul>

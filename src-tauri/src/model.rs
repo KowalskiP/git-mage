@@ -86,6 +86,10 @@ pub struct Worktree {
     pub locked: bool,
     /// The primary worktree (the original repo checkout).
     pub is_main: bool,
+    pub ahead: u32,
+    pub behind: u32,
+    /// Count of uncommitted changes in this worktree.
+    pub changes: u32,
 }
 
 /// One commit in a rebase todo range (base..HEAD), oldest first.

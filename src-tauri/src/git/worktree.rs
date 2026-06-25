@@ -47,6 +47,9 @@ pub fn worktree_list(path: &str) -> AppResult<Vec<Worktree>> {
                 head: String::new(),
                 locked: false,
                 is_main: list.is_empty(),
+                ahead: 0,
+                behind: 0,
+                changes: 0,
             });
         } else if let Some(h) = line.strip_prefix("HEAD ") {
             if let Some(w) = cur.as_mut() {
@@ -65,7 +68,45 @@ pub fn worktree_list(path: &str) -> AppResult<Vec<Worktree>> {
     if let Some(w) = cur.take() {
         list.push(w);
     }
+    for w in list.iter_mut() {
+        let (a, b, c) = worktree_summary(&w.path);
+        w.ahead = a;
+        w.behind = b;
+        w.changes = c;
+    }
     Ok(list)
+}
+
+/// (ahead, behind, uncommitted-change-count) for a worktree, via one `git status`.
+fn worktree_summary(wt: &str) -> (u32, u32, u32) {
+    let Ok(out) = Command::new("git")
+        .current_dir(wt)
+        .args(["status", "--porcelain=v1", "--branch"])
+        .output()
+    else {
+        return (0, 0, 0);
+    };
+    if !out.status.success() {
+        return (0, 0, 0);
+    }
+    let text = String::from_utf8_lossy(&out.stdout);
+    let (mut ahead, mut behind, mut changes) = (0u32, 0u32, 0u32);
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix("## ") {
+            if let Some((_, bracket)) = rest.split_once('[') {
+                for tok in bracket.trim_end_matches(']').split(", ") {
+                    if let Some(n) = tok.strip_prefix("ahead ") {
+                        ahead = n.trim().parse().unwrap_or(0);
+                    } else if let Some(n) = tok.strip_prefix("behind ") {
+                        behind = n.trim().parse().unwrap_or(0);
+                    }
+                }
+            }
+        } else if !line.is_empty() {
+            changes += 1;
+        }
+    }
+    (ahead, behind, changes)
 }
 
 /// Sibling directory name for a worktree of `name` (slashes flattened).
