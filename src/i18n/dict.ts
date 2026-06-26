@@ -17,6 +17,7 @@ type Dict = Record<string, string>;
 
 const en: Dict = {
   "app.tagline": "Open a repository to begin.",
+  "app.openCta": "Open repository",
   "sidebar.open": "Open",
   "sidebar.openRepo": "Open repository",
   "sidebar.repos": "Repos",
@@ -25,11 +26,27 @@ const en: Dict = {
   "sidebar.favorite": "Favorite",
   "sidebar.unfavorite": "Unfavorite",
   "sidebar.remove": "Remove from list",
+  "sidebar.search": "Search repositories…",
+  "sidebar.favorites": "Favorites",
+  "sidebar.recent": "Recent",
+  "sidebar.noMatch": "No matches.",
   "lang.label": "Language",
+  "settings.title": "Settings",
+  "settings.language": "Language",
+  "settings.signing": "Commit signing",
+  "settings.sign.enable": "Sign commits by default",
+  "settings.sign.format": "Format",
+  "settings.sign.keyGpg": "GPG key id",
+  "settings.sign.keySsh": "~/.ssh/id_ed25519.pub",
+  "settings.sign.save": "Save",
+  "settings.shortcuts": "Keyboard shortcuts",
+  "settings.shortcuts.open": "Open shortcuts…",
+  "toolbar.settings": "Settings",
 };
 
 const ru: Dict = {
   "app.tagline": "Откройте репозиторий, чтобы начать.",
+  "app.openCta": "Открыть репозиторий",
   "sidebar.open": "Открыть",
   "sidebar.openRepo": "Открыть репозиторий",
   "sidebar.repos": "Репозитории",
@@ -38,7 +55,22 @@ const ru: Dict = {
   "sidebar.favorite": "В избранное",
   "sidebar.unfavorite": "Убрать из избранного",
   "sidebar.remove": "Убрать из списка",
+  "sidebar.search": "Поиск репозиториев…",
+  "sidebar.favorites": "Избранное",
+  "sidebar.recent": "Недавние",
+  "sidebar.noMatch": "Ничего не найдено.",
   "lang.label": "Язык",
+  "settings.title": "Настройки",
+  "settings.language": "Язык",
+  "settings.signing": "Подпись коммитов",
+  "settings.sign.enable": "Подписывать коммиты по умолчанию",
+  "settings.sign.format": "Формат",
+  "settings.sign.keyGpg": "ID GPG-ключа",
+  "settings.sign.keySsh": "~/.ssh/id_ed25519.pub",
+  "settings.sign.save": "Сохранить",
+  "settings.shortcuts": "Горячие клавиши",
+  "settings.shortcuts.open": "Открыть шорткаты…",
+  "toolbar.settings": "Настройки",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru };
