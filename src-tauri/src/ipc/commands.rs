@@ -301,7 +301,7 @@ pub fn new_agent_session(
         ("sh".to_string(), wrapped)
     };
 
-    supervisor.start(
+    let session = supervisor.start(
         &app,
         &agent.id,
         &agent.name,
@@ -310,7 +310,15 @@ pub fn new_agent_session(
         &branch,
         &worktree,
         status_file.as_deref(),
-    )
+    )?;
+
+    // Persist so the session is still listed after an app restart.
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
+    let _ = db.save_session(&session, now);
+    Ok(session)
 }
 
 #[tauri::command]
@@ -339,13 +347,25 @@ pub fn agent_resize(
 }
 
 #[tauri::command]
-pub fn agent_kill(supervisor: State<Supervisor>, id: String) -> AppResult<()> {
-    supervisor.kill(&id)
+pub fn agent_kill(supervisor: State<Supervisor>, db: State<Db>, id: String) -> AppResult<()> {
+    supervisor.kill(&id)?;
+    // Killing (or removing an already-exited entry) drops it from persistence.
+    let _ = db.delete_session(&id);
+    Ok(())
 }
 
 #[tauri::command]
-pub fn agent_sessions(supervisor: State<Supervisor>) -> Vec<AgentSession> {
-    supervisor.list()
+pub fn agent_sessions(supervisor: State<Supervisor>, db: State<Db>) -> AppResult<Vec<AgentSession>> {
+    let live = supervisor.list();
+    let live_ids: std::collections::HashSet<String> = live.iter().map(|s| s.id.clone()).collect();
+    let mut out = live;
+    // Persisted sessions not currently running (e.g. after a restart) → exited.
+    for s in db.list_sessions()? {
+        if !live_ids.contains(&s.id) {
+            out.push(s);
+        }
+    }
+    Ok(out)
 }
 
 #[tauri::command]
