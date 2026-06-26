@@ -8,6 +8,7 @@ import { AgentSessionView } from "./features/agents/AgentSessionView";
 import { CommandPalette } from "./features/palette/CommandPalette";
 import { ShortcutsPanel } from "./features/shortcuts/ShortcutsPanel";
 import { ForgePanel } from "./features/forge/ForgePanel";
+import { SettingsPanel } from "./features/settings/SettingsPanel";
 import { eventBinding, effectiveBindings, KEYMAP_ACTIONS } from "./lib/keymap";
 import { useT } from "./i18n/useT";
 
@@ -101,6 +102,7 @@ export function App() {
       <CommandPalette />
       <ShortcutsPanel />
       <ForgePanel />
+      <SettingsPanel />
     </div>
   );
 }

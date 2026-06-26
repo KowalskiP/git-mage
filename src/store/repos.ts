@@ -50,6 +50,7 @@ interface ReposState {
   showTerminal: boolean;
   paletteOpen: boolean;
   shortcutsOpen: boolean;
+  settingsOpen: boolean;
   /** id → chord overrides for the keymap (empty chord = unbound). */
   keymap: Record<string, string>;
   lang: Lang;
@@ -57,6 +58,7 @@ interface ReposState {
   toggleTerminal: () => void;
   setPalette: (open: boolean) => void;
   setShortcuts: (open: boolean) => void;
+  setSettings: (open: boolean) => void;
   loadKeymap: () => Promise<void>;
   setBinding: (id: string, binding: string) => Promise<void>;
   resetBinding: (id: string) => Promise<void>;
@@ -164,12 +166,14 @@ export const useRepos = create<ReposState>((set, get) => ({
   showTerminal: false,
   paletteOpen: false,
   shortcutsOpen: false,
+  settingsOpen: false,
   keymap: {},
   lang: "en",
 
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
   setPalette: (open) => set({ paletteOpen: open }),
   setShortcuts: (open) => set({ shortcutsOpen: open }),
+  setSettings: (open) => set({ settingsOpen: open }),
 
   loadKeymap: async () => {
     try {

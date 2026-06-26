@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRepos } from "../store/repos";
+import { useT } from "../i18n/useT";
 
 export function Toolbar() {
+  const t = useT();
   const status = useRepos((s) => s.status);
   const branches = useRepos((s) => s.branches);
   const busy = useRepos((s) => s.busy);
@@ -26,8 +28,6 @@ export function Toolbar() {
   const lfsPull = useRepos((s) => s.lfsPull);
   const lfsTrack = useRepos((s) => s.lfsTrack);
   const lfsLock = useRepos((s) => s.lfsLock);
-  const signing = useRepos((s) => s.signing);
-  const saveSigning = useRepos((s) => s.saveSigning);
   const gitflow = useRepos((s) => s.gitflow);
   const gitflowInit = useRepos((s) => s.gitflowInit);
   const gitflowStart = useRepos((s) => s.gitflowStart);
@@ -35,7 +35,7 @@ export function Toolbar() {
   const showTerminal = useRepos((s) => s.showTerminal);
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
   const setPalette = useRepos((s) => s.setPalette);
-  const setShortcuts = useRepos((s) => s.setShortcuts);
+  const setSettings = useRepos((s) => s.setSettings);
   const forge = useRepos((s) => s.forge);
   const toggleForge = useRepos((s) => s.toggleForge);
 
@@ -44,10 +44,6 @@ export function Toolbar() {
   const [smOpen, setSmOpen] = useState(false);
   const [lfsOpen, setLfsOpen] = useState(false);
   const [lfsPattern, setLfsPattern] = useState("");
-  const [signOpen, setSignOpen] = useState(false);
-  const [signEnabled, setSignEnabled] = useState(false);
-  const [signFormat, setSignFormat] = useState("openpgp");
-  const [signKey, setSignKey] = useState("");
   const [flowOpen, setFlowOpen] = useState(false);
   const [flowKind, setFlowKind] = useState("feature");
   const [flowName, setFlowName] = useState("");
@@ -62,14 +58,6 @@ export function Toolbar() {
     await gitflowStart(flowKind, n);
   }
 
-  // Seed the signing form from config whenever the dropdown opens.
-  useEffect(() => {
-    if (signOpen && signing) {
-      setSignEnabled(signing.sign);
-      setSignFormat(signing.format || "openpgp");
-      setSignKey(signing.key);
-    }
-  }, [signOpen, signing]);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
@@ -397,64 +385,6 @@ export function Toolbar() {
 
       <div className="branch-picker">
         <button
-          className={"tbtn" + (signing?.sign ? " tbtn--on" : "")}
-          onClick={() => setSignOpen((o) => !o)}
-          disabled={!!busy}
-          title="Commit signing"
-        >
-          {signing?.sign ? "Signing ✓" : "Sign"} ▾
-        </button>
-        {signOpen && (
-          <>
-            <div className="dropdown-backdrop" onClick={() => setSignOpen(false)} />
-            <ul className="dropdown dropdown--wide">
-              <li className="sign-row">
-                <label className="sign-check">
-                  <input
-                    type="checkbox"
-                    checked={signEnabled}
-                    onChange={(e) => setSignEnabled(e.target.checked)}
-                  />
-                  Sign commits by default
-                </label>
-              </li>
-              <li className="sign-row">
-                <span className="sign-label">Format</span>
-                <select
-                  className="sign-select"
-                  value={signFormat}
-                  onChange={(e) => setSignFormat(e.target.value)}
-                >
-                  <option value="openpgp">GPG (openpgp)</option>
-                  <option value="ssh">SSH</option>
-                </select>
-              </li>
-              <li className="sign-row">
-                <input
-                  className="new-branch__input" {...inputProps}
-                  placeholder={signFormat === "ssh" ? "~/.ssh/id_ed25519.pub" : "GPG key id"}
-                  value={signKey}
-                  onChange={(e) => setSignKey(e.target.value)}
-                />
-              </li>
-              <li className="sign-row sign-row--end">
-                <button
-                  className="tbtn tbtn--primary"
-                  onClick={() => {
-                    setSignOpen(false);
-                    saveSigning(signEnabled, signFormat, signKey.trim());
-                  }}
-                >
-                  Save
-                </button>
-              </li>
-            </ul>
-          </>
-        )}
-      </div>
-
-      <div className="branch-picker">
-        <button
           className={"tbtn" + (gitflow?.currentKind ? " tbtn--on" : "")}
           onClick={() => setFlowOpen((o) => !o)}
           disabled={!!busy}
@@ -549,10 +479,10 @@ export function Toolbar() {
 
       <button
         className="tbtn"
-        onClick={() => setShortcuts(true)}
-        title="Keyboard shortcuts (⌘/)"
+        onClick={() => setSettings(true)}
+        title={t("toolbar.settings")}
       >
-        ⌘/
+        ⚙
       </button>
 
       {forge?.provider && (

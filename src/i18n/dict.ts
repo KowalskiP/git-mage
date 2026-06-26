@@ -26,6 +26,17 @@ const en: Dict = {
   "sidebar.unfavorite": "Unfavorite",
   "sidebar.remove": "Remove from list",
   "lang.label": "Language",
+  "settings.title": "Settings",
+  "settings.language": "Language",
+  "settings.signing": "Commit signing",
+  "settings.sign.enable": "Sign commits by default",
+  "settings.sign.format": "Format",
+  "settings.sign.keyGpg": "GPG key id",
+  "settings.sign.keySsh": "~/.ssh/id_ed25519.pub",
+  "settings.sign.save": "Save",
+  "settings.shortcuts": "Keyboard shortcuts",
+  "settings.shortcuts.open": "Open shortcuts…",
+  "toolbar.settings": "Settings",
 };
 
 const ru: Dict = {
@@ -39,6 +50,17 @@ const ru: Dict = {
   "sidebar.unfavorite": "Убрать из избранного",
   "sidebar.remove": "Убрать из списка",
   "lang.label": "Язык",
+  "settings.title": "Настройки",
+  "settings.language": "Язык",
+  "settings.signing": "Подпись коммитов",
+  "settings.sign.enable": "Подписывать коммиты по умолчанию",
+  "settings.sign.format": "Формат",
+  "settings.sign.keyGpg": "ID GPG-ключа",
+  "settings.sign.keySsh": "~/.ssh/id_ed25519.pub",
+  "settings.sign.save": "Сохранить",
+  "settings.shortcuts": "Горячие клавиши",
+  "settings.shortcuts.open": "Открыть шорткаты…",
+  "toolbar.settings": "Настройки",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru };

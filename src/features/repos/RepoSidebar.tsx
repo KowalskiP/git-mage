@@ -3,12 +3,9 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../../store/repos";
 import { AgentsPanel } from "../agents/AgentsPanel";
 import { useT } from "../../i18n/useT";
-import { LANGS } from "../../i18n/dict";
 
 export function RepoSidebar() {
   const { repos, selected, openRepo, select, remove, toggleFavorite, loading } = useRepos();
-  const lang = useRepos((s) => s.lang);
-  const setLang = useRepos((s) => s.setLang);
   const t = useT();
   const [nav, setNav] = useState<"repos" | "agents">("repos");
 
@@ -25,17 +22,6 @@ export function RepoSidebar() {
     <aside className="sidebar">
       <div className="sidebar__header">
         <span className="brand">GitMage</span>
-        <div className="lang-switch" title={t("lang.label")}>
-          {LANGS.map((l) => (
-            <button
-              key={l.code}
-              className={"lang-btn" + (lang === l.code ? " lang-btn--on" : "")}
-              onClick={() => setLang(l.code)}
-            >
-              {l.code.toUpperCase()}
-            </button>
-          ))}
-        </div>
         <button className="btn" onClick={pickRepo} disabled={loading}>
           {loading ? "…" : t("sidebar.open")}
         </button>
