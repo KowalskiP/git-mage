@@ -3,6 +3,7 @@ import { useRepos } from "../store/repos";
 import { commitDetail as fetchDetail } from "../ipc/commands";
 import type { CommitDetail, FileEntry } from "../types/git";
 import { FileTree } from "./FileTree";
+import { useT } from "../i18n/useT";
 
 interface Props {
   onOpenFile: (file: string, sha: string, wip: boolean, staged: boolean) => void;
@@ -81,6 +82,7 @@ function CommitBox() {
 }
 
 export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props) {
+  const t = useT();
   const selectedSha = useRepos((s) => s.selectedSha);
   const graph = useRepos((s) => s.graph);
   const status = useRepos((s) => s.status);
@@ -130,7 +132,7 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
   }, [commitFiles]);
 
   if (!selectedSha || !row) {
-    return <div className="detail-panel detail-panel--empty">Select a commit</div>;
+    return <div className="detail-panel detail-panel--empty">{t("detail.selectCommit")}</div>;
   }
 
   const openUnstaged = (f: string) => onOpenFile(f, selectedSha, isWip, false);
