@@ -297,9 +297,9 @@ export function CommitGraph() {
     }
   }, [graph, scrollTop, viewportH, graphW, selectedSha]);
 
-  if (graphLoading && graph.length === 0) return <div className="graph-msg">Loading history…</div>;
+  if (graphLoading && graph.length === 0) return <div className="graph-msg">{t("graph.loading")}</div>;
   if (error && graph.length === 0) return <div className="graph-msg error">{error}</div>;
-  if (graph.length === 0) return <div className="graph-msg">No commits yet.</div>;
+  if (graph.length === 0) return <div className="graph-msg">{t("graph.empty")}</div>;
 
   const first = Math.max(0, Math.floor(scrollTop / ROW_H) - 1);
   const last = Math.min(graph.length - 1, Math.ceil((scrollTop + viewportH) / ROW_H) + 1);
