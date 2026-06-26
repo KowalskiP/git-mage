@@ -23,9 +23,18 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/OWNER/REPO/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhEMUFGQkU5NEEzODMwQkQKUldTOU1EaEs2ZnNhallGTG9VVUZZbm1UZnJDcHlOTm1hV3lVLzRTellhd1Y4dE93aWpIOVJBR0YK"
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "category": "DeveloperTool",
     "copyright": "© GitMage contributors. GPL-3.0-or-later.",
     "shortDescription": "Fast, lightweight Git client with AI agent sessions.",
