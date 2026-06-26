@@ -59,6 +59,30 @@ body {
   letter-spacing: 0.3px;
 }
 
+.lang-switch {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  margin-right: 8px;
+}
+.lang-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  border-radius: 5px;
+  padding: 2px 5px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.lang-btn:hover {
+  color: var(--text);
+}
+.lang-btn--on {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--bg-hover);
+}
+
 .btn {
   background: var(--accent);
   color: white;
