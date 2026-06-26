@@ -7,6 +7,7 @@ import { RepoView } from "./features/RepoView";
 import { AgentSessionView } from "./features/agents/AgentSessionView";
 import { CommandPalette } from "./features/palette/CommandPalette";
 import { ShortcutsPanel } from "./features/shortcuts/ShortcutsPanel";
+import { ForgePanel } from "./features/forge/ForgePanel";
 import { eventBinding, effectiveBindings, KEYMAP_ACTIONS } from "./lib/keymap";
 
 export function App() {
@@ -95,6 +96,7 @@ export function App() {
       </main>
       <CommandPalette />
       <ShortcutsPanel />
+      <ForgePanel />
     </div>
   );
 }

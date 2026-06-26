@@ -92,6 +92,36 @@ export interface LfsStatus {
   files: LfsFile[];
 }
 
+export interface ForgeInfo {
+  provider: string; // "github" | "gitlab" | "bitbucket" | "" (unknown)
+  host: string;
+  owner: string;
+  repo: string;
+  hasToken: boolean;
+}
+
+export interface ForgePull {
+  number: number;
+  title: string;
+  author: string;
+  state: string;
+  draft: boolean;
+  url: string;
+  source: string;
+  target: string;
+  updated: string;
+}
+
+export interface ForgeIssue {
+  number: number;
+  title: string;
+  author: string;
+  state: string;
+  url: string;
+  comments: number;
+  updated: string;
+}
+
 export interface AgentInfo {
   id: string;
   name: string;

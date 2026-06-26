@@ -13,9 +13,11 @@ use crate::git;
 use crate::agents;
 use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
+use crate::forge::{self, Provider};
 use crate::model::{
-    AgentInfo, CommitDetail, DiffSides, GitflowConfig, GraphRow, Hunk, LfsStatus, RebaseCommit,
-    RepoMeta, RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
+    AgentInfo, CommitDetail, DiffSides, ForgeInfo, ForgeIssue, ForgePull, GitflowConfig, GraphRow,
+    Hunk, LfsStatus, RebaseCommit, RepoMeta, RepoStatus, SigningConfig, StashEntry, Submodule,
+    Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -464,6 +466,65 @@ pub async fn gitflow_start(path: String, kind: String, name: String) -> AppResul
 #[tauri::command]
 pub async fn gitflow_finish(path: String, kind: String, name: String) -> AppResult<()> {
     git::gitflow_finish(&path, &kind, &name)
+}
+
+#[tauri::command]
+pub async fn forge_detect(path: String) -> AppResult<ForgeInfo> {
+    Ok(forge::detect(&path))
+}
+
+#[tauri::command]
+pub async fn forge_set_token(provider: String, token: String) -> AppResult<()> {
+    let p = Provider::from_key(&provider).ok_or_else(|| AppError::Msg("unknown provider".into()))?;
+    forge::set_token(p, &token)
+}
+
+#[tauri::command]
+pub async fn forge_clear_token(provider: String) -> AppResult<()> {
+    let p = Provider::from_key(&provider).ok_or_else(|| AppError::Msg("unknown provider".into()))?;
+    forge::clear_token(p)
+}
+
+fn forge_token(rr: &forge::RepoRef) -> AppResult<String> {
+    forge::get_token(rr.provider)
+        .ok_or_else(|| AppError::Msg("no token for this provider — add one in the forge panel".into()))
+}
+
+#[tauri::command]
+pub async fn forge_pulls(path: String) -> AppResult<Vec<ForgePull>> {
+    let rr = forge::require_ref(&path)?;
+    let token = forge_token(&rr)?;
+    forge::fetch_pulls(&rr, &token).await
+}
+
+#[tauri::command]
+pub async fn forge_issues(path: String) -> AppResult<Vec<ForgeIssue>> {
+    let rr = forge::require_ref(&path)?;
+    let token = forge_token(&rr)?;
+    forge::fetch_issues(&rr, &token).await
+}
+
+/// Open a URL in the user's default browser (used for PR/issue links).
+#[tauri::command]
+pub async fn open_external(url: String) -> AppResult<()> {
+    // Only follow web links; never shell-execute arbitrary schemes.
+    if !(url.starts_with("https://") || url.starts_with("http://")) {
+        return Err(AppError::Msg("refusing to open non-http URL".into()));
+    }
+    #[cfg(target_os = "macos")]
+    let mut cmd = std::process::Command::new("open");
+    #[cfg(target_os = "windows")]
+    let mut cmd = {
+        let mut c = std::process::Command::new("cmd");
+        c.args(["/C", "start", ""]);
+        c
+    };
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let mut cmd = std::process::Command::new("xdg-open");
+
+    cmd.arg(&url);
+    cmd.spawn().map_err(|e| AppError::Msg(format!("open: {e}")))?;
+    Ok(())
 }
 
 #[tauri::command]
