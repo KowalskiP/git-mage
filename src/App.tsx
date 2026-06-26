@@ -9,12 +9,15 @@ import { CommandPalette } from "./features/palette/CommandPalette";
 import { ShortcutsPanel } from "./features/shortcuts/ShortcutsPanel";
 import { ForgePanel } from "./features/forge/ForgePanel";
 import { eventBinding, effectiveBindings, KEYMAP_ACTIONS } from "./lib/keymap";
+import { useT } from "./i18n/useT";
 
 export function App() {
+  const t = useT();
   const loadRepos = useRepos((s) => s.loadRepos);
   const loadAgents = useRepos((s) => s.loadAgents);
   const loadSessions = useRepos((s) => s.loadSessions);
   const loadKeymap = useRepos((s) => s.loadKeymap);
+  const loadLang = useRepos((s) => s.loadLang);
   const setSessionStatus = useRepos((s) => s.setSessionStatus);
   const refreshStatus = useRepos((s) => s.refreshStatus);
   const loadGraph = useRepos((s) => s.loadGraph);
@@ -29,7 +32,8 @@ export function App() {
     loadAgents();
     loadSessions();
     loadKeymap();
-  }, [loadRepos, loadAgents, loadSessions, loadKeymap]);
+    loadLang();
+  }, [loadRepos, loadAgents, loadSessions, loadKeymap, loadLang]);
 
   useEffect(() => {
     const unlisten = onFsChange((repoPath) => {
@@ -90,7 +94,7 @@ export function App() {
         ) : (
           <div className="empty">
             <h1>GitMage</h1>
-            <p>Open a repository to begin.</p>
+            <p>{t("app.tagline")}</p>
           </div>
         )}
       </main>

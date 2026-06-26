@@ -17,8 +17,10 @@ import type {
 } from "../types/git";
 import * as api from "../ipc/commands";
 import { effectiveBindings } from "../lib/keymap";
+import type { Lang } from "../i18n/dict";
 
 const KEYMAP_SETTING = "keymap.overrides";
+const LANG_SETTING = "locale";
 
 interface ReposState {
   repos: RepoMeta[];
@@ -50,6 +52,7 @@ interface ReposState {
   shortcutsOpen: boolean;
   /** id → chord overrides for the keymap (empty chord = unbound). */
   keymap: Record<string, string>;
+  lang: Lang;
 
   toggleTerminal: () => void;
   setPalette: (open: boolean) => void;
@@ -59,6 +62,8 @@ interface ReposState {
   resetBinding: (id: string) => Promise<void>;
   resetAllBindings: () => Promise<void>;
   runShortcut: (id: string) => void;
+  loadLang: () => Promise<void>;
+  setLang: (lang: Lang) => Promise<void>;
   loadRepos: () => Promise<void>;
   openRepo: (path: string) => Promise<void>;
   select: (repo: RepoMeta) => Promise<void>;
@@ -160,6 +165,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   paletteOpen: false,
   shortcutsOpen: false,
   keymap: {},
+  lang: "en",
 
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
   setPalette: (open) => set({ paletteOpen: open }),
@@ -198,6 +204,24 @@ export const useRepos = create<ReposState>((set, get) => ({
   resetAllBindings: async () => {
     set({ keymap: {} });
     await api.setSetting(KEYMAP_SETTING, JSON.stringify({})).catch(() => {});
+  },
+
+  loadLang: async () => {
+    try {
+      const saved = await api.getSetting(LANG_SETTING);
+      if (saved === "en" || saved === "ru") {
+        set({ lang: saved });
+      } else if (typeof navigator !== "undefined" && navigator.language.startsWith("ru")) {
+        set({ lang: "ru" }); // first run: follow the OS language
+      }
+    } catch {
+      /* keep default */
+    }
+  },
+
+  setLang: async (lang) => {
+    set({ lang });
+    await api.setSetting(LANG_SETTING, lang).catch(() => {});
   },
 
   runShortcut: (id) => {

@@ -2,13 +2,18 @@ import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../../store/repos";
 import { AgentsPanel } from "../agents/AgentsPanel";
+import { useT } from "../../i18n/useT";
+import { LANGS } from "../../i18n/dict";
 
 export function RepoSidebar() {
   const { repos, selected, openRepo, select, remove, toggleFavorite, loading } = useRepos();
+  const lang = useRepos((s) => s.lang);
+  const setLang = useRepos((s) => s.setLang);
+  const t = useT();
   const [nav, setNav] = useState<"repos" | "agents">("repos");
 
   async function pickRepo() {
-    const dir = await open({ directory: true, multiple: false, title: "Open repository" });
+    const dir = await open({ directory: true, multiple: false, title: t("sidebar.openRepo") });
     if (typeof dir === "string") await openRepo(dir);
   }
 
@@ -20,8 +25,19 @@ export function RepoSidebar() {
     <aside className="sidebar">
       <div className="sidebar__header">
         <span className="brand">GitMage</span>
+        <div className="lang-switch" title={t("lang.label")}>
+          {LANGS.map((l) => (
+            <button
+              key={l.code}
+              className={"lang-btn" + (lang === l.code ? " lang-btn--on" : "")}
+              onClick={() => setLang(l.code)}
+            >
+              {l.code.toUpperCase()}
+            </button>
+          ))}
+        </div>
         <button className="btn" onClick={pickRepo} disabled={loading}>
-          {loading ? "…" : "Open"}
+          {loading ? "…" : t("sidebar.open")}
         </button>
       </div>
 
@@ -30,13 +46,13 @@ export function RepoSidebar() {
           className={"navbtn" + (nav === "repos" ? " navbtn--on" : "")}
           onClick={() => setNav("repos")}
         >
-          Repos
+          {t("sidebar.repos")}
         </button>
         <button
           className={"navbtn" + (nav === "agents" ? " navbtn--on" : "")}
           onClick={() => setNav("agents")}
         >
-          Agents
+          {t("sidebar.agents")}
         </button>
       </div>
 
@@ -52,7 +68,7 @@ export function RepoSidebar() {
           >
             <button
               className="star"
-              title={repo.favorite ? "Unfavorite" : "Favorite"}
+              title={repo.favorite ? t("sidebar.unfavorite") : t("sidebar.favorite")}
               onClick={(e) => {
                 e.stopPropagation();
                 toggleFavorite(repo);
@@ -63,7 +79,7 @@ export function RepoSidebar() {
             <span className="repo-item__name">{repo.alias ?? repo.name}</span>
             <button
               className="remove"
-              title="Remove from list"
+              title={t("sidebar.remove")}
               onClick={(e) => {
                 e.stopPropagation();
                 remove(repo.id);
@@ -73,7 +89,7 @@ export function RepoSidebar() {
             </button>
           </li>
         ))}
-          {repos.length === 0 && <li className="repo-list__empty">No repositories yet.</li>}
+          {repos.length === 0 && <li className="repo-list__empty">{t("sidebar.noRepos")}</li>}
         </ul>
       )}
     </aside>
