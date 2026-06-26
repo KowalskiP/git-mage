@@ -35,6 +35,7 @@ export function Toolbar() {
   const showTerminal = useRepos((s) => s.showTerminal);
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
   const setPalette = useRepos((s) => s.setPalette);
+  const setShortcuts = useRepos((s) => s.setShortcuts);
 
   const [open, setOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
@@ -542,6 +543,14 @@ export function Toolbar() {
         title="Command palette (⌘K)"
       >
         ⌘K
+      </button>
+
+      <button
+        className="tbtn"
+        onClick={() => setShortcuts(true)}
+        title="Keyboard shortcuts (⌘/)"
+      >
+        ⌘/
       </button>
 
       <button

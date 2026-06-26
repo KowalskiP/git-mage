@@ -13,6 +13,9 @@ import type {
   Worktree,
 } from "../types/git";
 import * as api from "../ipc/commands";
+import { effectiveBindings } from "../lib/keymap";
+
+const KEYMAP_SETTING = "keymap.overrides";
 
 interface ReposState {
   repos: RepoMeta[];
@@ -36,9 +39,18 @@ interface ReposState {
   error: string | null;
   showTerminal: boolean;
   paletteOpen: boolean;
+  shortcutsOpen: boolean;
+  /** id → chord overrides for the keymap (empty chord = unbound). */
+  keymap: Record<string, string>;
 
   toggleTerminal: () => void;
   setPalette: (open: boolean) => void;
+  setShortcuts: (open: boolean) => void;
+  loadKeymap: () => Promise<void>;
+  setBinding: (id: string, binding: string) => Promise<void>;
+  resetBinding: (id: string) => Promise<void>;
+  resetAllBindings: () => Promise<void>;
+  runShortcut: (id: string) => void;
   loadRepos: () => Promise<void>;
   openRepo: (path: string) => Promise<void>;
   select: (repo: RepoMeta) => Promise<void>;
@@ -127,9 +139,73 @@ export const useRepos = create<ReposState>((set, get) => ({
   error: null,
   showTerminal: false,
   paletteOpen: false,
+  shortcutsOpen: false,
+  keymap: {},
 
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
   setPalette: (open) => set({ paletteOpen: open }),
+  setShortcuts: (open) => set({ shortcutsOpen: open }),
+
+  loadKeymap: async () => {
+    try {
+      const raw = await api.getSetting(KEYMAP_SETTING);
+      if (raw) set({ keymap: JSON.parse(raw) });
+    } catch {
+      /* corrupt/absent setting — keep defaults */
+    }
+  },
+
+  setBinding: async (id, binding) => {
+    // Reassign: clear the chord from any other action that currently holds it.
+    const next: Record<string, string> = { ...get().keymap };
+    if (binding) {
+      const eff = effectiveBindings(next);
+      for (const [otherId, b] of Object.entries(eff)) {
+        if (otherId !== id && b === binding) next[otherId] = "";
+      }
+    }
+    next[id] = binding;
+    set({ keymap: next });
+    await api.setSetting(KEYMAP_SETTING, JSON.stringify(next)).catch(() => {});
+  },
+
+  resetBinding: async (id) => {
+    const next = { ...get().keymap };
+    delete next[id];
+    set({ keymap: next });
+    await api.setSetting(KEYMAP_SETTING, JSON.stringify(next)).catch(() => {});
+  },
+
+  resetAllBindings: async () => {
+    set({ keymap: {} });
+    await api.setSetting(KEYMAP_SETTING, JSON.stringify({})).catch(() => {});
+  },
+
+  runShortcut: (id) => {
+    const s = get();
+    switch (id) {
+      case "palette":
+        return s.setPalette(!s.paletteOpen);
+      case "shortcuts":
+        return s.setShortcuts(!s.shortcutsOpen);
+      case "toggleTerminal":
+        return s.toggleTerminal();
+      case "refresh":
+        s.refreshStatus();
+        s.loadGraph();
+        return;
+      case "fetch":
+        return void s.fetch();
+      case "pull":
+        return void s.pull();
+      case "push":
+        return void s.push();
+      case "stageAll":
+        return void s.stageAll();
+      case "stash":
+        return void s.stashSave(null, false);
+    }
+  },
 
   loadRepos: async () => {
     try {
