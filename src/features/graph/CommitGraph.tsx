@@ -1,5 +1,6 @@
-import { type MouseEvent, useLayoutEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRepos } from "../../store/repos";
+import { useT } from "../../i18n/useT";
 import type { GraphRow } from "../../types/git";
 import { ContextMenu, type MenuItem } from "../ContextMenu";
 import { PromptModal } from "../PromptModal";
@@ -50,6 +51,7 @@ function parseRef(r: string): { kind: RefKind; name: string } {
 }
 
 export function CommitGraph() {
+  const t = useT();
   const graph = useRepos((s) => s.graph);
   const graphLoading = useRepos((s) => s.graphLoading);
   const selectedSha = useRepos((s) => s.selectedSha);
@@ -81,6 +83,49 @@ export function CommitGraph() {
     onSubmit: (v: string) => void;
   } | null>(null);
   const [rebaseBase, setRebaseBase] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [matchPos, setMatchPos] = useState(0);
+
+  // Commit search: indices of rows matching summary / author / sha. Does not
+  // alter the lane layout — just highlights and scrolls to matches.
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [] as number[];
+    const out: number[] = [];
+    graph.forEach((r, i) => {
+      if (r.wip) return;
+      if (
+        r.summary.toLowerCase().includes(q) ||
+        r.author.toLowerCase().includes(q) ||
+        r.sha.toLowerCase().includes(q)
+      ) {
+        out.push(i);
+      }
+    });
+    return out;
+  }, [graph, query]);
+
+  useEffect(() => setMatchPos(0), [query]);
+
+  const currentMatch = matches.length ? matches[Math.min(matchPos, matches.length - 1)] : -1;
+
+  // Scroll the current match into view and select it.
+  useEffect(() => {
+    if (currentMatch < 0) return;
+    const el = scrollRef.current;
+    if (el) {
+      const target = currentMatch * ROW_H - el.clientHeight / 2 + ROW_H / 2;
+      el.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+    }
+    const sha = graph[currentMatch]?.sha;
+    if (sha) selectNode(sha);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMatch]);
+
+  const stepMatch = (d: number) => {
+    if (matches.length === 0) return;
+    setMatchPos((p) => (p + d + matches.length) % matches.length);
+  };
 
   function commitMenu(e: MouseEvent, row: GraphRow) {
     e.preventDefault();
@@ -260,9 +305,36 @@ export function CommitGraph() {
   const last = Math.min(graph.length - 1, Math.ceil((scrollTop + viewportH) / ROW_H) + 1);
   const visibleIdx: number[] = [];
   for (let i = first; i <= last; i++) visibleIdx.push(i);
+  const matchesSet = new Set(matches);
 
   return (
-    <>
+    <div className="graph-wrap">
+      <div className="graph-search">
+        <input
+          className="graph-search__input"
+          placeholder={t("graph.search")}
+          value={query}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              stepMatch(e.shiftKey ? -1 : 1);
+            } else if (e.key === "Escape") {
+              setQuery("");
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+        />
+        {query && (
+          <span className="graph-search__count">
+            {matches.length ? `${matchPos + 1}/${matches.length}` : "0"}
+          </span>
+        )}
+      </div>
       <div className="graph-scroll" ref={scrollRef} onScroll={onScroll}>
       <canvas
         ref={canvasRef}
@@ -286,10 +358,17 @@ export function CommitGraph() {
               </div>
             );
           }
+          const isMatch = matches.length > 0 && query && currentMatch !== i && matchesSet.has(i);
+          const isCurrent = i === currentMatch && !!query;
           return (
             <div
               key={row.sha}
-              className={"commit-row" + (active ? " commit-row--active" : "")}
+              className={
+                "commit-row" +
+                (active ? " commit-row--active" : "") +
+                (isMatch ? " commit-row--match" : "") +
+                (isCurrent ? " commit-row--match-current" : "")
+              }
               style={{ top: i * ROW_H, left: graphW, height: ROW_H }}
               onClick={() => selectNode(row.sha)}
               onContextMenu={(e) => commitMenu(e, row)}
@@ -333,6 +412,6 @@ export function CommitGraph() {
       {rebaseBase && (
         <RebaseModal repoPath={repoPath} base={rebaseBase} onClose={() => setRebaseBase(null)} />
       )}
-    </>
+    </div>
   );
 }

@@ -18,6 +18,7 @@ type Dict = Record<string, string>;
 const en: Dict = {
   "app.tagline": "Open a repository to begin.",
   "app.openCta": "Open repository",
+  "graph.search": "Search commits…",
   "sidebar.open": "Open",
   "sidebar.openRepo": "Open repository",
   "sidebar.repos": "Repos",
@@ -48,6 +49,7 @@ const en: Dict = {
 const ru: Dict = {
   "app.tagline": "Откройте репозиторий, чтобы начать.",
   "app.openCta": "Открыть репозиторий",
+  "graph.search": "Поиск commit…",
   "sidebar.open": "Открыть",
   "sidebar.openRepo": "Открыть репозиторий",
   "sidebar.repos": "Репозитории",

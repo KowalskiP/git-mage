@@ -360,13 +360,50 @@ body {
 }
 
 /* Commit graph */
+.graph-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.graph-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.graph-search__input {
+  flex: 0 0 240px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+}
+.graph-search__input:focus {
+  border-color: var(--accent);
+}
+.graph-search__count {
+  font-size: 11px;
+  color: var(--text-dim);
+}
 .graph-scroll {
   position: relative;
   flex: 1;
   min-width: 0;
-  height: 100%;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+}
+.commit-row--match {
+  background: rgba(139, 92, 246, 0.1);
+}
+.commit-row--match-current {
+  background: rgba(139, 92, 246, 0.24);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 .graph-canvas {
   position: absolute;
