@@ -38,7 +38,14 @@ export function CommandPalette() {
       close();
       fn();
     };
-    const cmds: Cmd[] = [];
+    const cmds: Cmd[] = [
+      {
+        id: "shortcuts",
+        title: "Keyboard shortcuts",
+        hint: "help",
+        run: wrap(() => s.setShortcuts(true)),
+      },
+    ];
 
     if (selected) {
       const repo = selected.name;

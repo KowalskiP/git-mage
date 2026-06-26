@@ -6,11 +6,14 @@ import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { RepoView } from "./features/RepoView";
 import { AgentSessionView } from "./features/agents/AgentSessionView";
 import { CommandPalette } from "./features/palette/CommandPalette";
+import { ShortcutsPanel } from "./features/shortcuts/ShortcutsPanel";
+import { eventBinding, effectiveBindings, KEYMAP_ACTIONS } from "./lib/keymap";
 
 export function App() {
   const loadRepos = useRepos((s) => s.loadRepos);
   const loadAgents = useRepos((s) => s.loadAgents);
   const loadSessions = useRepos((s) => s.loadSessions);
+  const loadKeymap = useRepos((s) => s.loadKeymap);
   const setSessionStatus = useRepos((s) => s.setSessionStatus);
   const refreshStatus = useRepos((s) => s.refreshStatus);
   const loadGraph = useRepos((s) => s.loadGraph);
@@ -24,7 +27,8 @@ export function App() {
     loadRepos();
     loadAgents();
     loadSessions();
-  }, [loadRepos, loadAgents, loadSessions]);
+    loadKeymap();
+  }, [loadRepos, loadAgents, loadSessions, loadKeymap]);
 
   useEffect(() => {
     const unlisten = onFsChange((repoPath) => {
@@ -41,16 +45,22 @@ export function App() {
     };
   }, [refreshStatus, loadGraph]);
 
-  // Global ⌘K / ⌘P opens the command palette.
+  // Global shortcut dispatch driven by the editable keymap. Matching is on
+  // physical key codes so non-Latin layouts (e.g. Cyrillic) still trigger.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Use physical key codes so non-Latin keyboard layouts (e.g. Cyrillic,
-      // where Cmd+K reports e.key "л") still trigger the palette.
-      if ((e.metaKey || e.ctrlKey) && (e.code === "KeyK" || e.code === "KeyP")) {
-        e.preventDefault();
-        const st = useRepos.getState();
-        st.setPalette(!st.paletteOpen);
-      }
+      // Let the shortcut-capture field (data-capturing) record chords itself.
+      const target = e.target as HTMLElement | null;
+      if (target?.dataset?.capturing) return;
+      const chord = eventBinding(e);
+      if (!chord) return;
+      const st = useRepos.getState();
+      const eff = effectiveBindings(st.keymap);
+      const action = KEYMAP_ACTIONS.find((a) => eff[a.id] && eff[a.id] === chord);
+      if (!action) return;
+      if (action.needsRepo && !st.selected) return;
+      e.preventDefault();
+      st.runShortcut(action.id);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -84,6 +94,7 @@ export function App() {
         )}
       </main>
       <CommandPalette />
+      <ShortcutsPanel />
     </div>
   );
 }
