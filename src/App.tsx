@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "./store/repos";
 import { onFsChange } from "./ipc/events";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
@@ -9,6 +10,7 @@ import { CommandPalette } from "./features/palette/CommandPalette";
 import { ShortcutsPanel } from "./features/shortcuts/ShortcutsPanel";
 import { ForgePanel } from "./features/forge/ForgePanel";
 import { SettingsPanel } from "./features/settings/SettingsPanel";
+import { TopProgress, Toaster } from "./features/Feedback";
 import { eventBinding, effectiveBindings, KEYMAP_ACTIONS } from "./lib/keymap";
 import { useT } from "./i18n/useT";
 
@@ -24,6 +26,12 @@ export function App() {
   const loadGraph = useRepos((s) => s.loadGraph);
   const selected = useRepos((s) => s.selected);
   const openSessionId = useRepos((s) => s.openSessionId);
+  const openRepo = useRepos((s) => s.openRepo);
+
+  async function pickRepo() {
+    const dir = await open({ directory: true, multiple: false, title: t("sidebar.openRepo") });
+    if (typeof dir === "string") await openRepo(dir);
+  }
 
   // Throttle fs-change-driven refreshes (SPEC NFR: refresh ≤100ms, but coalesce bursts).
   const throttle = useRef<number | null>(null);
@@ -86,6 +94,7 @@ export function App() {
 
   return (
     <div className="app">
+      <TopProgress />
       <RepoSidebar />
       <main className="main">
         {openSessionId ? (
@@ -96,6 +105,9 @@ export function App() {
           <div className="empty">
             <h1>GitMage</h1>
             <p>{t("app.tagline")}</p>
+            <button className="btn empty__cta" onClick={pickRepo}>
+              {t("app.openCta")}
+            </button>
           </div>
         )}
       </main>
@@ -103,6 +115,7 @@ export function App() {
       <ShortcutsPanel />
       <ForgePanel />
       <SettingsPanel />
+      <Toaster />
     </div>
   );
 }

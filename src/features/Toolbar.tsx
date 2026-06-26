@@ -15,7 +15,6 @@ export function Toolbar() {
   const status = useRepos((s) => s.status);
   const branches = useRepos((s) => s.branches);
   const busy = useRepos((s) => s.busy);
-  const error = useRepos((s) => s.error);
   const checkout = useRepos((s) => s.checkout);
   const createBranch = useRepos((s) => s.createBranch);
   const fetch = useRepos((s) => s.fetch);
@@ -117,11 +116,6 @@ export function Toolbar() {
       <div className="toolbar__spacer" />
 
       {busy && <span className="toolbar__busy">{busy}</span>}
-      {!busy && error && (
-        <span className="toolbar__err" title={error}>
-          {error.split("\n")[0]}
-        </span>
-      )}
 
       <button className="tbtn" onClick={() => setPalette(true)} title="Command palette (⌘K)">
         ⌘K

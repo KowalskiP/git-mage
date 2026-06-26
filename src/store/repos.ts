@@ -59,6 +59,7 @@ interface ReposState {
   setPalette: (open: boolean) => void;
   setShortcuts: (open: boolean) => void;
   setSettings: (open: boolean) => void;
+  dismissError: () => void;
   loadKeymap: () => Promise<void>;
   setBinding: (id: string, binding: string) => Promise<void>;
   resetBinding: (id: string) => Promise<void>;
@@ -174,6 +175,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   setPalette: (open) => set({ paletteOpen: open }),
   setShortcuts: (open) => set({ shortcutsOpen: open }),
   setSettings: (open) => set({ settingsOpen: open }),
+  dismissError: () => set({ error: null }),
 
   loadKeymap: async () => {
     try {
