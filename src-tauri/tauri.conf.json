@@ -26,6 +26,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "category": "DeveloperTool",
+    "copyright": "© GitMage contributors. GPL-3.0-or-later.",
+    "shortDescription": "Fast, lightweight Git client with AI agent sessions.",
+    "longDescription": "Open-source Tauri + Rust + React Git client: visual commit graph, full git operations, interactive rebase, worktrees, embedded terminal, GitHub/GitLab/Bitbucket integration, and orchestration of external AI coding agents in isolated worktrees. No cloud, no telemetry.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
