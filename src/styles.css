@@ -1161,6 +1161,52 @@ body {
   padding: 0 5px;
 }
 
+/* Consolidated Repo menu (accordion) */
+.repo-menu {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.repo-sec {
+  border-bottom: 1px solid var(--border);
+}
+.repo-sec:last-child {
+  border-bottom: none;
+}
+.repo-sec__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.repo-sec__head:hover {
+  background: var(--bg-hover);
+}
+.repo-sec__caret {
+  color: var(--text-dim);
+  width: 10px;
+}
+.repo-sec__label {
+  flex: 1;
+  text-align: left;
+}
+.repo-sec__count {
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 6px;
+}
+.repo-sec__body {
+  padding: 2px 0 6px;
+  background: var(--bg);
+}
+
 /* Submodules dropdown */
 .sm-head {
   display: flex;
