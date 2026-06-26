@@ -10,6 +10,9 @@ import type {
   RebaseCommit,
   RepoMeta,
   RepoStatus,
+  ForgeInfo,
+  ForgeIssue,
+  ForgePull,
   GitflowConfig,
   LfsStatus,
   SigningConfig,
@@ -149,6 +152,15 @@ export const gitflowStart = (path: string, kind: string, name: string) =>
   invoke<void>("gitflow_start", { path, kind, name });
 export const gitflowFinish = (path: string, kind: string, name: string) =>
   invoke<void>("gitflow_finish", { path, kind, name });
+
+export const forgeDetect = (path: string) => invoke<ForgeInfo>("forge_detect", { path });
+export const forgeSetToken = (provider: string, token: string) =>
+  invoke<void>("forge_set_token", { provider, token });
+export const forgeClearToken = (provider: string) =>
+  invoke<void>("forge_clear_token", { provider });
+export const forgePulls = (path: string) => invoke<ForgePull[]>("forge_pulls", { path });
+export const forgeIssues = (path: string) => invoke<ForgeIssue[]>("forge_issues", { path });
+export const openExternal = (url: string) => invoke<void>("open_external", { url });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

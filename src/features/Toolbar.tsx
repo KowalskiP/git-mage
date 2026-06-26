@@ -36,6 +36,8 @@ export function Toolbar() {
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
   const setPalette = useRepos((s) => s.setPalette);
   const setShortcuts = useRepos((s) => s.setShortcuts);
+  const forge = useRepos((s) => s.forge);
+  const toggleForge = useRepos((s) => s.toggleForge);
 
   const [open, setOpen] = useState(false);
   const [stashOpen, setStashOpen] = useState(false);
@@ -552,6 +554,16 @@ export function Toolbar() {
       >
         ⌘/
       </button>
+
+      {forge?.provider && (
+        <button
+          className={"tbtn" + (forge.hasToken ? " tbtn--on" : "")}
+          onClick={() => toggleForge(true)}
+          title={`Pull requests & issues (${forge.provider})`}
+        >
+          PRs
+        </button>
+      )}
 
       <button
         className={"tbtn" + (showTerminal ? " tbtn--on" : "")}

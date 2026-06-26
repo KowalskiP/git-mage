@@ -2,6 +2,9 @@ import { create } from "zustand";
 import type {
   AgentInfo,
   AgentSession,
+  ForgeInfo,
+  ForgeIssue,
+  ForgePull,
   GitflowConfig,
   GraphRow,
   LfsStatus,
@@ -31,6 +34,11 @@ interface ReposState {
   lfs: LfsStatus | null;
   signing: SigningConfig | null;
   gitflow: GitflowConfig | null;
+  forge: ForgeInfo | null;
+  pulls: ForgePull[];
+  issues: ForgeIssue[];
+  forgeLoading: boolean;
+  showForge: boolean;
   agents: AgentInfo[];
   sessions: AgentSession[];
   openSessionId: string | null;
@@ -98,6 +106,12 @@ interface ReposState {
   gitflowInit: () => Promise<void>;
   gitflowStart: (kind: string, name: string) => Promise<void>;
   gitflowFinish: (kind: string, name: string) => Promise<void>;
+  toggleForge: (open?: boolean) => void;
+  loadForge: () => Promise<void>;
+  setForgeToken: (token: string) => Promise<void>;
+  clearForgeToken: () => Promise<void>;
+  loadPulls: () => Promise<void>;
+  loadIssues: () => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -131,6 +145,11 @@ export const useRepos = create<ReposState>((set, get) => ({
   lfs: null,
   signing: null,
   gitflow: null,
+  forge: null,
+  pulls: [],
+  issues: [],
+  forgeLoading: false,
+  showForge: false,
   agents: [],
   sessions: [],
   openSessionId: null,
@@ -245,6 +264,9 @@ export const useRepos = create<ReposState>((set, get) => ({
       lfs: null,
       signing: null,
       gitflow: null,
+      forge: null,
+      pulls: [],
+      issues: [],
     });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
@@ -257,6 +279,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadLfs(),
       get().loadSigning(),
       get().loadGitflow(),
+      get().loadForge(),
     ]);
   },
 
@@ -731,6 +754,82 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadGitflow(),
     ]);
     set({ busy: null });
+  },
+
+  toggleForge: (open) =>
+    set((s) => {
+      const next = open ?? !s.showForge;
+      // Lazy-load PRs/issues the first time the panel opens with a token.
+      if (next && s.forge?.hasToken && s.pulls.length === 0 && s.issues.length === 0) {
+        void get().loadPulls();
+        void get().loadIssues();
+      }
+      return { showForge: next };
+    }),
+
+  loadForge: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ forge: await api.forgeDetect(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  setForgeToken: async (token) => {
+    const sel = get().selected;
+    const provider = get().forge?.provider;
+    if (!sel || !provider) return;
+    set({ busy: "Saving token…", error: null });
+    try {
+      await api.forgeSetToken(provider, token);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadForge();
+    set({ busy: null });
+    if (get().forge?.hasToken) {
+      await Promise.all([get().loadPulls(), get().loadIssues()]);
+    }
+  },
+
+  clearForgeToken: async () => {
+    const provider = get().forge?.provider;
+    if (!provider) return;
+    set({ busy: "Removing token…", error: null });
+    try {
+      await api.forgeClearToken(provider);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    set({ pulls: [], issues: [] });
+    await get().loadForge();
+    set({ busy: null });
+  },
+
+  loadPulls: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ forgeLoading: true, error: null });
+    try {
+      set({ pulls: await api.forgePulls(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    set({ forgeLoading: false });
+  },
+
+  loadIssues: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ forgeLoading: true, error: null });
+    try {
+      set({ issues: await api.forgeIssues(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    set({ forgeLoading: false });
   },
 
   loadStashes: async () => {

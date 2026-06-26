@@ -1780,6 +1780,144 @@ body {
   text-align: center;
 }
 
+/* Forge panel (PRs & issues) */
+.forge {
+  width: 640px;
+  max-width: 92vw;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.forge-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.forge-title-bar {
+  font-size: 14px;
+  font-weight: 600;
+}
+.forge-repo {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.forge-err {
+  padding: 8px 14px;
+  color: var(--red);
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.forge-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.forge-empty,
+.forge-hint {
+  padding: 14px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+.forge-hint {
+  padding: 4px 0;
+}
+.forge-hint--dim {
+  font-size: 11px;
+  opacity: 0.7;
+}
+.forge-connect {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+.forge-connect .new-branch__input {
+  width: 100%;
+}
+.forge-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.forge-tabs__spacer {
+  flex: 1;
+}
+.forge-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+}
+.forge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.forge-row:hover {
+  background: var(--bg-hover);
+}
+.forge-state {
+  flex: 0 0 auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: 8px;
+  padding: 1px 7px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.forge-state--open {
+  color: var(--green);
+  border-color: var(--green);
+}
+.forge-state--merged {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.forge-state--closed,
+.forge-state--declined {
+  color: var(--red);
+  border-color: var(--red);
+}
+.forge-state--draft {
+  color: var(--text-dim);
+}
+.forge-num {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+}
+.forge-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.forge-meta {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+  font-size: 11px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Keyboard shortcuts panel */
 .shortcuts {
   width: 520px;

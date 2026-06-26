@@ -1,6 +1,7 @@
 mod agents;
 mod db;
 mod error;
+mod forge;
 mod git;
 mod ipc;
 mod model;
@@ -99,6 +100,12 @@ pub fn run() {
             ipc::commands::gitflow_init,
             ipc::commands::gitflow_start,
             ipc::commands::gitflow_finish,
+            ipc::commands::forge_detect,
+            ipc::commands::forge_set_token,
+            ipc::commands::forge_clear_token,
+            ipc::commands::forge_pulls,
+            ipc::commands::forge_issues,
+            ipc::commands::open_external,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

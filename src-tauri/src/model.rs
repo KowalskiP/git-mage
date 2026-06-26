@@ -189,6 +189,48 @@ pub struct CommitDetail {
     pub signer: String,
 }
 
+/// Detected code-hosting provider for a repo's remote (SPEC §M6).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ForgeInfo {
+    /// "github" | "gitlab" | "bitbucket" | "" (unknown/no remote).
+    pub provider: String,
+    pub host: String,
+    pub owner: String,
+    pub repo: String,
+    /// Whether a token for this provider is stored in the keychain.
+    pub has_token: bool,
+}
+
+/// A pull/merge request from a forge API (SPEC §M6).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ForgePull {
+    pub number: i64,
+    pub title: String,
+    pub author: String,
+    /// "open" | "merged" | "closed" | "declined".
+    pub state: String,
+    pub draft: bool,
+    pub url: String,
+    pub source: String,
+    pub target: String,
+    pub updated: String,
+}
+
+/// An issue from a forge API (SPEC §M6).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ForgeIssue {
+    pub number: i64,
+    pub title: String,
+    pub author: String,
+    pub state: String,
+    pub url: String,
+    pub comments: i64,
+    pub updated: String,
+}
+
 /// Gitflow branching state for a repo (SPEC §M5).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
