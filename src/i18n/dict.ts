@@ -62,14 +62,14 @@ const ru: Dict = {
   "lang.label": "Язык",
   "settings.title": "Настройки",
   "settings.language": "Язык",
-  "settings.signing": "Подпись коммитов",
-  "settings.sign.enable": "Подписывать коммиты по умолчанию",
+  "settings.signing": "Подпись commit",
+  "settings.sign.enable": "Подписывать commit по умолчанию",
   "settings.sign.format": "Формат",
   "settings.sign.keyGpg": "ID GPG-ключа",
   "settings.sign.keySsh": "~/.ssh/id_ed25519.pub",
   "settings.sign.save": "Сохранить",
   "settings.shortcuts": "Горячие клавиши",
-  "settings.shortcuts.open": "Открыть шорткаты…",
+  "settings.shortcuts.open": "Открыть…",
   "toolbar.settings": "Настройки",
 };
 
