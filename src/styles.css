@@ -1588,6 +1588,23 @@ body {
   color: var(--text-dim);
   margin-top: 8px;
 }
+.agents-intro {
+  margin: 10px 12px 4px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* Accessibility: visible keyboard focus (only on keyboard nav, not mouse) */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
 .agents-hint--pad {
   padding: 16px;
 }

@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useRepos } from "../../store/repos";
 import { getSetting, setSetting } from "../../ipc/commands";
 import { statusLabel } from "./status";
+import { useT } from "../../i18n/useT";
 
 export function AgentsPanel() {
+  const t = useT();
   const agents = useRepos((s) => s.agents);
   const worktrees = useRepos((s) => s.worktrees);
   const selected = useRepos((s) => s.selected);
@@ -39,6 +41,7 @@ export function AgentsPanel() {
 
   return (
     <div className="agents-panel">
+      {sessions.length === 0 && <div className="agents-intro">{t("agents.intro")}</div>}
       <div className="agents-section">
         <h3>New agent session</h3>
         {available.length === 0 ? (

@@ -157,7 +157,13 @@ export function ForgePanel() {
 
   return (
     <div className="palette-backdrop" onClick={() => toggleForge(false)}>
-      <div className="forge" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="forge"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Pull requests & issues"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="forge-head">
           <span className="forge-title-bar">
             {name || "Forge"}

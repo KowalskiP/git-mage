@@ -65,7 +65,13 @@ export function ShortcutsPanel() {
 
   return (
     <div className="palette-backdrop" onClick={() => setShortcuts(false)}>
-      <div className="shortcuts" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="shortcuts"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Keyboard shortcuts"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="shortcuts__head">
           <span className="shortcuts__title">Keyboard shortcuts</span>
           <div className="shortcuts__head-actions">

@@ -43,7 +43,13 @@ export function SettingsPanel() {
 
   return (
     <div className="palette-backdrop" onClick={() => setSettings(false)}>
-      <div className="settings" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="settings"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("settings.title")}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="settings__head">
           <span className="settings__title">{t("settings.title")}</span>
           <button className="diff-close" onClick={() => setSettings(false)} title={t("settings.title")}>
