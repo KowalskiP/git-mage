@@ -47,6 +47,9 @@ const en: Dict = {
   "settings.shortcuts": "Keyboard shortcuts",
   "settings.shortcuts.open": "Open shortcuts…",
   "toolbar.settings": "Settings",
+  "update.available": "Update {v} available",
+  "update.install": "Update & restart",
+  "update.installing": "Updating…",
 };
 
 const ru: Dict = {
@@ -81,6 +84,9 @@ const ru: Dict = {
   "settings.shortcuts": "Горячие клавиши",
   "settings.shortcuts.open": "Открыть…",
   "toolbar.settings": "Настройки",
+  "update.available": "Доступно обновление {v}",
+  "update.install": "Обновить и перезапустить",
+  "update.installing": "Обновление…",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru };

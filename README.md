@@ -85,6 +85,46 @@ See https://v2.tauri.app/distribute/sign/macos/ for the full flow. Until a
 distribution build is signed, keychain-backed features (forge tokens, signed
 commits) may prompt or be restricted under the ad-hoc signature.
 
+## Releasing & auto-update
+
+GitMage ships an in-app updater (`tauri-plugin-updater`) that pulls signed
+releases from **GitHub Releases** — no Apple account or paid hosting required.
+Update integrity is guaranteed by Tauri's own signing key (separate from Apple
+code signing).
+
+**One-time setup (on your fork):**
+
+1. In [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json), replace
+   `OWNER/REPO` in `plugins.updater.endpoints` with your GitHub `owner/repo`.
+2. Generate an updater keypair (if you don't reuse the bundled public key):
+   ```sh
+   npm run tauri signer generate -- -w ~/.gitmage/updater.key
+   ```
+   Put the **public** key in `plugins.updater.pubkey`. Add the **private** key
+   contents as the repo secret `TAURI_SIGNING_PRIVATE_KEY` (and
+   `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` if you set one).
+
+**Cutting a release:**
+
+1. Bump `version` in `package.json` and `src-tauri/tauri.conf.json`.
+2. Tag and push: `git tag v0.2.0 && git push --tags`.
+3. The [`release`](.github/workflows/release.yml) workflow builds the macOS
+   bundles (aarch64 + x86_64), signs them, and drafts a GitHub release with the
+   artifacts **and** `latest.json`. Publish the draft — running apps then see the
+   update on next launch.
+
+**Local signed build** (since `createUpdaterArtifacts` is enabled):
+
+```sh
+TAURI_SIGNING_PRIVATE_KEY="$(cat ~/.gitmage/updater.key)" npm run app:build
+```
+
+**Gatekeeper note (unsigned distribution):** without an Apple Developer ID the
+downloaded `.dmg` is unsigned, so on first launch macOS blocks it — users
+right-click → **Open** once (or `xattr -dr com.apple.quarantine
+/Applications/GitMage.app`). Auto-updates replace the bundle in place and aren't
+re-quarantined, so they apply without further prompts.
+
 ## Roadmap
 
 M0–M7 are implemented (scaffold → graph → git ops → rebase/conflicts →

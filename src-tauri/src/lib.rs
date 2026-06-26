@@ -17,8 +17,15 @@ use watcher::Watchers;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
+    let mut builder = tauri::Builder::default().plugin(tauri_plugin_dialog::init());
+    // Auto-update + relaunch are desktop-only (GitHub Releases endpoint).
+    #[cfg(desktop)]
+    {
+        builder = builder
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_process::init());
+    }
+    builder
         .manage(Watchers::default())
         .manage(Supervisor::default())
         .manage(Terminals::default())

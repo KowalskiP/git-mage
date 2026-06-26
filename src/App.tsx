@@ -11,6 +11,7 @@ import { ShortcutsPanel } from "./features/shortcuts/ShortcutsPanel";
 import { ForgePanel } from "./features/forge/ForgePanel";
 import { SettingsPanel } from "./features/settings/SettingsPanel";
 import { TopProgress, Toaster } from "./features/Feedback";
+import { UpdateBanner } from "./features/UpdateBanner";
 import { eventBinding, effectiveBindings, KEYMAP_ACTIONS } from "./lib/keymap";
 import { useT } from "./i18n/useT";
 
@@ -116,6 +117,7 @@ export function App() {
       <ForgePanel />
       <SettingsPanel />
       <Toaster />
+      <UpdateBanner />
     </div>
   );
 }
