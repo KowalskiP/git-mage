@@ -8,6 +8,14 @@ const inputProps = {
   spellCheck: false,
 } as const;
 
+// Shape-distinct glyphs so status isn't conveyed by colour alone (a11y).
+const SM_GLYPH: Record<string, string> = {
+  ok: "✓",
+  modified: "±",
+  uninitialized: "○",
+  conflict: "⚠",
+};
+
 /**
  * Consolidated "Repo ▾" menu (UX): folds the former Stashes / Worktrees /
  * Submodules / LFS / Gitflow toolbar dropdowns into one accordion so the
@@ -183,8 +191,8 @@ export function RepoMenu() {
             </button>
           </div>
           {submodules.map((sm) => (
-            <div key={sm.path} className="sm-row" title={`${sm.sha} ${sm.describe}`}>
-              <span className={"sm-dot sm-dot--" + sm.status} />
+            <div key={sm.path} className="sm-row" title={`${sm.status} · ${sm.sha} ${sm.describe}`}>
+              <span className={"gmark gmark--" + sm.status}>{SM_GLYPH[sm.status] ?? "•"}</span>
               <span className="sm-path">{sm.path}</span>
               <span className="sm-desc">{sm.describe || sm.sha.slice(0, 7)}</span>
               <span className="sm-actions">
@@ -238,8 +246,14 @@ export function RepoMenu() {
           )}
           {lfs.files.length === 0 && <div className="dropdown__empty">No LFS files</div>}
           {lfs.files.map((f) => (
-            <div key={f.path} className="lfs-row" title={f.oid}>
-              <span className={"lfs-dot " + (f.downloaded ? "lfs-dot--ok" : "lfs-dot--pointer")} />
+            <div
+              key={f.path}
+              className="lfs-row"
+              title={(f.downloaded ? "downloaded" : "pointer only") + " · " + f.oid}
+            >
+              <span className={"gmark " + (f.downloaded ? "gmark--ok" : "gmark--pointer")}>
+                {f.downloaded ? "●" : "○"}
+              </span>
               <span className="lfs-path">{f.path}</span>
               {f.lockOwner && <span className="lfs-lock">🔒 {f.lockOwner}</span>}
               <span className="lfs-actions">
