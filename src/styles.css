@@ -366,12 +366,26 @@ body {
   display: flex;
   flex-direction: column;
 }
+.graph-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.graph-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
 .graph-search {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
+  flex: 1;
+  min-width: 0;
 }
 .graph-search__input {
   flex: 0 0 240px;

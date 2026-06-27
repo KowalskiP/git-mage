@@ -5,6 +5,7 @@ import type { GraphRow } from "../../types/git";
 import { ContextMenu, type MenuItem } from "../ContextMenu";
 import { PromptModal } from "../PromptModal";
 import { RebaseModal } from "../RebaseModal";
+import { GraphActions } from "./GraphActions";
 
 const ROW_H = 26;
 const COL_W = 14;
@@ -321,7 +322,9 @@ export function CommitGraph() {
 
   return (
     <div className="graph-wrap">
-      <div className="graph-search">
+      <div className="graph-bar">
+        <GraphActions />
+        <div className="graph-search">
         <input
           className="graph-search__input"
           placeholder={t("graph.search")}
@@ -346,6 +349,7 @@ export function CommitGraph() {
             {matches.length ? `${matchPos + 1}/${matches.length}` : "0"}
           </span>
         )}
+        </div>
       </div>
       <div className="graph-scroll" ref={scrollRef} onScroll={onScroll}>
       <canvas
