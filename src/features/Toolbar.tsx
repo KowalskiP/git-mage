@@ -17,10 +17,6 @@ export function Toolbar() {
   const busy = useRepos((s) => s.busy);
   const checkout = useRepos((s) => s.checkout);
   const createBranch = useRepos((s) => s.createBranch);
-  const fetch = useRepos((s) => s.fetch);
-  const pull = useRepos((s) => s.pull);
-  const push = useRepos((s) => s.push);
-  const stashSave = useRepos((s) => s.stashSave);
   const showTerminal = useRepos((s) => s.showTerminal);
   const toggleTerminal = useRepos((s) => s.toggleTerminal);
   const setPalette = useRepos((s) => s.setPalette);
@@ -107,10 +103,6 @@ export function Toolbar() {
         </button>
       )}
 
-      <button className="tbtn" onClick={() => stashSave(null, false)} disabled={!!busy}>
-        Stash
-      </button>
-
       <RepoMenu />
 
       <div className="toolbar__spacer" />
@@ -141,16 +133,6 @@ export function Toolbar() {
         title="Toggle embedded terminal"
       >
         Terminal
-      </button>
-
-      <button className="tbtn" onClick={() => fetch()} disabled={!!busy}>
-        Fetch
-      </button>
-      <button className="tbtn" onClick={() => pull()} disabled={!!busy}>
-        Pull{status && status.behind > 0 ? ` ${status.behind}` : ""}
-      </button>
-      <button className="tbtn" onClick={() => push()} disabled={!!busy}>
-        Push{status && status.ahead > 0 ? ` ${status.ahead}` : ""}
       </button>
     </div>
   );
