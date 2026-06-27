@@ -16,6 +16,15 @@ fn run(path: &str, args: &[&str], network: bool) -> AppResult<()> {
         // Never block on a TTY prompt or a merge editor in a headless process.
         cmd.env("GIT_TERMINAL_PROMPT", "0");
         cmd.env("GIT_EDITOR", "true");
+        // HTTPS forge remote with a stored PAT → authenticate via askpass
+        // instead of failing. SSH remotes return None and use the SSH agent.
+        if let Some((user, token)) = crate::forge::https_token(path) {
+            if let Some(helper) = askpass_helper() {
+                cmd.env("GIT_ASKPASS", helper);
+                cmd.env("GITMAGE_USER", user);
+                cmd.env("GITMAGE_TOKEN", token);
+            }
+        }
     }
     let out = cmd
         .output()
@@ -27,6 +36,21 @@ fn run(path: &str, args: &[&str], network: bool) -> AppResult<()> {
         return Err(AppError::Git(msg.trim().to_string()));
     }
     Ok(())
+}
+
+/// Write (idempotently) a tiny GIT_ASKPASS helper that echoes the username /
+/// token from the environment, and return its path. The secret lives only in
+/// the env passed to the git child, never in the script file.
+fn askpass_helper() -> Option<String> {
+    let p = std::env::temp_dir().join("gitmage-askpass.sh");
+    let body = "#!/bin/sh\ncase \"$1\" in\n  *[Uu]sername*) printf '%s' \"$GITMAGE_USER\" ;;\n  *) printf '%s' \"$GITMAGE_TOKEN\" ;;\nesac\n";
+    std::fs::write(&p, body).ok()?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).ok()?;
+    }
+    Some(p.to_string_lossy().into_owned())
 }
 
 pub fn checkout(path: &str, refname: &str) -> AppResult<()> {

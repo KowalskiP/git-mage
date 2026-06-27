@@ -194,6 +194,28 @@ pub fn clear_token(provider: Provider) -> AppResult<()> {
     }
 }
 
+/// Username git should use with a forge personal access token over HTTPS.
+fn https_user(p: Provider) -> &'static str {
+    match p {
+        Provider::GitHub => "x-access-token",
+        Provider::GitLab => "oauth2",
+        Provider::Bitbucket => "x-token-auth",
+    }
+}
+
+/// For an HTTPS forge remote with a stored token, the (username, token) to feed
+/// git's askpass so fetch/pull/push authenticate non-interactively. Returns None
+/// for SSH remotes (the SSH agent handles those) or when no token is stored.
+pub fn https_token(path: &str) -> Option<(String, String)> {
+    let url = remote_url(path)?;
+    if !(url.starts_with("https://") || url.starts_with("http://")) {
+        return None;
+    }
+    let rr = parse_repo_ref(&url)?;
+    let token = get_token(rr.provider)?;
+    Some((https_user(rr.provider).to_string(), token))
+}
+
 /// Resolve a repo path to its RepoRef, erroring if unsupported.
 pub fn require_ref(path: &str) -> AppResult<RepoRef> {
     remote_url(path)
@@ -249,5 +271,28 @@ mod tests {
     #[test]
     fn non_url_is_none() {
         assert!(parse_repo_ref("not a url").is_none());
+    }
+
+    #[test]
+    fn https_token_gating_without_keychain() {
+        use std::process::Command;
+        let dir = std::env::temp_dir().join(format!("gitmage-askpass-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        let g = |args: &[&str]| {
+            Command::new("git").current_dir(&dir).args(args).output().unwrap();
+        };
+        g(&["init", "-q"]);
+
+        // SSH remote → no askpass token (handled by the SSH agent), no keychain hit.
+        g(&["remote", "add", "origin", "git@github.com:o/r.git"]);
+        assert!(https_token(p).is_none());
+
+        // HTTPS on an unrecognised host → None before any keychain lookup.
+        g(&["remote", "set-url", "origin", "https://example.com/o/r.git"]);
+        assert!(https_token(p).is_none());
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
