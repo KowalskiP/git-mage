@@ -65,6 +65,25 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// A local branch with its tracking state, for the sidebar tree (SPEC §6.4).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct LocalBranch {
+    pub name: String,
+    pub current: bool,
+    pub ahead: u32,
+    pub behind: u32,
+}
+
+/// Local + remote branches for the sidebar explorer.
+#[derive(Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct BranchList {
+    pub local: Vec<LocalBranch>,
+    /// Remote-tracking branches, full short names like "origin/main".
+    pub remote: Vec<String>,
+}
+
 /// A configured git remote (SPEC §6.4).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

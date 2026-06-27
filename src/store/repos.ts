@@ -6,6 +6,7 @@ import type {
   ForgeIssue,
   ForgePull,
   GitflowConfig,
+  BranchList,
   GraphRow,
   LfsStatus,
   Remote,
@@ -31,6 +32,7 @@ interface ReposState {
   graphLoading: boolean;
   selectedSha: string | null;
   branches: string[];
+  branchTree: BranchList;
   remotes: Remote[];
   stashes: StashEntry[];
   worktrees: Worktree[];
@@ -159,6 +161,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   graphLoading: false,
   selectedSha: null,
   branches: [],
+  branchTree: { local: [], remote: [] },
   remotes: [],
   stashes: [],
   worktrees: [],
@@ -438,7 +441,8 @@ export const useRepos = create<ReposState>((set, get) => ({
     const sel = get().selected;
     if (!sel) return;
     try {
-      set({ branches: await api.listBranches(sel.path) });
+      const bl = await api.branchList(sel.path);
+      set({ branchTree: bl, branches: bl.local.map((b) => b.name) });
     } catch (e) {
       set({ error: String(e) });
     }

@@ -15,7 +15,8 @@ use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
 use crate::forge::{self, Provider};
 use crate::model::{
-    AgentInfo, CommitDetail, DiffSides, ForgeInfo, ForgeIssue, ForgePull, GitflowConfig, GraphRow,
+    AgentInfo, BranchList, CommitDetail, DiffSides, ForgeInfo, ForgeIssue, ForgePull, GitflowConfig,
+    GraphRow,
     Hunk, LfsStatus, RebaseCommit, Remote, RepoMeta, RepoStatus, SigningConfig, StashEntry,
     Submodule, Worktree,
 };
@@ -115,6 +116,11 @@ pub async fn commit(path: String, message: String, amend: bool) -> AppResult<()>
 #[tauri::command]
 pub async fn list_branches(path: String) -> AppResult<Vec<String>> {
     git::list_branches(&path)
+}
+
+#[tauri::command]
+pub async fn branch_list(path: String) -> AppResult<BranchList> {
+    git::branch_list(&path)
 }
 
 #[tauri::command]

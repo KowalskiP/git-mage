@@ -55,6 +55,7 @@ pub fn run() {
             ipc::commands::unstage_all,
             ipc::commands::commit,
             ipc::commands::list_branches,
+            ipc::commands::branch_list,
             ipc::commands::checkout,
             ipc::commands::create_branch,
             ipc::commands::fetch,
