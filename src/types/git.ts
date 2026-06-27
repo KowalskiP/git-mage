@@ -77,6 +77,19 @@ export interface Remote {
   url: string;
 }
 
+export interface LocalBranch {
+  name: string;
+  current: boolean;
+  ahead: number;
+  behind: number;
+}
+
+export interface BranchList {
+  local: LocalBranch[];
+  /** Remote-tracking branches, full short names like "origin/main". */
+  remote: string[];
+}
+
 export interface Submodule {
   path: string;
   sha: string;

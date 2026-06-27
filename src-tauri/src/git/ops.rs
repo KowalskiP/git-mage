@@ -5,7 +5,7 @@
 use std::process::Command;
 
 use crate::error::{AppError, AppResult};
-use crate::model::RebaseCommit;
+use crate::model::{BranchList, LocalBranch, RebaseCommit};
 
 const US: char = '\u{1f}';
 
@@ -323,6 +323,39 @@ mod tests {
     }
 
     #[test]
+    fn parse_track_ahead_behind() {
+        assert_eq!(parse_track("[ahead 1, behind 2]"), (1, 2));
+        assert_eq!(parse_track("[ahead 3]"), (3, 0));
+        assert_eq!(parse_track("[behind 5]"), (0, 5));
+        assert_eq!(parse_track(""), (0, 0));
+        assert_eq!(parse_track("[gone]"), (0, 0));
+    }
+
+    #[test]
+    fn branch_list_local_current_and_remotes() {
+        let dir = std::env::temp_dir().join(format!("gitmage-blist-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        g(&dir, &["init", "-q", "-b", "main"]);
+        g(&dir, &["config", "user.email", "t@t"]);
+        g(&dir, &["config", "user.name", "t"]);
+        std::fs::write(dir.join("a.txt"), "a\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "base"]);
+        g(&dir, &["branch", "feature"]);
+
+        let bl = branch_list(p).unwrap();
+        assert_eq!(bl.local.len(), 2);
+        let main = bl.local.iter().find(|b| b.name == "main").unwrap();
+        assert!(main.current, "main is current");
+        assert!(bl.local.iter().any(|b| b.name == "feature" && !b.current));
+        assert!(bl.remote.is_empty(), "no remotes configured");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn cherry_pick_revert_reset_and_sequencer() {
         fn rev(dir: &Path, r: &str) -> String {
             let o = Command::new("git").current_dir(dir).args(["rev-parse", r]).output().unwrap();
@@ -563,4 +596,63 @@ pub fn list_branches(path: &str) -> AppResult<Vec<String>> {
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect())
+}
+
+/// Parse ahead/behind from a `%(upstream:track)` string like "[ahead 1, behind 2]".
+fn parse_track(s: &str) -> (u32, u32) {
+    let num_after = |kw: &str| -> u32 {
+        s.find(kw)
+            .and_then(|i| {
+                s[i + kw.len()..]
+                    .trim_start()
+                    .split(|c: char| !c.is_ascii_digit())
+                    .next()
+            })
+            .and_then(|d| d.parse().ok())
+            .unwrap_or(0)
+    };
+    (num_after("ahead "), num_after("behind "))
+}
+
+/// Local branches (current + ahead/behind) and remote-tracking branches, for
+/// the sidebar explorer (SPEC §6.4).
+pub fn branch_list(path: &str) -> AppResult<BranchList> {
+    let local_out = Command::new("git")
+        .current_dir(path)
+        .args([
+            "for-each-ref",
+            &format!("--format=%(refname:short){US}%(HEAD){US}%(upstream:track)"),
+            "refs/heads",
+        ])
+        .output()
+        .map_err(|e| AppError::Git(format!("git: {e}")))?;
+    if !local_out.status.success() {
+        return Err(AppError::Git(
+            String::from_utf8_lossy(&local_out.stderr).trim().to_string(),
+        ));
+    }
+    let mut local = Vec::new();
+    for line in String::from_utf8_lossy(&local_out.stdout).lines() {
+        let mut f = line.split(US);
+        let name = f.next().unwrap_or("").to_string();
+        if name.is_empty() {
+            continue;
+        }
+        let current = f.next().unwrap_or("") == "*";
+        let (ahead, behind) = parse_track(f.next().unwrap_or(""));
+        local.push(LocalBranch { name, current, ahead, behind });
+    }
+
+    let remote_out = Command::new("git")
+        .current_dir(path)
+        .args(["for-each-ref", "--format=%(refname:short)", "refs/remotes"])
+        .output()
+        .map_err(|e| AppError::Git(format!("git: {e}")))?;
+    let remote = String::from_utf8_lossy(&remote_out.stdout)
+        .lines()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty() && !s.ends_with("/HEAD"))
+        .collect();
+
+    Ok(BranchList { local, remote })
 }

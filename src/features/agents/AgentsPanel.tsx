@@ -7,7 +7,6 @@ import { useT } from "../../i18n/useT";
 export function AgentsPanel() {
   const t = useT();
   const agents = useRepos((s) => s.agents);
-  const worktrees = useRepos((s) => s.worktrees);
   const selected = useRepos((s) => s.selected);
   const sessions = useRepos((s) => s.sessions);
   const newSession = useRepos((s) => s.newSession);
@@ -129,29 +128,6 @@ export function AgentsPanel() {
             >
               <span className="agent-dot" />
               {a.name}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="agents-section">
-        <h3>Worktrees ({worktrees.length})</h3>
-        <ul className="wt-cards">
-          {worktrees.map((w) => (
-            <li key={w.path} className="wt-card">
-              <div className="wt-card__top">
-                <span className="wt-card__branch">{w.branch ?? w.head.slice(0, 7)}</span>
-                {w.isMain && <span className="wt-tag">main</span>}
-                {w.locked && <span className="wt-tag">🔒</span>}
-              </div>
-              <div className="wt-card__path" title={w.path}>
-                {w.path}
-              </div>
-              <div className="wt-card__meta">
-                {w.ahead > 0 && <span>↑{w.ahead}</span>}
-                {w.behind > 0 && <span>↓{w.behind}</span>}
-                <span>{w.changes > 0 ? `${w.changes} uncommitted` : "clean"}</span>
-              </div>
             </li>
           ))}
         </ul>

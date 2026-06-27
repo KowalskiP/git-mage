@@ -4,6 +4,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "./store/repos";
 import { onFsChange } from "./ipc/events";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
+import { Explorer } from "./features/explorer/Explorer";
 import { RepoView } from "./features/RepoView";
 import { AgentSessionView } from "./features/agents/AgentSessionView";
 import { CommandPalette } from "./features/palette/CommandPalette";
@@ -27,6 +28,7 @@ export function App() {
   const loadGraph = useRepos((s) => s.loadGraph);
   const selected = useRepos((s) => s.selected);
   const openSessionId = useRepos((s) => s.openSessionId);
+  const reposDrawerOpen = useRepos((s) => s.reposDrawerOpen);
   const openRepo = useRepos((s) => s.openRepo);
 
   async function pickRepo() {
@@ -93,10 +95,15 @@ export function App() {
     };
   }, [setSessionStatus]);
 
+  // The repos drawer can be collapsed, but stays forced-open while no repo is
+  // selected so there's always a way to open one.
+  const showDrawer = reposDrawerOpen || !selected;
+
   return (
     <div className="app">
       <TopProgress />
-      <RepoSidebar />
+      {showDrawer && <RepoSidebar />}
+      {selected && <Explorer />}
       <main className="main">
         {openSessionId ? (
           <AgentSessionView sessionId={openSessionId} />

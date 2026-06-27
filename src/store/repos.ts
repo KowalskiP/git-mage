@@ -6,6 +6,7 @@ import type {
   ForgeIssue,
   ForgePull,
   GitflowConfig,
+  BranchList,
   GraphRow,
   LfsStatus,
   Remote,
@@ -31,6 +32,7 @@ interface ReposState {
   graphLoading: boolean;
   selectedSha: string | null;
   branches: string[];
+  branchTree: BranchList;
   remotes: Remote[];
   stashes: StashEntry[];
   worktrees: Worktree[];
@@ -50,6 +52,7 @@ interface ReposState {
   loading: boolean;
   error: string | null;
   showTerminal: boolean;
+  reposDrawerOpen: boolean;
   paletteOpen: boolean;
   shortcutsOpen: boolean;
   settingsOpen: boolean;
@@ -58,6 +61,7 @@ interface ReposState {
   lang: Lang;
 
   toggleTerminal: () => void;
+  toggleReposDrawer: (open?: boolean) => void;
   setPalette: (open: boolean) => void;
   setShortcuts: (open: boolean) => void;
   setSettings: (open: boolean) => void;
@@ -159,6 +163,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   graphLoading: false,
   selectedSha: null,
   branches: [],
+  branchTree: { local: [], remote: [] },
   remotes: [],
   stashes: [],
   worktrees: [],
@@ -178,6 +183,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   loading: false,
   error: null,
   showTerminal: false,
+  reposDrawerOpen: true,
   paletteOpen: false,
   shortcutsOpen: false,
   settingsOpen: false,
@@ -185,6 +191,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   lang: "en",
 
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
+  toggleReposDrawer: (open) => set((s) => ({ reposDrawerOpen: open ?? !s.reposDrawerOpen })),
   setPalette: (open) => set({ paletteOpen: open }),
   setShortcuts: (open) => set({ shortcutsOpen: open }),
   setSettings: (open) => set({ settingsOpen: open }),
@@ -438,7 +445,8 @@ export const useRepos = create<ReposState>((set, get) => ({
     const sel = get().selected;
     if (!sel) return;
     try {
-      set({ branches: await api.listBranches(sel.path) });
+      const bl = await api.branchList(sel.path);
+      set({ branchTree: bl, branches: bl.local.map((b) => b.name) });
     } catch (e) {
       set({ error: String(e) });
     }

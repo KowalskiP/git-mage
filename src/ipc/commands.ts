@@ -10,6 +10,7 @@ import type {
   RebaseCommit,
   RepoMeta,
   RepoStatus,
+  BranchList,
   ForgeInfo,
   ForgeIssue,
   ForgePull,
@@ -62,6 +63,7 @@ export const commit = (path: string, message: string, amend: boolean) =>
   invoke<void>("commit", { path, message, amend });
 
 export const listBranches = (path: string) => invoke<string[]>("list_branches", { path });
+export const branchList = (path: string) => invoke<BranchList>("branch_list", { path });
 export const checkout = (path: string, refname: string) =>
   invoke<void>("checkout", { path, refname });
 export const createBranch = (path: string, name: string, checkout: boolean) =>

@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../../store/repos";
-import { AgentsPanel } from "../agents/AgentsPanel";
 import { useT } from "../../i18n/useT";
 import type { RepoMeta } from "../../types/git";
 
@@ -11,10 +10,15 @@ function shortPath(path: string): string {
   return parts.length <= 2 ? path : "…/" + parts.slice(-2).join("/");
 }
 
+/**
+ * Collapsible drawer listing the open repositories (favorites / recent) with an
+ * Open button. The per-repo explorer lives in a separate sidebar; this drawer
+ * can be hidden once a repo is open (toggled from the explorer header).
+ */
 export function RepoSidebar() {
   const { repos, selected, openRepo, select, remove, toggleFavorite, loading } = useRepos();
+  const toggleReposDrawer = useRepos((s) => s.toggleReposDrawer);
   const t = useT();
-  const [nav, setNav] = useState<"repos" | "agents">("repos");
   const [query, setQuery] = useState("");
 
   async function pickRepo() {
@@ -78,58 +82,44 @@ export function RepoSidebar() {
     <aside className="sidebar">
       <div className="sidebar__header">
         <span className="brand">GitMage</span>
-        <button className="btn" onClick={pickRepo} disabled={loading}>
-          {loading ? "…" : t("sidebar.open")}
-        </button>
-      </div>
-
-      <div className="sidebar-nav">
-        <button
-          className={"navbtn" + (nav === "repos" ? " navbtn--on" : "")}
-          onClick={() => setNav("repos")}
-        >
-          {t("sidebar.repos")}
-        </button>
-        <button
-          className={"navbtn" + (nav === "agents" ? " navbtn--on" : "")}
-          onClick={() => setNav("agents")}
-        >
-          {t("sidebar.agents")}
-        </button>
-      </div>
-
-      {nav === "agents" ? (
-        <AgentsPanel />
-      ) : (
-        <>
-          {repos.length > 0 && (
-            <input
-              className="repo-search"
-              placeholder={t("sidebar.search")}
-              value={query}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+        <div className="sidebar__header-actions">
+          <button className="btn" onClick={pickRepo} disabled={loading}>
+            {loading ? "…" : t("sidebar.open")}
+          </button>
+          {selected && (
+            <button
+              className="exp-drawer-toggle"
+              title="Hide repositories"
+              onClick={() => toggleReposDrawer(false)}
+            >
+              ⇤
+            </button>
           )}
-          <ul className="repo-list">
-            {repos.length === 0 && <li className="repo-list__empty">{t("sidebar.noRepos")}</li>}
-            {repos.length > 0 && nothing && (
-              <li className="repo-list__empty">{t("sidebar.noMatch")}</li>
-            )}
-            {filtered.favorites.length > 0 && (
-              <li className="repo-group">{t("sidebar.favorites")}</li>
-            )}
-            {filtered.favorites.map(row)}
-            {filtered.recent.length > 0 && filtered.favorites.length > 0 && (
-              <li className="repo-group">{t("sidebar.recent")}</li>
-            )}
-            {filtered.recent.map(row)}
-          </ul>
-        </>
+        </div>
+      </div>
+
+      {repos.length > 0 && (
+        <input
+          className="repo-search"
+          placeholder={t("sidebar.search")}
+          value={query}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          onChange={(e) => setQuery(e.target.value)}
+        />
       )}
+      <ul className="repo-list">
+        {repos.length === 0 && <li className="repo-list__empty">{t("sidebar.noRepos")}</li>}
+        {repos.length > 0 && nothing && <li className="repo-list__empty">{t("sidebar.noMatch")}</li>}
+        {filtered.favorites.length > 0 && <li className="repo-group">{t("sidebar.favorites")}</li>}
+        {filtered.favorites.map(row)}
+        {filtered.recent.length > 0 && filtered.favorites.length > 0 && (
+          <li className="repo-group">{t("sidebar.recent")}</li>
+        )}
+        {filtered.recent.map(row)}
+      </ul>
     </aside>
   );
 }
