@@ -65,6 +65,14 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// A configured git remote (SPEC §6.4).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Remote {
+    pub name: String,
+    pub url: String,
+}
+
 /// A git submodule and its working state (SPEC §6.8).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
