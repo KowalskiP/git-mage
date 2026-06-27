@@ -11,6 +11,7 @@ mod graph;
 mod hunk;
 mod lfs;
 mod ops;
+mod remotes;
 mod signing;
 mod stage;
 mod stash;
@@ -35,6 +36,7 @@ pub use ops::{
     rebase_todo_commits, reset, resolve_side, revert, sequencer_abort, sequencer_continue,
     tag_create, tag_delete, write_resolution,
 };
+pub use remotes::{remote_add, remote_list, remote_remove, remote_rename, remote_set_url};
 pub use signing::{set_signing, signing_config};
 pub use stage::{commit, stage, stage_all, unstage, unstage_all};
 pub use status::status;

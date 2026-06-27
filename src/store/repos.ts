@@ -8,6 +8,7 @@ import type {
   GitflowConfig,
   GraphRow,
   LfsStatus,
+  Remote,
   RepoMeta,
   RepoStatus,
   SigningConfig,
@@ -30,6 +31,7 @@ interface ReposState {
   graphLoading: boolean;
   selectedSha: string | null;
   branches: string[];
+  remotes: Remote[];
   stashes: StashEntry[];
   worktrees: Worktree[];
   submodules: Submodule[];
@@ -81,6 +83,11 @@ interface ReposState {
   stageHunk: (patch: string) => Promise<void>;
   unstageHunk: (patch: string) => Promise<void>;
   loadBranches: () => Promise<void>;
+  loadRemotes: () => Promise<void>;
+  addRemote: (name: string, url: string) => Promise<void>;
+  removeRemote: (name: string) => Promise<void>;
+  renameRemote: (oldName: string, newName: string) => Promise<void>;
+  setRemoteUrl: (name: string, url: string) => Promise<void>;
   checkout: (refname: string) => Promise<void>;
   createBranch: (name: string, checkout: boolean) => Promise<void>;
   fetch: () => Promise<void>;
@@ -152,6 +159,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   graphLoading: false,
   selectedSha: null,
   branches: [],
+  remotes: [],
   stashes: [],
   worktrees: [],
   submodules: [],
@@ -293,6 +301,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       graph: [],
       selectedSha: null,
       branches: [],
+      remotes: [],
       stashes: [],
       worktrees: [],
       submodules: [],
@@ -310,6 +319,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadBranches(),
       get().loadStashes(),
       get().loadWorktrees(),
+      get().loadRemotes(),
       get().loadSubmodules(),
       get().loadLfs(),
       get().loadSigning(),
@@ -432,6 +442,68 @@ export const useRepos = create<ReposState>((set, get) => ({
     } catch (e) {
       set({ error: String(e) });
     }
+  },
+
+  loadRemotes: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ remotes: await api.remoteList(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  addRemote: async (name, url) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Adding remote ${name}…`, error: null });
+    try {
+      await api.remoteAdd(sel.path, name, url);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadRemotes(), get().refreshStatus()]);
+    set({ busy: null });
+  },
+
+  removeRemote: async (name) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Removing remote ${name}…`, error: null });
+    try {
+      await api.remoteRemove(sel.path, name);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadRemotes();
+    set({ busy: null });
+  },
+
+  renameRemote: async (oldName, newName) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Renaming remote ${oldName}…`, error: null });
+    try {
+      await api.remoteRename(sel.path, oldName, newName);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadRemotes(), get().refreshStatus()]);
+    set({ busy: null });
+  },
+
+  setRemoteUrl: async (name, url) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Updating ${name} URL…`, error: null });
+    try {
+      await api.remoteSetUrl(sel.path, name, url);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadRemotes();
+    set({ busy: null });
   },
 
   checkout: async (refname) => {

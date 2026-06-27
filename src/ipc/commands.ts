@@ -15,6 +15,7 @@ import type {
   ForgePull,
   GitflowConfig,
   LfsStatus,
+  Remote,
   SigningConfig,
   StashEntry,
   Submodule,
@@ -94,6 +95,16 @@ export const writeResolution = (path: string, file: string, content: string) =>
   invoke<void>("write_resolution", { path, file, content });
 export const mergeContinue = (path: string) => invoke<void>("merge_continue", { path });
 export const mergeAbort = (path: string) => invoke<void>("merge_abort", { path });
+export const remoteList = (path: string) => invoke<Remote[]>("remote_list", { path });
+export const remoteAdd = (path: string, name: string, url: string) =>
+  invoke<void>("remote_add", { path, name, url });
+export const remoteRemove = (path: string, name: string) =>
+  invoke<void>("remote_remove", { path, name });
+export const remoteRename = (path: string, oldName: string, newName: string) =>
+  invoke<void>("remote_rename", { path, old: oldName, new: newName });
+export const remoteSetUrl = (path: string, name: string, url: string) =>
+  invoke<void>("remote_set_url", { path, name, url });
+
 export const cherryPick = (path: string, sha: string) =>
   invoke<void>("cherry_pick", { path, sha });
 export const revert = (path: string, sha: string) => invoke<void>("revert", { path, sha });

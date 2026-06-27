@@ -23,6 +23,9 @@ const SM_GLYPH: Record<string, string> = {
  */
 export function RepoMenu() {
   const busy = useRepos((s) => s.busy);
+  const remotes = useRepos((s) => s.remotes);
+  const addRemote = useRepos((s) => s.addRemote);
+  const removeRemote = useRepos((s) => s.removeRemote);
   const stashes = useRepos((s) => s.stashes);
   const stashApply = useRepos((s) => s.stashApply);
   const stashPop = useRepos((s) => s.stashPop);
@@ -44,12 +47,23 @@ export function RepoMenu() {
 
   const [open, setOpen] = useState(false);
   const [section, setSection] = useState<string | null>(null);
+  const [reName, setReName] = useState("");
+  const [reUrl, setReUrl] = useState("");
   const [wtName, setWtName] = useState("");
   const [lfsPattern, setLfsPattern] = useState("");
   const [flowKind, setFlowKind] = useState("feature");
   const [flowName, setFlowName] = useState("");
 
   const toggle = (s: string) => setSection((cur) => (cur === s ? null : s));
+
+  async function createRemote() {
+    const n = reName.trim();
+    const u = reUrl.trim();
+    if (!n || !u) return;
+    setReName("");
+    setReUrl("");
+    await addRemote(n, u);
+  }
 
   async function createWorktree() {
     const n = wtName.trim();
@@ -71,6 +85,7 @@ export function RepoMenu() {
   }
 
   const sections: { key: string; label: string; count?: number; show: boolean }[] = [
+    { key: "remotes", label: "Remotes", count: remotes.length, show: true },
     { key: "stashes", label: "Stashes", count: stashes.length, show: true },
     { key: "worktrees", label: "Worktrees", count: worktrees.length, show: true },
     { key: "submodules", label: "Submodules", count: submodules.length, show: submodules.length > 0 },
@@ -106,6 +121,48 @@ export function RepoMenu() {
   );
 
   function renderBody(key: string) {
+    if (key === "remotes") {
+      return (
+        <>
+          <div className="wt-new">
+            <input
+              className="new-branch__input"
+              {...inputProps}
+              placeholder="name"
+              style={{ flex: "0 0 70px" }}
+              value={reName}
+              onChange={(e) => setReName(e.target.value)}
+            />
+            <input
+              className="new-branch__input"
+              {...inputProps}
+              placeholder="remote URL"
+              value={reUrl}
+              onChange={(e) => setReUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") createRemote();
+              }}
+            />
+            <button className="tbtn tbtn--primary" onClick={createRemote}>
+              Add
+            </button>
+          </div>
+          {remotes.length === 0 && <div className="dropdown__empty">No remotes</div>}
+          {remotes.map((r) => (
+            <div key={r.name} className="sm-row" title={r.url}>
+              <span className="sm-path">{r.name}</span>
+              <span className="sm-desc">{r.url}</span>
+              <span className="sm-actions">
+                <button className="link-btn link-btn--danger" onClick={() => removeRemote(r.name)}>
+                  Remove
+                </button>
+              </span>
+            </div>
+          ))}
+        </>
+      );
+    }
+
     if (key === "stashes") {
       if (stashes.length === 0) return <div className="dropdown__empty">No stashes</div>;
       return stashes.map((s) => (

@@ -16,8 +16,8 @@ use crate::terminal::{TermSession, Terminals};
 use crate::forge::{self, Provider};
 use crate::model::{
     AgentInfo, CommitDetail, DiffSides, ForgeInfo, ForgeIssue, ForgePull, GitflowConfig, GraphRow,
-    Hunk, LfsStatus, RebaseCommit, RepoMeta, RepoStatus, SigningConfig, StashEntry, Submodule,
-    Worktree,
+    Hunk, LfsStatus, RebaseCommit, Remote, RepoMeta, RepoStatus, SigningConfig, StashEntry,
+    Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -210,6 +210,31 @@ pub async fn merge_continue(path: String) -> AppResult<()> {
 #[tauri::command]
 pub async fn merge_abort(path: String) -> AppResult<()> {
     git::merge_abort(&path)
+}
+
+#[tauri::command]
+pub async fn remote_list(path: String) -> AppResult<Vec<Remote>> {
+    git::remote_list(&path)
+}
+
+#[tauri::command]
+pub async fn remote_add(path: String, name: String, url: String) -> AppResult<()> {
+    git::remote_add(&path, &name, &url)
+}
+
+#[tauri::command]
+pub async fn remote_remove(path: String, name: String) -> AppResult<()> {
+    git::remote_remove(&path, &name)
+}
+
+#[tauri::command]
+pub async fn remote_rename(path: String, old: String, new: String) -> AppResult<()> {
+    git::remote_rename(&path, &old, &new)
+}
+
+#[tauri::command]
+pub async fn remote_set_url(path: String, name: String, url: String) -> AppResult<()> {
+    git::remote_set_url(&path, &name, &url)
 }
 
 #[tauri::command]

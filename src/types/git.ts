@@ -72,6 +72,11 @@ export interface Worktree {
   changes: number;
 }
 
+export interface Remote {
+  name: string;
+  url: string;
+}
+
 export interface Submodule {
   path: string;
   sha: string;
