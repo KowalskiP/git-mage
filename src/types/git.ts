@@ -27,6 +27,8 @@ export interface RepoStatus {
   conflicted: FileEntry[];
   mergeInProgress: boolean;
   rebaseInProgress: boolean;
+  /** In-progress sequencer op: "cherry-pick" | "revert" | "" (none). */
+  sequencer: string;
 }
 
 export interface GraphEdge {

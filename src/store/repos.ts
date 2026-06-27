@@ -131,6 +131,11 @@ interface ReposState {
   openMergetool: (file: string) => Promise<void>;
   mergeContinue: () => Promise<void>;
   mergeAbort: () => Promise<void>;
+  cherryPick: (sha: string) => Promise<void>;
+  revert: (sha: string) => Promise<void>;
+  reset: (target: string, mode: string) => Promise<void>;
+  sequencerContinue: () => Promise<void>;
+  sequencerAbort: () => Promise<void>;
   rebase: (onto: string) => Promise<void>;
   rebaseContinue: () => Promise<void>;
   rebaseAbort: () => Promise<void>;
@@ -991,6 +996,73 @@ export const useRepos = create<ReposState>((set, get) => ({
     set({ busy: "Aborting merge…", error: null });
     try {
       await api.mergeAbort(sel.path);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
+  cherryPick: async (sha) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Cherry-picking…", error: null });
+    try {
+      await api.cherryPick(sel.path, sha);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  revert: async (sha) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Reverting…", error: null });
+    try {
+      await api.revert(sel.path, sha);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  reset: async (target, mode) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Resetting (${mode})…`, error: null });
+    try {
+      await api.reset(sel.path, target, mode);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  sequencerContinue: async () => {
+    const sel = get().selected;
+    const kind = get().status?.sequencer;
+    if (!sel || !kind) return;
+    set({ busy: `Continuing ${kind}…`, error: null });
+    try {
+      await api.sequencerContinue(sel.path, kind);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
+    set({ busy: null });
+  },
+
+  sequencerAbort: async () => {
+    const sel = get().selected;
+    const kind = get().status?.sequencer;
+    if (!sel || !kind) return;
+    set({ busy: `Aborting ${kind}…`, error: null });
+    try {
+      await api.sequencerAbort(sel.path, kind);
     } catch (e) {
       set({ error: String(e) });
     }

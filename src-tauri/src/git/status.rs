@@ -53,30 +53,44 @@ pub fn status(path: &str) -> AppResult<RepoStatus> {
         .map(|o| o.status.success())
         .unwrap_or(false);
 
-    st.rebase_in_progress = rebase_in_progress(path);
+    let gd = git_dir(path);
+    st.rebase_in_progress = gd
+        .as_ref()
+        .map(|b| b.join("rebase-merge").exists() || b.join("rebase-apply").exists())
+        .unwrap_or(false);
+    st.sequencer = gd
+        .as_ref()
+        .map(|b| {
+            if b.join("CHERRY_PICK_HEAD").exists() {
+                "cherry-pick"
+            } else if b.join("REVERT_HEAD").exists() {
+                "revert"
+            } else {
+                ""
+            }
+        })
+        .unwrap_or("")
+        .to_string();
 
     Ok(st)
 }
 
-/// True when a rebase is mid-flight (a rebase-merge / rebase-apply state dir exists).
-fn rebase_in_progress(path: &str) -> bool {
-    let Ok(out) = Command::new("git")
+/// Resolve the repo's `.git` directory (absolute), or None.
+fn git_dir(path: &str) -> Option<std::path::PathBuf> {
+    let out = Command::new("git")
         .current_dir(path)
         .args(["rev-parse", "--git-dir"])
         .output()
-    else {
-        return false;
-    };
+        .ok()?;
     if !out.status.success() {
-        return false;
+        return None;
     }
     let gd = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    let base = if std::path::Path::new(&gd).is_absolute() {
-        std::path::PathBuf::from(gd)
+    if std::path::Path::new(&gd).is_absolute() {
+        Some(std::path::PathBuf::from(gd))
     } else {
-        std::path::Path::new(path).join(gd)
-    };
-    base.join("rebase-merge").exists() || base.join("rebase-apply").exists()
+        Some(std::path::Path::new(path).join(gd))
+    }
 }
 
 /// Parse the `## ` branch header (already stripped of the prefix) into

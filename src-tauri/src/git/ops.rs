@@ -58,6 +58,47 @@ pub fn merge(path: &str, refname: &str) -> AppResult<()> {
     run(path, &["merge", "--no-edit", refname], false)
 }
 
+/// Apply commit `sha` onto the current branch. On conflict, leaves a cherry-pick
+/// in progress (resolve, then continue/abort).
+pub fn cherry_pick(path: &str, sha: &str) -> AppResult<()> {
+    // network=true → GIT_EDITOR=true so the commit message editor never blocks.
+    run(path, &["cherry-pick", sha], true)
+}
+
+/// Create a commit that reverses `sha`.
+pub fn revert(path: &str, sha: &str) -> AppResult<()> {
+    run(path, &["revert", "--no-edit", sha], true)
+}
+
+/// Move HEAD (and optionally the index/worktree) to `target`.
+/// `mode` is "soft" | "mixed" | "hard".
+pub fn reset(path: &str, target: &str, mode: &str) -> AppResult<()> {
+    let flag = match mode {
+        "soft" => "--soft",
+        "hard" => "--hard",
+        _ => "--mixed",
+    };
+    run(path, &["reset", flag, target], false)
+}
+
+fn sequencer_cmd(kind: &str) -> &'static str {
+    if kind == "revert" {
+        "revert"
+    } else {
+        "cherry-pick"
+    }
+}
+
+/// Continue an in-progress cherry-pick / revert after resolving conflicts.
+pub fn sequencer_continue(path: &str, kind: &str) -> AppResult<()> {
+    run(path, &[sequencer_cmd(kind), "--continue"], true)
+}
+
+/// Abort an in-progress cherry-pick / revert.
+pub fn sequencer_abort(path: &str, kind: &str) -> AppResult<()> {
+    run(path, &[sequencer_cmd(kind), "--abort"], false)
+}
+
 /// Resolve a conflicted file by taking one side, then mark it resolved (`git add`).
 pub fn resolve_side(path: &str, file: &str, ours: bool) -> AppResult<()> {
     let side = if ours { "--ours" } else { "--theirs" };
@@ -253,6 +294,62 @@ mod tests {
         let done = crate::git::status(p).unwrap();
         assert!(!done.merge_in_progress, "merge complete");
         assert_eq!(std::fs::read_to_string(dir.join("f.txt")).unwrap(), "mainline\n");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn cherry_pick_revert_reset_and_sequencer() {
+        fn rev(dir: &Path, r: &str) -> String {
+            let o = Command::new("git").current_dir(dir).args(["rev-parse", r]).output().unwrap();
+            String::from_utf8_lossy(&o.stdout).trim().to_string()
+        }
+
+        let dir = std::env::temp_dir().join(format!("gitmage-seq-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        g(&dir, &["init", "-q"]);
+        g(&dir, &["config", "user.email", "t@t"]);
+        g(&dir, &["config", "user.name", "t"]);
+        std::fs::write(dir.join("a.txt"), "a\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "base"]);
+        let base = rev(&dir, "HEAD");
+
+        // Side branch adds b.txt.
+        g(&dir, &["checkout", "-q", "-b", "feature"]);
+        std::fs::write(dir.join("b.txt"), "b\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "add b"]);
+        let feat = rev(&dir, "HEAD");
+
+        // Cherry-pick brings b.txt onto the base branch.
+        g(&dir, &["checkout", "-q", "-"]);
+        cherry_pick(p, &feat).unwrap();
+        assert!(dir.join("b.txt").exists(), "cherry-pick applied");
+
+        // Revert undoes it.
+        revert(p, &rev(&dir, "HEAD")).unwrap();
+        assert!(!dir.join("b.txt").exists(), "revert removed b.txt");
+
+        // Reset --hard back to base drops the cherry-pick + revert commits.
+        reset(p, &base, "hard").unwrap();
+        assert_eq!(rev(&dir, "HEAD"), base, "HEAD reset to base");
+        assert!(!dir.join("b.txt").exists());
+
+        // Conflicting cherry-pick leaves a sequencer in progress; abort clears it.
+        std::fs::write(dir.join("a.txt"), "mainline\n").unwrap();
+        g(&dir, &["commit", "-qam", "main edit"]);
+        g(&dir, &["checkout", "-q", "-b", "other", &base]);
+        std::fs::write(dir.join("a.txt"), "other\n").unwrap();
+        g(&dir, &["commit", "-qam", "other edit"]);
+        let other = rev(&dir, "HEAD");
+        g(&dir, &["checkout", "-q", "-"]);
+        assert!(cherry_pick(p, &other).is_err(), "cherry-pick should conflict");
+        assert_eq!(crate::git::status(p).unwrap().sequencer, "cherry-pick");
+        sequencer_abort(p, "cherry-pick").unwrap();
+        assert_eq!(crate::git::status(p).unwrap().sequencer, "");
 
         let _ = std::fs::remove_dir_all(&dir);
     }
