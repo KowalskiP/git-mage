@@ -61,6 +61,9 @@ export function CommitGraph() {
   const checkout = useRepos((s) => s.checkout);
   const merge = useRepos((s) => s.merge);
   const rebase = useRepos((s) => s.rebase);
+  const cherryPick = useRepos((s) => s.cherryPick);
+  const revert = useRepos((s) => s.revert);
+  const reset = useRepos((s) => s.reset);
   const createBranchAt = useRepos((s) => s.createBranchAt);
   const branchDelete = useRepos((s) => s.branchDelete);
   const branchRename = useRepos((s) => s.branchRename);
@@ -156,7 +159,16 @@ export function CommitGraph() {
             }),
         },
         { label: "Checkout commit", onClick: () => checkout(sha) },
+        { label: "Cherry-pick commit", onClick: () => cherryPick(sha) },
+        { label: "Revert commit", onClick: () => revert(sha) },
         { label: "Interactive rebase from here…", onClick: () => setRebaseBase(sha) },
+        { label: `Reset ${currentBranch ?? "branch"} here (soft)`, onClick: () => reset(sha, "soft") },
+        { label: `Reset ${currentBranch ?? "branch"} here (mixed)`, onClick: () => reset(sha, "mixed") },
+        {
+          label: `Reset ${currentBranch ?? "branch"} here (hard)`,
+          danger: true,
+          onClick: () => reset(sha, "hard"),
+        },
         { label: "Copy SHA", onClick: () => navigator.clipboard?.writeText(sha) },
       ],
     });

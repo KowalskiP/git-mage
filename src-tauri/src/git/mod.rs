@@ -29,10 +29,11 @@ pub use worktree::{
     worktree_add, worktree_list, worktree_lock, worktree_prune, worktree_remove,
 };
 pub use ops::{
-    branch_delete, branch_rename, checkout, conflict_content, create_branch, create_branch_at,
-    fetch, launch_difftool, launch_mergetool, list_branches, merge, merge_abort, merge_continue,
-    pull, push, rebase, rebase_abort, rebase_continue, rebase_interactive, rebase_todo_commits,
-    resolve_side, tag_create, tag_delete, write_resolution,
+    branch_delete, branch_rename, checkout, cherry_pick, conflict_content, create_branch,
+    create_branch_at, fetch, launch_difftool, launch_mergetool, list_branches, merge, merge_abort,
+    merge_continue, pull, push, rebase, rebase_abort, rebase_continue, rebase_interactive,
+    rebase_todo_commits, reset, resolve_side, revert, sequencer_abort, sequencer_continue,
+    tag_create, tag_delete, write_resolution,
 };
 pub use signing::{set_signing, signing_config};
 pub use stage::{commit, stage, stage_all, unstage, unstage_all};

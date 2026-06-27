@@ -213,6 +213,31 @@ pub async fn merge_abort(path: String) -> AppResult<()> {
 }
 
 #[tauri::command]
+pub async fn cherry_pick(path: String, sha: String) -> AppResult<()> {
+    git::cherry_pick(&path, &sha)
+}
+
+#[tauri::command]
+pub async fn revert(path: String, sha: String) -> AppResult<()> {
+    git::revert(&path, &sha)
+}
+
+#[tauri::command]
+pub async fn reset(path: String, target: String, mode: String) -> AppResult<()> {
+    git::reset(&path, &target, &mode)
+}
+
+#[tauri::command]
+pub async fn sequencer_continue(path: String, kind: String) -> AppResult<()> {
+    git::sequencer_continue(&path, &kind)
+}
+
+#[tauri::command]
+pub async fn sequencer_abort(path: String, kind: String) -> AppResult<()> {
+    git::sequencer_abort(&path, &kind)
+}
+
+#[tauri::command]
 pub async fn rebase(path: String, onto: String) -> AppResult<()> {
     git::rebase(&path, &onto)
 }

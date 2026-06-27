@@ -34,6 +34,8 @@ pub struct RepoStatus {
     pub merge_in_progress: bool,
     /// True when a rebase is in progress (rebase-merge/rebase-apply present).
     pub rebase_in_progress: bool,
+    /// In-progress sequencer op: "cherry-pick" | "revert" | "" (none).
+    pub sequencer: String,
 }
 
 /// One line segment in the commit graph, drawn from this row toward the next.

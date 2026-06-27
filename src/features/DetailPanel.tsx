@@ -96,6 +96,8 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
   const mergeAbort = useRepos((s) => s.mergeAbort);
   const rebaseContinue = useRepos((s) => s.rebaseContinue);
   const rebaseAbort = useRepos((s) => s.rebaseAbort);
+  const sequencerContinue = useRepos((s) => s.sequencerContinue);
+  const sequencerAbort = useRepos((s) => s.sequencerAbort);
 
   const [mode, setMode] = useState<"path" | "tree">("path");
   const [detail, setDetail] = useState<CommitDetail | null>(null);
@@ -144,9 +146,20 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
   const conflicted = status?.conflicted ?? [];
   const mergeInProgress = status?.mergeInProgress ?? false;
   const rebaseInProgress = status?.rebaseInProgress ?? false;
-  const opLabel = rebaseInProgress ? "Rebase" : "Merge";
-  const opContinue = rebaseInProgress ? rebaseContinue : mergeContinue;
-  const opAbort = rebaseInProgress ? rebaseAbort : mergeAbort;
+  const sequencer = status?.sequencer ?? "";
+  const opInProgress = mergeInProgress || rebaseInProgress || !!sequencer;
+  const opLabel = sequencer || (rebaseInProgress ? "Rebase" : "Merge");
+  const opContinue = sequencer
+    ? sequencerContinue
+    : rebaseInProgress
+      ? rebaseContinue
+      : mergeContinue;
+  const opAbort = sequencer ? sequencerAbort : rebaseInProgress ? rebaseAbort : mergeAbort;
+  const opContinueLabel = sequencer
+    ? `Continue ${sequencer}`
+    : rebaseInProgress
+      ? "Continue rebase"
+      : "Commit merge";
 
   return (
     <div className="detail-panel">
@@ -218,7 +231,7 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
         </div>
       </div>
 
-      {isWip && (mergeInProgress || rebaseInProgress) && (
+      {isWip && opInProgress && (
         <div className="merge-banner">
           <span className="merge-banner__label">
             {opLabel} in progress
@@ -235,7 +248,7 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
               disabled={conflicted.length > 0}
               onClick={() => opContinue()}
             >
-              {rebaseInProgress ? "Continue rebase" : "Commit merge"}
+              {opContinueLabel}
             </button>
           </div>
         </div>

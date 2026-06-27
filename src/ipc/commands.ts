@@ -94,6 +94,15 @@ export const writeResolution = (path: string, file: string, content: string) =>
   invoke<void>("write_resolution", { path, file, content });
 export const mergeContinue = (path: string) => invoke<void>("merge_continue", { path });
 export const mergeAbort = (path: string) => invoke<void>("merge_abort", { path });
+export const cherryPick = (path: string, sha: string) =>
+  invoke<void>("cherry_pick", { path, sha });
+export const revert = (path: string, sha: string) => invoke<void>("revert", { path, sha });
+export const reset = (path: string, target: string, mode: string) =>
+  invoke<void>("reset", { path, target, mode });
+export const sequencerContinue = (path: string, kind: string) =>
+  invoke<void>("sequencer_continue", { path, kind });
+export const sequencerAbort = (path: string, kind: string) =>
+  invoke<void>("sequencer_abort", { path, kind });
 export const rebase = (path: string, onto: string) => invoke<void>("rebase", { path, onto });
 export const rebaseContinue = (path: string) => invoke<void>("rebase_continue", { path });
 export const rebaseAbort = (path: string) => invoke<void>("rebase_abort", { path });
