@@ -1938,14 +1938,30 @@ body {
   margin-top: 8px;
 }
 .agents-intro {
+  position: relative;
   margin: 10px 12px 4px;
-  padding: 10px 12px;
+  padding: 10px 28px 10px 12px;
   font-size: 12px;
   line-height: 1.45;
   color: var(--text-dim);
   background: var(--bg-hover);
   border: 1px solid var(--border);
   border-radius: 8px;
+}
+.agents-intro__close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px;
+}
+.agents-intro__close:hover {
+  color: var(--text);
 }
 
 /* Accessibility: visible keyboard focus (only on keyboard nav, not mouse) */
