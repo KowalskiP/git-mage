@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRepos } from "../../store/repos";
 import { useT } from "../../i18n/useT";
 import { LANGS } from "../../i18n/dict";
+import { THEME_VARS, THEME_VAR_LABELS, basePalette, type ThemeMode } from "../../theme";
 
 const inputProps = {
   autoComplete: "off",
@@ -25,7 +26,20 @@ export function SettingsPanel() {
   const saveSigning = useRepos((s) => s.saveSigning);
   const setShortcuts = useRepos((s) => s.setShortcuts);
   const setProfilesOpen = useRepos((s) => s.setProfilesOpen);
+  const appearance = useRepos((s) => s.appearance);
+  const setThemeMode = useRepos((s) => s.setThemeMode);
+  const setUiScale = useRepos((s) => s.setUiScale);
+  const setIconTheme = useRepos((s) => s.setIconTheme);
+  const setThemeVar = useRepos((s) => s.setThemeVar);
+  const resetTheme = useRepos((s) => s.resetTheme);
   const busy = useRepos((s) => s.busy);
+
+  const themeBase = basePalette(appearance.mode);
+  const themeModes: { code: ThemeMode; key: string }[] = [
+    { code: "system", key: "theme.system" },
+    { code: "dark", key: "theme.dark" },
+    { code: "light", key: "theme.light" },
+  ];
 
   const [signEnabled, setSignEnabled] = useState(false);
   const [signFormat, setSignFormat] = useState("openpgp");
@@ -58,6 +72,72 @@ export function SettingsPanel() {
           </button>
         </div>
         <div className="settings__body">
+          <section className="settings__group">
+            <h4>{t("settings.appearance")}</h4>
+            <div className="settings__row">
+              <span className="sign-label">{t("settings.theme")}</span>
+              <div className="seg">
+                {themeModes.map((m) => (
+                  <button
+                    key={m.code}
+                    className={"seg__btn" + (appearance.mode === m.code ? " seg__btn--on" : "")}
+                    onClick={() => setThemeMode(m.code)}
+                  >
+                    {t(m.key)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="settings__row">
+              <span className="sign-label">{t("settings.iconStyle")}</span>
+              <div className="seg">
+                <button
+                  className={"seg__btn" + (appearance.iconTheme === "lucide" ? " seg__btn--on" : "")}
+                  onClick={() => setIconTheme("lucide")}
+                >
+                  {t("icon.lucide")}
+                </button>
+                <button
+                  className={"seg__btn" + (appearance.iconTheme === "fantasy" ? " seg__btn--on" : "")}
+                  onClick={() => setIconTheme("fantasy")}
+                >
+                  {t("icon.fantasy")}
+                </button>
+              </div>
+            </div>
+            <div className="settings__row">
+              <span className="sign-label">{t("settings.scale")}</span>
+              <input
+                type="range"
+                min={0.8}
+                max={1.3}
+                step={0.05}
+                value={appearance.scale}
+                onChange={(e) => setUiScale(Number(e.target.value))}
+                style={{ flex: 1 }}
+              />
+              <span className="settings__scale-val">{Math.round(appearance.scale * 100)}%</span>
+            </div>
+            <details className="settings__customize">
+              <summary>{t("settings.customize")}</summary>
+              <div className="theme-grid">
+                {THEME_VARS.map((v) => (
+                  <label key={v} className="theme-swatch" title={v}>
+                    <input
+                      type="color"
+                      value={appearance.custom[v] || themeBase[v]}
+                      onChange={(e) => setThemeVar(v, e.target.value)}
+                    />
+                    <span>{THEME_VAR_LABELS[v]}</span>
+                  </label>
+                ))}
+              </div>
+              <button className="tbtn" onClick={() => resetTheme()}>
+                {t("settings.resetTheme")}
+              </button>
+            </details>
+          </section>
+
           <section className="settings__group">
             <h4>{t("settings.language")}</h4>
             <div className="seg">

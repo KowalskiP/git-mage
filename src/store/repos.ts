@@ -21,6 +21,16 @@ import type {
 import * as api from "../ipc/commands";
 import { effectiveBindings } from "../lib/keymap";
 import type { Lang } from "../i18n/dict";
+import {
+  type Appearance,
+  type IconTheme,
+  type ThemeMode,
+  type ThemeVar,
+  DEFAULT_APPEARANCE,
+  applyAppearance,
+} from "../theme";
+
+const APPEARANCE_SETTING = "appearance";
 
 const KEYMAP_SETTING = "keymap.overrides";
 const LANG_SETTING = "locale";
@@ -64,6 +74,7 @@ interface ReposState {
   /** id → chord overrides for the keymap (empty chord = unbound). */
   keymap: Record<string, string>;
   lang: Lang;
+  appearance: Appearance;
 
   toggleTerminal: () => void;
   toggleReposDrawer: (open?: boolean) => void;
@@ -88,6 +99,12 @@ interface ReposState {
   runShortcut: (id: string) => void;
   loadLang: () => Promise<void>;
   setLang: (lang: Lang) => Promise<void>;
+  loadAppearance: () => Promise<void>;
+  setThemeMode: (mode: ThemeMode) => void;
+  setThemeVar: (v: ThemeVar, value: string) => void;
+  resetTheme: () => void;
+  setUiScale: (scale: number) => void;
+  setIconTheme: (t: IconTheme) => void;
   loadRepos: () => Promise<void>;
   openRepo: (path: string) => Promise<void>;
   select: (repo: RepoMeta) => Promise<void>;
@@ -171,6 +188,18 @@ interface ReposState {
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
 
+/** Merge an appearance patch, persist it, and apply it to the document. */
+function saveAppearance(
+  get: () => ReposState,
+  set: (partial: Partial<ReposState>) => void,
+  patch: Partial<Appearance>,
+) {
+  const next: Appearance = { ...get().appearance, ...patch };
+  set({ appearance: next });
+  applyAppearance(next);
+  api.setSetting(APPEARANCE_SETTING, JSON.stringify(next)).catch(() => {});
+}
+
 /** Cleared per-repo slice shared by select() and closeRepo(). */
 const EMPTY_REPO_STATE = {
   status: null,
@@ -228,6 +257,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   settingsOpen: false,
   keymap: {},
   lang: "en",
+  appearance: DEFAULT_APPEARANCE,
 
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
   toggleReposDrawer: (open) => set((s) => ({ reposDrawerOpen: open ?? !s.reposDrawerOpen })),
@@ -366,6 +396,25 @@ export const useRepos = create<ReposState>((set, get) => ({
     set({ lang });
     await api.setSetting(LANG_SETTING, lang).catch(() => {});
   },
+
+  loadAppearance: async () => {
+    let a = DEFAULT_APPEARANCE;
+    try {
+      const raw = await api.getSetting(APPEARANCE_SETTING);
+      if (raw) a = { ...DEFAULT_APPEARANCE, ...JSON.parse(raw) };
+    } catch {
+      /* corrupt/absent — use defaults */
+    }
+    set({ appearance: a });
+    applyAppearance(a);
+  },
+
+  setThemeMode: (mode) => saveAppearance(get, set, { mode }),
+  setThemeVar: (v, value) =>
+    saveAppearance(get, set, { custom: { ...get().appearance.custom, [v]: value } }),
+  resetTheme: () => saveAppearance(get, set, { custom: {} }),
+  setUiScale: (scale) => saveAppearance(get, set, { scale }),
+  setIconTheme: (iconTheme) => saveAppearance(get, set, { iconTheme }),
 
   runShortcut: (id) => {
     const s = get();
