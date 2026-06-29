@@ -371,7 +371,7 @@ mod tests {
         ]);
         let cols: Vec<u32> = rows.iter().map(|r| r.column).collect();
         // The merge spawns a second lane, so some commit lands in column 1.
-        assert!(cols.iter().any(|&c| c == 1), "merge should use a 2nd lane: {cols:?}");
+        assert!(cols.contains(&1), "merge should use a 2nd lane: {cols:?}");
         // The merge commit has two outgoing edges (to both parents).
         assert_eq!(rows[0].edges.len(), 2);
         // History reconverges: base is back in column 0.
