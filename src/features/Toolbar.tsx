@@ -1,5 +1,6 @@
 import { useRepos } from "../store/repos";
 import { useT } from "../i18n/useT";
+import { Icon } from "./Icon";
 
 /**
  * Lean top bar. Branch switching, remotes, stashes, worktrees, PRs etc. now
@@ -20,20 +21,23 @@ export function Toolbar() {
 
       {busy && <span className="toolbar__busy">{busy}</span>}
 
-      <button className="tbtn" onClick={() => setPalette(true)} title="Command palette (⌘K)">
-        ⌘K
+      <button className="gbtn" onClick={() => setPalette(true)} title="Command palette (⌘K)">
+        <Icon name="palette" size={17} />
+        <span>⌘K</span>
       </button>
 
-      <button className="tbtn" onClick={() => setSettings(true)} title={t("toolbar.settings")}>
-        ⚙
+      <button className="gbtn" onClick={() => setSettings(true)} title={t("toolbar.settings")}>
+        <Icon name="settings" size={17} />
+        <span>{t("toolbar.settings")}</span>
       </button>
 
       <button
-        className={"tbtn" + (showTerminal ? " tbtn--on" : "")}
+        className={"gbtn" + (showTerminal ? " gbtn--on" : "")}
         onClick={toggleTerminal}
         title="Toggle embedded terminal"
       >
-        Terminal
+        <Icon name="terminal" size={17} />
+        <span>Terminal</span>
       </button>
     </div>
   );

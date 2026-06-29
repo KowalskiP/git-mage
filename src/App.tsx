@@ -5,6 +5,7 @@ import { useRepos } from "./store/repos";
 import { onFsChange } from "./ipc/events";
 import * as api from "./ipc/commands";
 import { applyAppearance } from "./theme";
+import { Logo } from "./features/Logo";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { Explorer } from "./features/explorer/Explorer";
 import { CloneModal } from "./features/CloneModal";
@@ -195,6 +196,7 @@ export function App() {
           <RepoView />
         ) : (
           <div className="empty">
+            <Logo size={64} />
             <h1>GitMage</h1>
             <p>{t("app.tagline")}</p>
             <button className="btn empty__cta" onClick={pickRepo}>

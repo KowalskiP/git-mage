@@ -61,8 +61,15 @@ body {
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-weight: 600;
   letter-spacing: 0.3px;
+}
+.empty .app-logo,
+.empty svg[role="img"] {
+  margin-bottom: 10px;
 }
 
 .lang-switch {
@@ -674,6 +681,45 @@ body {
   align-items: center;
   gap: 6px;
   flex: 0 0 auto;
+}
+
+/* Icon-over-label button (graph actions + toolbar). */
+.gbtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  min-width: 50px;
+}
+.gbtn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.gbtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.gbtn--on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.exp-sec__icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-dim);
 }
 .graph-search {
   display: flex;

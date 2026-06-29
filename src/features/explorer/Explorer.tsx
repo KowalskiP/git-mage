@@ -11,6 +11,7 @@ import { useRepos } from "../../store/repos";
 import { getSetting, setSetting, openExternal } from "../../ipc/commands";
 import { ContextMenu, type MenuItem } from "../ContextMenu";
 import { PromptModal } from "../PromptModal";
+import { Icon, type IconName } from "../Icon";
 import { AgentsPanel } from "../agents/AgentsPanel";
 import { buildTree, type TreeNode } from "./tree";
 import type { LocalBranch } from "../../types/git";
@@ -18,6 +19,18 @@ import type { LocalBranch } from "../../types/git";
 const LAYOUT_SETTING = "explorer.layout";
 const DEFAULT_H = 200;
 const DEFAULT_OPEN = new Set(["local", "remote", "pulls"]);
+
+const SECTION_ICON: Record<string, IconName> = {
+  local: "branch",
+  remote: "remote",
+  pulls: "pr",
+  stashes: "stash",
+  worktrees: "worktree",
+  submodules: "submodule",
+  agents: "agent",
+  gitflow: "gitflow",
+  lfs: "lfs",
+};
 
 type Conf = { open: boolean; h: number };
 type Layout = Record<string, Conf>;
@@ -342,6 +355,11 @@ export function Explorer() {
       <div className="exp-sec">
         <div className="exp-sec__head" onClick={() => toggleSec(id)}>
           <span className="exp-caret">{c.open ? "▾" : "▸"}</span>
+          {SECTION_ICON[id] && (
+            <span className="exp-sec__icon">
+              <Icon name={SECTION_ICON[id]} size={13} />
+            </span>
+          )}
           <span className="exp-sec__title">{title}</span>
           {opts.count != null && opts.count > 0 && (
             <span className="exp-sec__count">{opts.count}</span>
@@ -366,8 +384,8 @@ export function Explorer() {
   };
 
   const plus = (label: string, onClick: () => void) => (
-    <button className="exp-add" title={label} onClick={onClick}>
-      +
+    <button className="exp-add" title={label} aria-label={label} onClick={onClick}>
+      <Icon name="add" size={14} />
     </button>
   );
 
@@ -377,9 +395,10 @@ export function Explorer() {
         <button
           className="exp-drawer-toggle"
           title={reposDrawerOpen ? "Hide repositories" : "Show repositories"}
+          aria-label={reposDrawerOpen ? "Hide repositories" : "Show repositories"}
           onClick={() => toggleReposDrawer()}
         >
-          {reposDrawerOpen ? "⇤" : "☰"}
+          <Icon name={reposDrawerOpen ? "drawerOpen" : "drawerClosed"} size={16} />
         </button>
         <div className="exp-head__main">
           <span className="exp-head__name" title={selected.path}>
@@ -398,7 +417,7 @@ export function Explorer() {
           aria-label="Close repository"
           onClick={() => closeRepo()}
         >
-          ✕
+          <Icon name="close" size={15} />
         </button>
       </div>
 
