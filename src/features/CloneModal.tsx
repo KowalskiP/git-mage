@@ -10,7 +10,7 @@ const inputProps = {
 } as const;
 
 /** Derive the repo folder name from a clone URL (strip trailing slash + .git). */
-function nameFromUrl(url: string): string {
+export function nameFromUrl(url: string): string {
   const u = url.trim().replace(/\/+$/, "").replace(/\.git$/, "");
   const seg = u.split(/[/:]/).pop() ?? "";
   return seg;

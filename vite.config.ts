@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+/// <reference types="vitest/config" />
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 // Tauri-aware Vite config.
@@ -16,5 +17,14 @@ export default defineConfig({
   build: {
     target: "es2021",
     sourcemap: true,
+  },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    css: false,
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // Reset call history before each test; tests set implementations explicitly.
+    clearMocks: true,
   },
 });

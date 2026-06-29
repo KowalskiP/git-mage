@@ -189,10 +189,18 @@ export function ProfilesPanel() {
                     <button
                       className="tbtn tbtn--primary"
                       disabled={!selected || !!busy}
-                      title={selected ? "Apply to the open repo" : "Open a repo first"}
+                      title={selected ? "Apply to the open repo (local config)" : "Open a repo first"}
                       onClick={() => applyProfile(p)}
                     >
                       Apply
+                    </button>
+                    <button
+                      className="tbtn"
+                      disabled={!!busy}
+                      title="Set as the global git identity (~/.gitconfig)"
+                      onClick={() => applyProfile(p, true)}
+                    >
+                      Global
                     </button>
                     <button className="link-btn" onClick={() => setEditing({ ...p })}>
                       Edit

@@ -66,6 +66,7 @@ export function Explorer() {
   const sessions = useRepos((s) => s.sessions);
   const reposDrawerOpen = useRepos((s) => s.reposDrawerOpen);
   const toggleReposDrawer = useRepos((s) => s.toggleReposDrawer);
+  const closeRepo = useRepos((s) => s.closeRepo);
 
   const checkout = useRepos((s) => s.checkout);
   const merge = useRepos((s) => s.merge);
@@ -391,6 +392,14 @@ export function Explorer() {
             Connect
           </button>
         )}
+        <button
+          className="exp-drawer-toggle"
+          title="Close repository"
+          aria-label="Close repository"
+          onClick={() => closeRepo()}
+        >
+          ✕
+        </button>
       </div>
 
       <div className="exp-sections">
