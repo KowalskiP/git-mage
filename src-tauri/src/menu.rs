@@ -25,6 +25,7 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "check_update", "Check for Updates…", true, None::<&str>)?,
             &MenuItem::with_id(app, "settings", "Preferences…", true, Some("CmdOrCtrl+,"))?,
+            &MenuItem::with_id(app, "profiles", "Profiles…", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::services(app, None)?,
             &PredefinedMenuItem::separator(app)?,
@@ -91,6 +92,7 @@ pub fn on_event<R: Runtime>(app: &AppHandle<R>, event: tauri::menu::MenuEvent) {
         id,
         "check_update"
             | "settings"
+            | "profiles"
             | "clone"
             | "init"
             | "open_repo"

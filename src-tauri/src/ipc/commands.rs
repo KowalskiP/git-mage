@@ -17,7 +17,7 @@ use crate::forge::{self, Provider};
 use crate::model::{
     AgentInfo, BranchList, CommitDetail, DiffSides, ForgeInfo, ForgeIssue, ForgePull, GitflowConfig,
     GraphRow,
-    Hunk, LfsStatus, RebaseCommit, Remote, RepoMeta, RepoStatus, SigningConfig, StashEntry,
+    Hunk, LfsStatus, Profile, RebaseCommit, Remote, RepoMeta, RepoStatus, SigningConfig, StashEntry,
     Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
@@ -655,6 +655,35 @@ pub fn init_repo(dir: String, db: State<Db>) -> AppResult<RepoMeta> {
     git::init(&dir)?;
     let name = repo_name(&dir);
     db.add_or_touch(&dir, &name)
+}
+
+// ---- identity profiles (SPEC #6) ---------------------------------------
+
+#[tauri::command]
+pub fn profiles_list(db: State<Db>) -> AppResult<Vec<Profile>> {
+    db.profiles()
+}
+
+#[tauri::command]
+pub fn profile_save(profile: Profile, db: State<Db>) -> AppResult<Profile> {
+    db.save_profile(&profile)
+}
+
+#[tauri::command]
+pub fn profile_delete(id: i64, db: State<Db>) -> AppResult<()> {
+    db.delete_profile(id)
+}
+
+/// Apply a profile to a repo's local git config.
+#[tauri::command]
+pub fn profile_apply(path: String, profile: Profile) -> AppResult<()> {
+    git::apply_profile(&path, &profile)
+}
+
+/// Effective (name, email) identity for a repo.
+#[tauri::command]
+pub fn repo_identity(path: String) -> AppResult<(String, String)> {
+    git::identity(&path)
 }
 
 #[tauri::command]

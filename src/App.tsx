@@ -7,6 +7,7 @@ import * as api from "./ipc/commands";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { Explorer } from "./features/explorer/Explorer";
 import { CloneModal } from "./features/CloneModal";
+import { ProfilesPanel } from "./features/profiles/ProfilesPanel";
 import { RepoView } from "./features/RepoView";
 import { AgentSessionView } from "./features/agents/AgentSessionView";
 import { CommandPalette } from "./features/palette/CommandPalette";
@@ -25,6 +26,7 @@ export function App() {
   const loadSessions = useRepos((s) => s.loadSessions);
   const loadKeymap = useRepos((s) => s.loadKeymap);
   const loadLang = useRepos((s) => s.loadLang);
+  const loadProfiles = useRepos((s) => s.loadProfiles);
   const setSessionStatus = useRepos((s) => s.setSessionStatus);
   const refreshStatus = useRepos((s) => s.refreshStatus);
   const loadGraph = useRepos((s) => s.loadGraph);
@@ -53,7 +55,8 @@ export function App() {
     loadSessions();
     loadKeymap();
     loadLang();
-  }, [loadRepos, loadAgents, loadSessions, loadKeymap, loadLang]);
+    loadProfiles();
+  }, [loadRepos, loadAgents, loadSessions, loadKeymap, loadLang, loadProfiles]);
 
   useEffect(() => {
     const unlisten = onFsChange((repoPath) => {
@@ -108,6 +111,9 @@ export function App() {
           break;
         case "settings":
           st.setSettings(true);
+          break;
+        case "profiles":
+          st.setProfilesOpen(true);
           break;
         case "check_update":
           window.dispatchEvent(new CustomEvent("gitmage:check-update"));
@@ -170,6 +176,7 @@ export function App() {
       <ForgePanel />
       <SettingsPanel />
       <CloneModal />
+      <ProfilesPanel />
       <Toaster />
       <UpdateBanner />
     </div>

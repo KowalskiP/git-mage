@@ -2590,6 +2590,74 @@ body {
   width: 100%;
 }
 
+/* Profiles panel */
+.profiles-current {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  margin: 6px 0 4px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.profiles-current__label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.profiles-current__val {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+}
+.profiles-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.profiles-empty {
+  color: var(--text-dim);
+  font-size: 12px;
+  padding: 6px 0;
+}
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.profile-row:last-child {
+  border-bottom: none;
+}
+.profile-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.profile-row__name {
+  font-weight: 600;
+}
+.profile-row__id {
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-row__sign {
+  color: var(--green);
+}
+.profile-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
 /* Keyboard shortcuts panel */
 .shortcuts {
   width: 520px;

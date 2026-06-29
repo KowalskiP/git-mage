@@ -16,6 +16,7 @@ import type {
   ForgePull,
   GitflowConfig,
   LfsStatus,
+  Profile,
   Remote,
   SigningConfig,
   StashEntry,
@@ -188,6 +189,13 @@ export const openIn = (kind: "editor" | "terminal" | "finder", path: string) =>
 export const cloneRepo = (url: string, dir: string) =>
   invoke<RepoMeta>("clone_repo", { url, dir });
 export const initRepo = (dir: string) => invoke<RepoMeta>("init_repo", { dir });
+
+export const profilesList = () => invoke<Profile[]>("profiles_list");
+export const profileSave = (profile: Profile) => invoke<Profile>("profile_save", { profile });
+export const profileDelete = (id: number) => invoke<void>("profile_delete", { id });
+export const profileApply = (path: string, profile: Profile) =>
+  invoke<void>("profile_apply", { path, profile });
+export const repoIdentity = (path: string) => invoke<[string, string]>("repo_identity", { path });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

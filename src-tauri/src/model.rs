@@ -1,4 +1,21 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+/// A reusable git identity (SPEC #6 profiles): name/email plus optional signing
+/// key and SSH key, applied to a repo's local config in one click.
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Profile {
+    pub id: i64,
+    pub name: String,
+    pub user_name: String,
+    pub user_email: String,
+    /// GPG key id or SSH pubkey path; empty disables signing config.
+    pub signing_key: String,
+    /// "openpgp" | "ssh" | "" (unset).
+    pub signing_format: String,
+    /// Path to an SSH private key; empty leaves core.sshCommand untouched.
+    pub ssh_key_path: String,
+}
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
