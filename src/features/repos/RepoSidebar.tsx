@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../../store/repos";
 import { useT } from "../../i18n/useT";
+import { Icon } from "../Icon";
+import { Logo } from "../Logo";
 import type { RepoMeta } from "../../types/git";
 
 /** Shortened path for the repo subtitle: last two segments. */
@@ -81,18 +83,29 @@ export function RepoSidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar__header">
-        <span className="brand">GitMage</span>
+        <span className="brand">
+          <Logo size={18} />
+          GitMage
+        </span>
         <div className="sidebar__header-actions">
-          <button className="btn" onClick={pickRepo} disabled={loading}>
-            {loading ? "…" : t("sidebar.open")}
+          <button className="btn btn--icon" onClick={pickRepo} disabled={loading}>
+            {loading ? (
+              "…"
+            ) : (
+              <>
+                <Icon name="folderOpen" size={14} />
+                {t("sidebar.open")}
+              </>
+            )}
           </button>
           {selected && (
             <button
               className="exp-drawer-toggle"
               title="Hide repositories"
+              aria-label="Hide repositories"
               onClick={() => toggleReposDrawer(false)}
             >
-              ⇤
+              <Icon name="drawerOpen" size={16} />
             </button>
           )}
         </div>

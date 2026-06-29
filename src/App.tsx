@@ -4,6 +4,8 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "./store/repos";
 import { onFsChange } from "./ipc/events";
 import * as api from "./ipc/commands";
+import { applyAppearance } from "./theme";
+import { Logo } from "./features/Logo";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { Explorer } from "./features/explorer/Explorer";
 import { CloneModal } from "./features/CloneModal";
@@ -27,6 +29,7 @@ export function App() {
   const loadKeymap = useRepos((s) => s.loadKeymap);
   const loadLang = useRepos((s) => s.loadLang);
   const loadProfiles = useRepos((s) => s.loadProfiles);
+  const loadAppearance = useRepos((s) => s.loadAppearance);
   const setSessionStatus = useRepos((s) => s.setSessionStatus);
   const refreshStatus = useRepos((s) => s.refreshStatus);
   const loadGraph = useRepos((s) => s.loadGraph);
@@ -56,7 +59,20 @@ export function App() {
     loadKeymap();
     loadLang();
     loadProfiles();
-  }, [loadRepos, loadAgents, loadSessions, loadKeymap, loadLang, loadProfiles]);
+    loadAppearance();
+  }, [loadRepos, loadAgents, loadSessions, loadKeymap, loadLang, loadProfiles, loadAppearance]);
+
+  // Re-apply the palette when the OS theme changes while in "system" mode.
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-color-scheme: light)");
+    if (!mq) return;
+    const onChange = () => {
+      const a = useRepos.getState().appearance;
+      if (a.mode === "system") applyAppearance(a);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     const unlisten = onFsChange((repoPath) => {
@@ -180,6 +196,7 @@ export function App() {
           <RepoView />
         ) : (
           <div className="empty">
+            <Logo size={64} />
             <h1>GitMage</h1>
             <p>{t("app.tagline")}</p>
             <button className="btn empty__cta" onClick={pickRepo}>

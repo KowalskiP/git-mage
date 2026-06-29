@@ -295,6 +295,9 @@ pub fn rebase_interactive(path: &str, base: &str, todo: &str) -> AppResult<()> {
     Ok(())
 }
 
+// Helpers below are defined after this module for historical reasons; the test
+// module intentionally sits mid-file.
+#[allow(clippy::items_after_test_module)]
 #[cfg(test)]
 mod tests {
     use super::*;

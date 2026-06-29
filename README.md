@@ -31,6 +31,16 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
   issues; personal access tokens stored in the **system keychain**.
 - **Keyboard shortcuts** — editable keymap with a shortcuts panel.
 - **i18n** — English & Russian, with a language switcher.
+- **Explorer sidebar** — GitKraken-style collapsible, resizable sections (local
+  branches foldered by `/`, remotes, pull requests, stashes, worktrees,
+  submodules, gitflow, LFS, agents) + a separate collapsible repositories drawer.
+- **Native window menu** — File / Edit / GitMage: clone, init, open, open in
+  VS Code / Terminal / Finder, close repository, preferences, check for updates.
+- **Identity profiles** — reusable name/email + signing/SSH-key profiles, applied
+  per-repo (local config) or globally.
+- **Themes** — dark / light / system, a custom **color editor** with reset, and an
+  **interface-scale** control.
+- **Icon styles** — clean **Modern** (Lucide) or a **Fantasy** set (game-icons.net).
 
 ## Stack
 
@@ -60,6 +70,16 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
 npm install
 npm run app:dev      # launch the app (Vite + Tauri, hot reload)
 ```
+
+## Test
+
+```sh
+npm test                       # frontend unit + integration (Vitest + Testing Library)
+( cd src-tauri && cargo test ) # backend (Rust)
+```
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs both suites,
+typecheck, the frontend build and `clippy -D warnings` on every push / PR.
 
 ## Build
 
@@ -129,7 +149,22 @@ re-quarantined, so they apply without further prompts.
 
 M0–M7 are implemented (scaffold → graph → git ops → rebase/conflicts →
 worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
-integrations → polish). See [`docs/SPEC.md`](docs/SPEC.md) §11.
+integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
+native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
+
+Considered next: pull-request **creation** (forge is read-only today),
+reflog-based **undo**, file history / **blame**, drag-and-drop merge/rebase on
+the graph, per-repo profile auto-apply, and completing the Russian i18n.
+
+## Screenshots
+
+Drop images in `docs/screenshots/` and reference them here. (None are checked in
+yet — capture them from a local `npm run app:dev` build.)
+
+## Credits
+
+Bundled icons: **Lucide** (MIT) and **game-icons.net** (CC BY 3.0, incl. the
+wizard-hat logo). Full attribution in [`CREDITS.md`](CREDITS.md).
 
 ## License
 
