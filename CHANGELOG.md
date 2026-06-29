@@ -6,6 +6,27 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 
 ## [Unreleased]
 
+### Added — UI overhaul, appearance & tooling
+- **Explorer sidebar** (GitKraken-style): collapsible, individually resizable
+  sections — LOCAL branches foldered by `/` (current marker, ahead/behind,
+  double-click checkout, context menu), REMOTE, PULL REQUESTS (with a token),
+  STASHES, WORKTREES, SUBMODULES, AGENTS, GITFLOW, LFS — plus a separate
+  collapsible **repositories drawer**. Fetch/Pull/Push/Stash moved above the graph.
+- **Native window menu** — File / Edit / GitMage (clone, init, open, open in
+  VS Code / Terminal / Finder, **close repository**, preferences, check for
+  updates).
+- **Clone / Init** repositories from the app; **close repository** returns to the
+  empty state.
+- **Identity profiles** — name/email + signing/SSH-key profiles stored in SQLite,
+  applied per-repo or globally.
+- **Themes** — dark / light / system, a custom color editor with reset, and an
+  interface-scale control.
+- **Icon styles** — Lucide ("Modern") or game-icons.net ("Fantasy"); new
+  wizard-hat app icon & logo.
+- Dismissible agent-intro banner (remembers the choice).
+- **CI** workflow (frontend + backend tests, typecheck, build, clippy) and a
+  frontend **test harness** (Vitest + Testing Library with Tauri mocked).
+
 ### Added — M7 (polish)
 - Unified **Settings** panel (language, commit signing, shortcuts launcher).
 - Consolidated **Repo** menu folding Stashes / Worktrees / Submodules / LFS /
