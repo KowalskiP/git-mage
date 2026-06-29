@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { useRepos } from "../store/repos";
 import { useT } from "../i18n/useT";
 
 /**
@@ -11,6 +12,7 @@ import { useT } from "../i18n/useT";
  */
 export function UpdateBanner() {
   const t = useT();
+  const setInfo = useRepos((s) => s.setInfo);
   const [update, setUpdate] = useState<Update | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -27,6 +29,21 @@ export function UpdateBanner() {
       alive = false;
     };
   }, []);
+
+  // Manual "Check for Updates…" from the native menu. Unlike the silent startup
+  // check, this surfaces "up to date" / failure as an info toast.
+  useEffect(() => {
+    const onCheck = () => {
+      check()
+        .then((u) => {
+          if (u) setUpdate(u);
+          else setInfo(t("update.upToDate"));
+        })
+        .catch(() => setInfo(t("update.checkFailed")));
+    };
+    window.addEventListener("gitmage:check-update", onCheck);
+    return () => window.removeEventListener("gitmage:check-update", onCheck);
+  }, [setInfo, t]);
 
   if (!update) return null;
 

@@ -603,6 +603,60 @@ pub async fn open_external(url: String) -> AppResult<()> {
     Ok(())
 }
 
+/// Open a repository folder in an external app: "editor" (VS Code), "terminal",
+/// or "finder" (the OS file manager). Window-menu helpers (SPEC §M7 native menu).
+#[tauri::command]
+pub fn open_in(kind: String, path: String) -> AppResult<()> {
+    #[cfg(target_os = "macos")]
+    {
+        let mut cmd = std::process::Command::new("open");
+        match kind.as_str() {
+            "editor" => {
+                cmd.args(["-a", "Visual Studio Code"]).arg(&path);
+            }
+            "terminal" => {
+                cmd.args(["-a", "Terminal"]).arg(&path);
+            }
+            "finder" => {
+                cmd.arg(&path);
+            }
+            _ => return Err(AppError::Msg(format!("unknown target: {kind}"))),
+        }
+        cmd.spawn().map_err(|e| AppError::Msg(format!("open: {e}")))?;
+        Ok(())
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (kind, path);
+        Err(AppError::Msg("open_in is only implemented on macOS".into()))
+    }
+}
+
+fn repo_name(path: &str) -> String {
+    std::path::Path::new(path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("repo")
+        .to_string()
+}
+
+/// Clone `url` into `dir` and register the new repository.
+#[tauri::command]
+pub async fn clone_repo(url: String, dir: String, db: State<'_, Db>) -> AppResult<RepoMeta> {
+    git::clone(&url, &dir)?;
+    git::validate(&dir)?;
+    let name = repo_name(&dir);
+    db.add_or_touch(&dir, &name)
+}
+
+/// Initialize a new repository at `dir` and register it.
+#[tauri::command]
+pub fn init_repo(dir: String, db: State<Db>) -> AppResult<RepoMeta> {
+    git::init(&dir)?;
+    let name = repo_name(&dir);
+    db.add_or_touch(&dir, &name)
+}
+
 #[tauri::command]
 pub async fn worktree_list(path: String) -> AppResult<Vec<Worktree>> {
     git::worktree_list(&path)

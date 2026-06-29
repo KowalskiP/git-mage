@@ -1475,6 +1475,22 @@ body {
   gap: 8px;
   margin-top: 14px;
 }
+.clone-dest {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.clone-dest__path {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: ui-monospace, Menlo, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Stashes dropdown */
 .dropdown--wide {
@@ -2499,6 +2515,9 @@ body {
 }
 .toast--error {
   border-left: 3px solid var(--red);
+}
+.toast--info {
+  border-left: 3px solid var(--accent);
 }
 .toast__msg {
   flex: 1;

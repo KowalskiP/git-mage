@@ -9,6 +9,9 @@ mod supervisor;
 mod terminal;
 mod watcher;
 
+#[cfg(desktop)]
+mod menu;
+
 use db::Db;
 use supervisor::Supervisor;
 use terminal::Terminals;
@@ -23,7 +26,9 @@ pub fn run() {
     {
         builder = builder
             .plugin(tauri_plugin_updater::Builder::new().build())
-            .plugin(tauri_plugin_process::init());
+            .plugin(tauri_plugin_process::init())
+            .menu(menu::build)
+            .on_menu_event(menu::on_event);
     }
     builder
         .manage(Watchers::default())
@@ -124,6 +129,9 @@ pub fn run() {
             ipc::commands::forge_pulls,
             ipc::commands::forge_issues,
             ipc::commands::open_external,
+            ipc::commands::open_in,
+            ipc::commands::clone_repo,
+            ipc::commands::init_repo,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

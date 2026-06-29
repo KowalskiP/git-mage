@@ -30,8 +30,9 @@ pub use worktree::{
     worktree_add, worktree_list, worktree_lock, worktree_prune, worktree_remove,
 };
 pub use ops::{
-    branch_delete, branch_list, branch_rename, checkout, cherry_pick, conflict_content, create_branch,
-    create_branch_at, fetch, launch_difftool, launch_mergetool, list_branches, merge, merge_abort,
+    branch_delete, branch_list, branch_rename, checkout, cherry_pick, clone, conflict_content,
+    create_branch, create_branch_at, fetch, init, launch_difftool, launch_mergetool, list_branches,
+    merge, merge_abort,
     merge_continue, pull, push, rebase, rebase_abort, rebase_continue, rebase_interactive,
     rebase_todo_commits, reset, resolve_side, revert, sequencer_abort, sequencer_continue,
     tag_create, tag_delete, write_resolution,

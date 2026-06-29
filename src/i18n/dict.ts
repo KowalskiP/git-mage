@@ -51,6 +51,9 @@ const en: Dict = {
   "update.available": "Update {v} available",
   "update.install": "Update & restart",
   "update.installing": "Updating…",
+  "update.upToDate": "You're on the latest version.",
+  "update.checkFailed": "Update check failed.",
+  "menu.initTitle": "New repository folder",
 };
 
 const ru: Dict = {
@@ -89,6 +92,9 @@ const ru: Dict = {
   "update.available": "Доступно обновление {v}",
   "update.install": "Обновить и перезапустить",
   "update.installing": "Обновление…",
+  "update.upToDate": "Установлена последняя версия.",
+  "update.checkFailed": "Не удалось проверить обновления.",
+  "menu.initTitle": "Папка нового репозитория",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru };

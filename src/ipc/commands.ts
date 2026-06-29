@@ -183,6 +183,11 @@ export const forgeClearToken = (provider: string) =>
 export const forgePulls = (path: string) => invoke<ForgePull[]>("forge_pulls", { path });
 export const forgeIssues = (path: string) => invoke<ForgeIssue[]>("forge_issues", { path });
 export const openExternal = (url: string) => invoke<void>("open_external", { url });
+export const openIn = (kind: "editor" | "terminal" | "finder", path: string) =>
+  invoke<void>("open_in", { kind, path });
+export const cloneRepo = (url: string, dir: string) =>
+  invoke<RepoMeta>("clone_repo", { url, dir });
+export const initRepo = (dir: string) => invoke<RepoMeta>("init_repo", { dir });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

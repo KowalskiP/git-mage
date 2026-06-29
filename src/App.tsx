@@ -3,8 +3,10 @@ import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "./store/repos";
 import { onFsChange } from "./ipc/events";
+import * as api from "./ipc/commands";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { Explorer } from "./features/explorer/Explorer";
+import { CloneModal } from "./features/CloneModal";
 import { RepoView } from "./features/RepoView";
 import { AgentSessionView } from "./features/agents/AgentSessionView";
 import { CommandPalette } from "./features/palette/CommandPalette";
@@ -30,10 +32,16 @@ export function App() {
   const openSessionId = useRepos((s) => s.openSessionId);
   const reposDrawerOpen = useRepos((s) => s.reposDrawerOpen);
   const openRepo = useRepos((s) => s.openRepo);
+  const initRepo = useRepos((s) => s.initRepo);
 
   async function pickRepo() {
     const dir = await open({ directory: true, multiple: false, title: t("sidebar.openRepo") });
     if (typeof dir === "string") await openRepo(dir);
+  }
+
+  async function doInit() {
+    const dir = await open({ directory: true, multiple: false, title: t("menu.initTitle") });
+    if (typeof dir === "string") await initRepo(dir);
   }
 
   // Throttle fs-change-driven refreshes (SPEC NFR: refresh ≤100ms, but coalesce bursts).
@@ -83,6 +91,44 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Native window-menu actions (File / GitMage). The Rust side emits "menu"
+  // with the item id; we dispatch to the matching action here.
+  useEffect(() => {
+    const un = listen<string>("menu", (e) => {
+      const st = useRepos.getState();
+      switch (e.payload) {
+        case "open_repo":
+          void pickRepo();
+          break;
+        case "init":
+          void doInit();
+          break;
+        case "clone":
+          st.setClone(true);
+          break;
+        case "settings":
+          st.setSettings(true);
+          break;
+        case "check_update":
+          window.dispatchEvent(new CustomEvent("gitmage:check-update"));
+          break;
+        case "open_editor":
+          if (st.selected) void api.openIn("editor", st.selected.path);
+          break;
+        case "open_terminal":
+          if (st.selected) void api.openIn("terminal", st.selected.path);
+          break;
+        case "open_finder":
+          if (st.selected) void api.openIn("finder", st.selected.path);
+          break;
+      }
+    });
+    return () => {
+      un.then((fn) => fn());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Live agent status (from Claude Code hooks) + process exit.
   useEffect(() => {
     const onStatus = listen<{ id: string; status: string }>("agent:status", (e) =>
@@ -123,6 +169,7 @@ export function App() {
       <ShortcutsPanel />
       <ForgePanel />
       <SettingsPanel />
+      <CloneModal />
       <Toaster />
       <UpdateBanner />
     </div>
