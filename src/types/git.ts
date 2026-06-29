@@ -197,6 +197,17 @@ export interface SigningConfig {
   key: string;
 }
 
+export interface Profile {
+  /** 0 for an unsaved profile; assigned on save. */
+  id: number;
+  name: string;
+  userName: string;
+  userEmail: string;
+  signingKey: string;
+  signingFormat: string; // "openpgp" | "ssh" | ""
+  sshKeyPath: string;
+}
+
 export interface GitflowConfig {
   initialized: boolean;
   main: string;

@@ -36,6 +36,7 @@ const en: Dict = {
   "sidebar.noMatch": "No matches.",
   "lang.label": "Language",
   "agents.intro": "Run a coding agent (Claude Code, Codex, …) in an isolated worktree — it works on its own branch and can't touch your main checkout.",
+  "agents.introDismiss": "Don't show again",
   "settings.title": "Settings",
   "settings.language": "Language",
   "settings.signing": "Commit signing",
@@ -46,10 +47,15 @@ const en: Dict = {
   "settings.sign.save": "Save",
   "settings.shortcuts": "Keyboard shortcuts",
   "settings.shortcuts.open": "Open shortcuts…",
+  "settings.profiles": "Profiles",
+  "settings.profiles.open": "Manage profiles…",
   "toolbar.settings": "Settings",
   "update.available": "Update {v} available",
   "update.install": "Update & restart",
   "update.installing": "Updating…",
+  "update.upToDate": "You're on the latest version.",
+  "update.checkFailed": "Update check failed.",
+  "menu.initTitle": "New repository folder",
 };
 
 const ru: Dict = {
@@ -73,6 +79,7 @@ const ru: Dict = {
   "sidebar.noMatch": "Ничего не найдено.",
   "lang.label": "Язык",
   "agents.intro": "Запустите кодинг-агента (Claude Code, Codex, …) в изолированном worktree — он работает в своей branch и не трогает ваш основной checkout.",
+  "agents.introDismiss": "Больше не показывать",
   "settings.title": "Настройки",
   "settings.language": "Язык",
   "settings.signing": "Подпись commit",
@@ -83,10 +90,15 @@ const ru: Dict = {
   "settings.sign.save": "Сохранить",
   "settings.shortcuts": "Горячие клавиши",
   "settings.shortcuts.open": "Открыть…",
+  "settings.profiles": "Профили",
+  "settings.profiles.open": "Управление профилями…",
   "toolbar.settings": "Настройки",
   "update.available": "Доступно обновление {v}",
   "update.install": "Обновить и перезапустить",
   "update.installing": "Обновление…",
+  "update.upToDate": "Установлена последняя версия.",
+  "update.checkFailed": "Не удалось проверить обновления.",
+  "menu.initTitle": "Папка нового репозитория",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru };

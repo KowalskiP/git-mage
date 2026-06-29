@@ -9,6 +9,7 @@ import type {
   BranchList,
   GraphRow,
   LfsStatus,
+  Profile,
   Remote,
   RepoMeta,
   RepoStatus,
@@ -51,8 +52,12 @@ interface ReposState {
   busy: string | null;
   loading: boolean;
   error: string | null;
+  info: string | null;
   showTerminal: boolean;
   reposDrawerOpen: boolean;
+  cloneOpen: boolean;
+  profilesOpen: boolean;
+  profiles: Profile[];
   paletteOpen: boolean;
   shortcutsOpen: boolean;
   settingsOpen: boolean;
@@ -62,6 +67,16 @@ interface ReposState {
 
   toggleTerminal: () => void;
   toggleReposDrawer: (open?: boolean) => void;
+  setClone: (open: boolean) => void;
+  cloneRepo: (url: string, dir: string) => Promise<void>;
+  initRepo: (dir: string) => Promise<void>;
+  setProfilesOpen: (open: boolean) => void;
+  loadProfiles: () => Promise<void>;
+  saveProfile: (p: Profile) => Promise<void>;
+  deleteProfile: (id: number) => Promise<void>;
+  applyProfile: (p: Profile) => Promise<void>;
+  setInfo: (msg: string | null) => void;
+  dismissInfo: () => void;
   setPalette: (open: boolean) => void;
   setShortcuts: (open: boolean) => void;
   setSettings: (open: boolean) => void;
@@ -182,8 +197,12 @@ export const useRepos = create<ReposState>((set, get) => ({
   busy: null,
   loading: false,
   error: null,
+  info: null,
   showTerminal: false,
   reposDrawerOpen: true,
+  cloneOpen: false,
+  profilesOpen: false,
+  profiles: [],
   paletteOpen: false,
   shortcutsOpen: false,
   settingsOpen: false,
@@ -192,6 +211,79 @@ export const useRepos = create<ReposState>((set, get) => ({
 
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
   toggleReposDrawer: (open) => set((s) => ({ reposDrawerOpen: open ?? !s.reposDrawerOpen })),
+  setClone: (open) => set({ cloneOpen: open }),
+  setInfo: (msg) => set({ info: msg }),
+  dismissInfo: () => set({ info: null }),
+
+  cloneRepo: async (url, dir) => {
+    set({ busy: "Cloning…", error: null });
+    try {
+      const repo = await api.cloneRepo(url, dir);
+      set({ cloneOpen: false });
+      await get().loadRepos();
+      await get().select(repo);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    set({ busy: null });
+  },
+
+  initRepo: async (dir) => {
+    set({ busy: "Initializing…", error: null });
+    try {
+      const repo = await api.initRepo(dir);
+      await get().loadRepos();
+      await get().select(repo);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    set({ busy: null });
+  },
+
+  setProfilesOpen: (open) => set({ profilesOpen: open }),
+
+  loadProfiles: async () => {
+    try {
+      set({ profiles: await api.profilesList() });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  saveProfile: async (p) => {
+    set({ error: null });
+    try {
+      await api.profileSave(p);
+      await get().loadProfiles();
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  deleteProfile: async (id) => {
+    set({ error: null });
+    try {
+      await api.profileDelete(id);
+      await get().loadProfiles();
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  applyProfile: async (p) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Applying profile ${p.name}…`, error: null });
+    try {
+      await api.profileApply(sel.path, p);
+      set({ info: `Profile "${p.name}" applied to ${sel.alias ?? sel.name}.` });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await get().loadSigning();
+    set({ busy: null });
+  },
+
   setPalette: (open) => set({ paletteOpen: open }),
   setShortcuts: (open) => set({ shortcutsOpen: open }),
   setSettings: (open) => set({ settingsOpen: open }),

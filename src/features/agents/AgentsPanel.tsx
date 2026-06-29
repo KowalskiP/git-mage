@@ -4,6 +4,8 @@ import { getSetting, setSetting } from "../../ipc/commands";
 import { statusLabel } from "./status";
 import { useT } from "../../i18n/useT";
 
+const INTRO_SETTING = "agent.intro.dismissed";
+
 export function AgentsPanel() {
   const t = useT();
   const agents = useRepos((s) => s.agents);
@@ -19,10 +21,18 @@ export function AgentsPanel() {
   const [agentId, setAgentId] = useState("");
   const [branch, setBranch] = useState("");
   const [setup, setSetup] = useState("");
+  // Start hidden until the persisted flag loads, so dismissers never see a flash.
+  const [introDismissed, setIntroDismissed] = useState(true);
 
   useEffect(() => {
     getSetting("agent.setup").then((v) => setSetup(v ?? ""));
+    getSetting(INTRO_SETTING).then((v) => setIntroDismissed(v === "1"));
   }, []);
+
+  const dismissIntro = () => {
+    setIntroDismissed(true);
+    setSetting(INTRO_SETTING, "1").catch(() => {});
+  };
 
   if (!selected) {
     return <div className="agents-hint agents-hint--pad">Select a repository to manage agent sessions.</div>;
@@ -40,7 +50,19 @@ export function AgentsPanel() {
 
   return (
     <div className="agents-panel">
-      {sessions.length === 0 && <div className="agents-intro">{t("agents.intro")}</div>}
+      {sessions.length === 0 && !introDismissed && (
+        <div className="agents-intro">
+          <span>{t("agents.intro")}</span>
+          <button
+            className="agents-intro__close"
+            title={t("agents.introDismiss")}
+            aria-label={t("agents.introDismiss")}
+            onClick={dismissIntro}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <div className="agents-section">
         <h3>New agent session</h3>
         {available.length === 0 ? (

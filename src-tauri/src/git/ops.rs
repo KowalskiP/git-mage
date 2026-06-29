@@ -53,6 +53,38 @@ fn askpass_helper() -> Option<String> {
     Some(p.to_string_lossy().into_owned())
 }
 
+/// Clone `url` into the new directory `dir` (network). Auth relies on the
+/// system credential helper / SSH agent; we never block on a TTY prompt.
+pub fn clone(url: &str, dir: &str) -> AppResult<()> {
+    let mut cmd = Command::new("git");
+    cmd.args(["clone", url, dir]);
+    cmd.env("GIT_TERMINAL_PROMPT", "0");
+    let out = cmd
+        .output()
+        .map_err(|e| AppError::Git(format!("git: {e}")))?;
+    if !out.status.success() {
+        let err = String::from_utf8_lossy(&out.stderr);
+        return Err(AppError::Git(err.trim().to_string()));
+    }
+    Ok(())
+}
+
+/// Initialize a new repository at `dir` (creating it if needed) with `main` as
+/// the initial branch.
+pub fn init(dir: &str) -> AppResult<()> {
+    std::fs::create_dir_all(dir).map_err(|e| AppError::Git(format!("mkdir: {e}")))?;
+    let out = Command::new("git")
+        .current_dir(dir)
+        .args(["init", "-q", "-b", "main"])
+        .output()
+        .map_err(|e| AppError::Git(format!("git: {e}")))?;
+    if !out.status.success() {
+        let err = String::from_utf8_lossy(&out.stderr);
+        return Err(AppError::Git(err.trim().to_string()));
+    }
+    Ok(())
+}
+
 pub fn checkout(path: &str, refname: &str) -> AppResult<()> {
     run(path, &["checkout", refname], false)
 }

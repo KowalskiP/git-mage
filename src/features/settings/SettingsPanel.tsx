@@ -24,6 +24,7 @@ export function SettingsPanel() {
   const signing = useRepos((s) => s.signing);
   const saveSigning = useRepos((s) => s.saveSigning);
   const setShortcuts = useRepos((s) => s.setShortcuts);
+  const setProfilesOpen = useRepos((s) => s.setProfilesOpen);
   const busy = useRepos((s) => s.busy);
 
   const [signEnabled, setSignEnabled] = useState(false);
@@ -106,6 +107,19 @@ export function SettingsPanel() {
               onClick={() => saveSigning(signEnabled, signFormat, signKey.trim())}
             >
               {t("settings.sign.save")}
+            </button>
+          </section>
+
+          <section className="settings__group">
+            <h4>{t("settings.profiles")}</h4>
+            <button
+              className="tbtn"
+              onClick={() => {
+                setSettings(false);
+                setProfilesOpen(true);
+              }}
+            >
+              {t("settings.profiles.open")}
             </button>
           </section>
 

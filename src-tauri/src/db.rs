@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use rusqlite::{params, Connection};
 
 use crate::error::AppResult;
-use crate::model::RepoMeta;
+use crate::model::{Profile, RepoMeta};
 use crate::supervisor::AgentSession;
 
 /// SQLite-backed repository registry. Wrapped in a Mutex so it can live in
@@ -31,6 +31,15 @@ CREATE TABLE IF NOT EXISTS agent_sessions (
   branch        TEXT NOT NULL,
   worktree_path TEXT NOT NULL,
   created_at    INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS profiles (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  name           TEXT NOT NULL,
+  user_name      TEXT NOT NULL DEFAULT '',
+  user_email     TEXT NOT NULL DEFAULT '',
+  signing_key    TEXT NOT NULL DEFAULT '',
+  signing_format TEXT NOT NULL DEFAULT '',
+  ssh_key_path   TEXT NOT NULL DEFAULT ''
 );
 ";
 
@@ -113,6 +122,56 @@ impl Db {
         Ok(())
     }
 
+    pub fn profiles(&self) -> AppResult<Vec<Profile>> {
+        let conn = self.0.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, name, user_name, user_email, signing_key, signing_format, ssh_key_path
+             FROM profiles ORDER BY name COLLATE NOCASE",
+        )?;
+        let rows = stmt.query_map([], |r| {
+            Ok(Profile {
+                id: r.get(0)?,
+                name: r.get(1)?,
+                user_name: r.get(2)?,
+                user_email: r.get(3)?,
+                signing_key: r.get(4)?,
+                signing_format: r.get(5)?,
+                ssh_key_path: r.get(6)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<_, _>>()?)
+    }
+
+    /// Insert (id == 0) or update a profile; returns it with its row id.
+    pub fn save_profile(&self, p: &Profile) -> AppResult<Profile> {
+        let conn = self.0.lock().unwrap();
+        let id = if p.id == 0 {
+            conn.execute(
+                "INSERT INTO profiles
+                   (name, user_name, user_email, signing_key, signing_format, ssh_key_path)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![p.name, p.user_name, p.user_email, p.signing_key, p.signing_format, p.ssh_key_path],
+            )?;
+            conn.last_insert_rowid()
+        } else {
+            conn.execute(
+                "UPDATE profiles SET name=?2, user_name=?3, user_email=?4,
+                   signing_key=?5, signing_format=?6, ssh_key_path=?7 WHERE id=?1",
+                params![p.id, p.name, p.user_name, p.user_email, p.signing_key, p.signing_format, p.ssh_key_path],
+            )?;
+            p.id
+        };
+        Ok(Profile { id, ..p.clone() })
+    }
+
+    pub fn delete_profile(&self, id: i64) -> AppResult<()> {
+        self.0
+            .lock()
+            .unwrap()
+            .execute("DELETE FROM profiles WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
     /// Persist an agent session so it survives app restarts (SPEC §M7). The pty
     /// process itself does not survive — restored sessions show as "exited".
     pub fn save_session(&self, s: &AgentSession, created_at: i64) -> AppResult<()> {
@@ -192,6 +251,37 @@ mod tests {
         let list = db.list_sessions().unwrap();
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].id, "s2");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn profile_crud_round_trip() {
+        let dir = std::env::temp_dir().join(format!("gitmage-prof-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let db = Db::open(&dir.join("t.sqlite")).unwrap();
+
+        let mut p = Profile {
+            name: "Work".into(),
+            user_name: "Ann".into(),
+            user_email: "ann@work.com".into(),
+            ..Default::default()
+        };
+        let saved = db.save_profile(&p).unwrap();
+        assert!(saved.id > 0);
+
+        // Update via the returned id.
+        p.id = saved.id;
+        p.user_email = "ann@corp.com".into();
+        db.save_profile(&p).unwrap();
+
+        let all = db.profiles().unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].user_email, "ann@corp.com");
+
+        db.delete_profile(saved.id).unwrap();
+        assert_eq!(db.profiles().unwrap().len(), 0);
 
         let _ = std::fs::remove_dir_all(&dir);
     }

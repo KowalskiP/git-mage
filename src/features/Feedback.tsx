@@ -22,18 +22,32 @@ export function TopProgress() {
 export function Toaster() {
   const error = useRepos((s) => s.error);
   const dismissError = useRepos((s) => s.dismissError);
+  const info = useRepos((s) => s.info);
+  const dismissInfo = useRepos((s) => s.dismissInfo);
 
-  if (!error) return null;
+  if (!error && !info) return null;
   return (
     <div className="toaster">
-      <div className="toast toast--error">
-        <span className="toast__msg" title={error}>
-          {error.split("\n")[0]}
-        </span>
-        <button className="toast__close" onClick={dismissError} title="Dismiss">
-          ✕
-        </button>
-      </div>
+      {error && (
+        <div className="toast toast--error">
+          <span className="toast__msg" title={error}>
+            {error.split("\n")[0]}
+          </span>
+          <button className="toast__close" onClick={dismissError} title="Dismiss">
+            ✕
+          </button>
+        </div>
+      )}
+      {info && (
+        <div className="toast toast--info">
+          <span className="toast__msg" title={info}>
+            {info}
+          </span>
+          <button className="toast__close" onClick={dismissInfo} title="Dismiss">
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }
