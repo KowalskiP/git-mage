@@ -74,7 +74,7 @@ interface ReposState {
   loadProfiles: () => Promise<void>;
   saveProfile: (p: Profile) => Promise<void>;
   deleteProfile: (id: number) => Promise<void>;
-  applyProfile: (p: Profile) => Promise<void>;
+  applyProfile: (p: Profile, global?: boolean) => Promise<void>;
   setInfo: (msg: string | null) => void;
   dismissInfo: () => void;
   setPalette: (open: boolean) => void;
@@ -167,8 +167,28 @@ interface ReposState {
   rebaseAbort: () => Promise<void>;
   rebaseInteractive: (base: string, todo: string) => Promise<void>;
   remove: (id: number) => Promise<void>;
+  closeRepo: () => Promise<void>;
   toggleFavorite: (repo: RepoMeta) => Promise<void>;
 }
+
+/** Cleared per-repo slice shared by select() and closeRepo(). */
+const EMPTY_REPO_STATE = {
+  status: null,
+  graph: [],
+  selectedSha: null,
+  branches: [],
+  branchTree: { local: [], remote: [] } as BranchList,
+  remotes: [],
+  stashes: [],
+  worktrees: [],
+  submodules: [],
+  lfs: null,
+  signing: null,
+  gitflow: null,
+  forge: null,
+  pulls: [],
+  issues: [],
+};
 
 export const useRepos = create<ReposState>((set, get) => ({
   repos: [],
@@ -244,7 +264,7 @@ export const useRepos = create<ReposState>((set, get) => ({
 
   loadProfiles: async () => {
     try {
-      set({ profiles: await api.profilesList() });
+      set({ profiles: (await api.profilesList()) ?? [] });
     } catch (e) {
       set({ error: String(e) });
     }
@@ -270,17 +290,22 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
   },
 
-  applyProfile: async (p) => {
+  applyProfile: async (p, global = false) => {
     const sel = get().selected;
-    if (!sel) return;
+    // Global apply doesn't need an open repo; local does.
+    if (!global && !sel) return;
     set({ busy: `Applying profile ${p.name}…`, error: null });
     try {
-      await api.profileApply(sel.path, p);
-      set({ info: `Profile "${p.name}" applied to ${sel.alias ?? sel.name}.` });
+      await api.profileApply(sel?.path ?? "", p, global);
+      set({
+        info: global
+          ? `Profile "${p.name}" set as global git identity.`
+          : `Profile "${p.name}" applied to ${sel?.alias ?? sel?.name}.`,
+      });
     } catch (e) {
       set({ error: String(e) });
     }
-    await get().loadSigning();
+    if (!global) await get().loadSigning();
     set({ busy: null });
   },
 
@@ -394,23 +419,7 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (prev && prev.path !== repo.path) {
       await api.unwatchRepo(prev.path).catch(() => {});
     }
-    set({
-      selected: repo,
-      status: null,
-      graph: [],
-      selectedSha: null,
-      branches: [],
-      remotes: [],
-      stashes: [],
-      worktrees: [],
-      submodules: [],
-      lfs: null,
-      signing: null,
-      gitflow: null,
-      forge: null,
-      pulls: [],
-      issues: [],
-    });
+    set({ selected: repo, ...EMPTY_REPO_STATE });
     await api.watchRepo(repo.path).catch(() => {});
     await Promise.all([
       get().refreshStatus(),
@@ -1336,8 +1345,16 @@ export const useRepos = create<ReposState>((set, get) => ({
   remove: async (id) => {
     await api.removeRepo(id);
     const sel = get().selected;
-    if (sel?.id === id) set({ selected: null, status: null, graph: [], selectedSha: null });
+    if (sel?.id === id) set({ selected: null, openSessionId: null, ...EMPTY_REPO_STATE });
     await get().loadRepos();
+  },
+
+  // Close the open repo and return to the empty state (keeps it in the list).
+  closeRepo: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    await api.unwatchRepo(sel.path).catch(() => {});
+    set({ selected: null, openSessionId: null, ...EMPTY_REPO_STATE });
   },
 
   toggleFavorite: async (repo) => {

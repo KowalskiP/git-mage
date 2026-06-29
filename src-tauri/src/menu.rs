@@ -45,12 +45,11 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &MenuItem::with_id(app, "clone", "Clone…", true, None::<&str>)?,
             &MenuItem::with_id(app, "init", "New Repository…", true, None::<&str>)?,
             &MenuItem::with_id(app, "open_repo", "Open Repository…", true, Some("CmdOrCtrl+O"))?,
+            &MenuItem::with_id(app, "close_repo", "Close Repository", true, Some("CmdOrCtrl+W"))?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "open_editor", "Open in VS Code", true, None::<&str>)?,
             &MenuItem::with_id(app, "open_terminal", "Open in Terminal", true, None::<&str>)?,
             &MenuItem::with_id(app, "open_finder", "Reveal in Finder", true, None::<&str>)?,
-            &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::close_window(app, None)?,
         ],
     )?;
 
@@ -77,8 +76,6 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &PredefinedMenuItem::minimize(app, None)?,
             &PredefinedMenuItem::maximize(app, None)?,
             &PredefinedMenuItem::fullscreen(app, None)?,
-            &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::close_window(app, None)?,
         ],
     )?;
 
@@ -96,6 +93,7 @@ pub fn on_event<R: Runtime>(app: &AppHandle<R>, event: tauri::menu::MenuEvent) {
             | "clone"
             | "init"
             | "open_repo"
+            | "close_repo"
             | "open_editor"
             | "open_terminal"
             | "open_finder"

@@ -94,6 +94,20 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Suppress the webview's default right-click menu (its "Reload" item) on the
+  // app chrome, but keep it on text fields so cut/copy/paste stays available.
+  // Custom in-app context menus call preventDefault + stopPropagation, so they
+  // never reach this listener.
+  useEffect(() => {
+    const onCtx = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, [contenteditable='true'], [contenteditable='']")) return;
+      e.preventDefault();
+    };
+    document.addEventListener("contextmenu", onCtx);
+    return () => document.removeEventListener("contextmenu", onCtx);
+  }, []);
+
   // Native window-menu actions (File / GitMage). The Rust side emits "menu"
   // with the item id; we dispatch to the matching action here.
   useEffect(() => {
@@ -102,6 +116,9 @@ export function App() {
       switch (e.payload) {
         case "open_repo":
           void pickRepo();
+          break;
+        case "close_repo":
+          void st.closeRepo();
           break;
         case "init":
           void doInit();

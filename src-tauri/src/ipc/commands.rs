@@ -674,10 +674,10 @@ pub fn profile_delete(id: i64, db: State<Db>) -> AppResult<()> {
     db.delete_profile(id)
 }
 
-/// Apply a profile to a repo's local git config.
+/// Apply a profile to a repo's local git config, or the global config.
 #[tauri::command]
-pub fn profile_apply(path: String, profile: Profile) -> AppResult<()> {
-    git::apply_profile(&path, &profile)
+pub fn profile_apply(path: String, profile: Profile, global: bool) -> AppResult<()> {
+    git::apply_profile(&path, &profile, global)
 }
 
 /// Effective (name, email) identity for a repo.
