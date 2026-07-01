@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRepos } from "../../store/repos";
 import { useT } from "../../i18n/useT";
-import { LANGS } from "../../i18n/dict";
+import { LANGS, type Lang } from "../../i18n/dict";
 import { THEME_VARS, THEME_VAR_LABELS, basePalette, type ThemeMode } from "../../theme";
 
 const inputProps = {
@@ -140,17 +140,17 @@ export function SettingsPanel() {
 
           <section className="settings__group">
             <h4>{t("settings.language")}</h4>
-            <div className="seg">
+            <select
+              className="sign-select settings__input"
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Lang)}
+            >
               {LANGS.map((l) => (
-                <button
-                  key={l.code}
-                  className={"seg__btn" + (lang === l.code ? " seg__btn--on" : "")}
-                  onClick={() => setLang(l.code)}
-                >
+                <option key={l.code} value={l.code}>
                   {l.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </section>
 
           <section className="settings__group">

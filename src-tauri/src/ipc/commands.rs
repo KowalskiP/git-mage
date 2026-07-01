@@ -580,6 +580,20 @@ pub async fn forge_issues(path: String) -> AppResult<Vec<ForgeIssue>> {
     forge::fetch_issues(&rr, &token).await
 }
 
+/// Create a pull/merge request (source → target branch); returns its web URL.
+#[tauri::command]
+pub async fn forge_create_pull(
+    path: String,
+    title: String,
+    body: String,
+    source: String,
+    target: String,
+) -> AppResult<String> {
+    let rr = forge::require_ref(&path)?;
+    let token = forge_token(&rr)?;
+    forge::create_pull(&rr, &token, &title, &body, &source, &target).await
+}
+
 /// Open a URL in the user's default browser (used for PR/issue links).
 #[tauri::command]
 pub async fn open_external(url: String) -> AppResult<()> {

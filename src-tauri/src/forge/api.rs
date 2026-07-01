@@ -246,6 +246,81 @@ fn urlencode(s: &str) -> String {
     s.replace('/', "%2F")
 }
 
+// ---- create pull/merge request ----
+
+/// Endpoint + JSON body for creating a PR/MR — pure so it's unit-testable.
+pub struct PullSpec {
+    pub url: String,
+    pub body: Value,
+}
+
+/// Build the create-PR request for `rr` (source → target branch).
+pub fn pull_request_spec(
+    rr: &RepoRef,
+    title: &str,
+    body: &str,
+    source: &str,
+    target: &str,
+) -> PullSpec {
+    match rr.provider {
+        Provider::GitHub => PullSpec {
+            url: format!("https://api.github.com/repos/{}/pulls", rr.full_path()),
+            body: serde_json::json!({ "title": title, "head": source, "base": target, "body": body }),
+        },
+        Provider::GitLab => PullSpec {
+            url: format!(
+                "https://{}/api/v4/projects/{}/merge_requests",
+                rr.host,
+                urlencode(&rr.full_path())
+            ),
+            body: serde_json::json!({
+                "source_branch": source, "target_branch": target,
+                "title": title, "description": body
+            }),
+        },
+        Provider::Bitbucket => PullSpec {
+            url: format!(
+                "https://api.bitbucket.org/2.0/repositories/{}/pullrequests",
+                rr.full_path()
+            ),
+            body: serde_json::json!({
+                "title": title, "description": body,
+                "source": { "branch": { "name": source } },
+                "destination": { "branch": { "name": target } }
+            }),
+        },
+    }
+}
+
+/// Web URL of the created PR from the provider's JSON response.
+fn created_pull_url(provider: Provider, v: &Value) -> String {
+    match provider {
+        Provider::GitHub => s(v, "html_url"),
+        Provider::GitLab => s(v, "web_url"),
+        Provider::Bitbucket => path(v, &["links", "html", "href"]),
+    }
+}
+
+/// Create a PR/MR and return its web URL.
+pub async fn create_pull(
+    rr: &RepoRef,
+    token: &str,
+    title: &str,
+    body: &str,
+    source: &str,
+    target: &str,
+) -> AppResult<String> {
+    let c = client()?;
+    let spec = pull_request_spec(rr, title, body, source, target);
+    let mut req = c.post(&spec.url).bearer_auth(token).json(&spec.body);
+    if rr.provider == Provider::GitHub {
+        req = req.header("Accept", "application/vnd.github+json");
+    }
+    // get_json accepts any 2xx (POST create returns 201).
+    let json = get_json(req).await?;
+    Ok(created_pull_url(rr.provider, &json))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -330,5 +405,58 @@ mod tests {
     #[test]
     fn gitlab_path_is_percent_encoded() {
         assert_eq!(urlencode("group/sub/project"), "group%2Fsub%2Fproject");
+    }
+
+    fn rr(provider: Provider) -> RepoRef {
+        RepoRef {
+            provider,
+            host: "gitlab.com".into(),
+            owner: "grp".into(),
+            repo: "proj".into(),
+        }
+    }
+
+    #[test]
+    fn github_pull_spec_uses_head_base() {
+        let spec = pull_request_spec(&rr(Provider::GitHub), "T", "B", "feat", "main");
+        assert_eq!(spec.url, "https://api.github.com/repos/grp/proj/pulls");
+        assert_eq!(spec.body["head"], "feat");
+        assert_eq!(spec.body["base"], "main");
+        assert_eq!(spec.body["title"], "T");
+    }
+
+    #[test]
+    fn gitlab_mr_spec_encodes_path_and_uses_branch_fields() {
+        let spec = pull_request_spec(&rr(Provider::GitLab), "T", "B", "feat", "main");
+        assert_eq!(spec.url, "https://gitlab.com/api/v4/projects/grp%2Fproj/merge_requests");
+        assert_eq!(spec.body["source_branch"], "feat");
+        assert_eq!(spec.body["target_branch"], "main");
+    }
+
+    #[test]
+    fn bitbucket_pr_spec_nests_branches() {
+        let spec = pull_request_spec(&rr(Provider::Bitbucket), "T", "B", "feat", "main");
+        assert!(spec.url.ends_with("/repositories/grp/proj/pullrequests"));
+        assert_eq!(spec.body["source"]["branch"]["name"], "feat");
+        assert_eq!(spec.body["destination"]["branch"]["name"], "main");
+    }
+
+    #[test]
+    fn created_pull_url_per_provider() {
+        assert_eq!(
+            created_pull_url(Provider::GitHub, &json!({"html_url": "https://gh/pr/1"})),
+            "https://gh/pr/1"
+        );
+        assert_eq!(
+            created_pull_url(Provider::GitLab, &json!({"web_url": "https://gl/mr/1"})),
+            "https://gl/mr/1"
+        );
+        assert_eq!(
+            created_pull_url(
+                Provider::Bitbucket,
+                &json!({"links": {"html": {"href": "https://bb/pr/1"}}})
+            ),
+            "https://bb/pr/1"
+        );
     }
 }

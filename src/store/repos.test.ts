@@ -26,6 +26,8 @@ async function defaultInvoke(cmd: string, args?: Record<string, unknown>): Promi
     case "submodule_list":
     case "profiles_list":
     case "graph_load":
+    case "forge_pulls":
+    case "forge_issues":
       return [];
     case "branch_list":
       return { local: [{ name: "main", current: true, ahead: 0, behind: 0 }], remote: [] };
@@ -186,6 +188,26 @@ describe("profile CRUD", () => {
     await useRepos.getState().deleteProfile(5);
     expect(invokeMock).toHaveBeenCalledWith("profile_delete", { id: 5 });
     expect(invokeMock).toHaveBeenCalledWith("profiles_list");
+  });
+});
+
+describe("createPull", () => {
+  it("creates a PR, opens it in the browser and closes the dialog", async () => {
+    useRepos.setState({ selected: repo({ path: "/tmp/x" }), prOpen: true });
+    invokeMock.mockImplementation((async (cmd: string) =>
+      cmd === "forge_create_pull" ? "https://forge/pr/1" : defaultInvoke(cmd)) as never);
+
+    await useRepos.getState().createPull("Title", "Body", "feat", "main");
+
+    expect(invokeMock).toHaveBeenCalledWith("forge_create_pull", {
+      path: "/tmp/x",
+      title: "Title",
+      body: "Body",
+      source: "feat",
+      target: "main",
+    });
+    expect(invokeMock).toHaveBeenCalledWith("open_external", { url: "https://forge/pr/1" });
+    expect(useRepos.getState().prOpen).toBe(false);
   });
 });
 

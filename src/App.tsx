@@ -9,6 +9,7 @@ import { Logo } from "./features/Logo";
 import { RepoSidebar } from "./features/repos/RepoSidebar";
 import { Explorer } from "./features/explorer/Explorer";
 import { CloneModal } from "./features/CloneModal";
+import { NewPrModal } from "./features/forge/NewPrModal";
 import { ProfilesPanel } from "./features/profiles/ProfilesPanel";
 import { RepoView } from "./features/RepoView";
 import { AgentSessionView } from "./features/agents/AgentSessionView";
@@ -210,6 +211,7 @@ export function App() {
       <ForgePanel />
       <SettingsPanel />
       <CloneModal />
+      <NewPrModal />
       <ProfilesPanel />
       <Toaster />
       <UpdateBanner />

@@ -20,7 +20,7 @@ import type {
 } from "../types/git";
 import * as api from "../ipc/commands";
 import { effectiveBindings } from "../lib/keymap";
-import type { Lang } from "../i18n/dict";
+import { isLang, type Lang } from "../i18n/dict";
 import {
   type Appearance,
   type IconTheme,
@@ -66,6 +66,7 @@ interface ReposState {
   showTerminal: boolean;
   reposDrawerOpen: boolean;
   cloneOpen: boolean;
+  prOpen: boolean;
   profilesOpen: boolean;
   profiles: Profile[];
   paletteOpen: boolean;
@@ -163,6 +164,8 @@ interface ReposState {
   clearForgeToken: () => Promise<void>;
   loadPulls: () => Promise<void>;
   loadIssues: () => Promise<void>;
+  setPrOpen: (open: boolean) => void;
+  createPull: (title: string, body: string, source: string, target: string) => Promise<void>;
   loadStashes: () => Promise<void>;
   stashSave: (message: string | null, untracked: boolean) => Promise<void>;
   stashApply: (id: string) => Promise<void>;
@@ -250,6 +253,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   showTerminal: false,
   reposDrawerOpen: true,
   cloneOpen: false,
+  prOpen: false,
   profilesOpen: false,
   profiles: [],
   paletteOpen: false,
@@ -382,13 +386,17 @@ export const useRepos = create<ReposState>((set, get) => ({
   loadLang: async () => {
     try {
       const saved = await api.getSetting(LANG_SETTING);
-      if (saved === "en" || saved === "ru") {
+      if (saved && isLang(saved)) {
         set({ lang: saved });
-      } else if (typeof navigator !== "undefined" && navigator.language.startsWith("ru")) {
-        set({ lang: "ru" }); // first run: follow the OS language
+        return;
       }
     } catch {
-      /* keep default */
+      /* fall through to OS detection */
+    }
+    // First run: follow the OS language if we support it (e.g. "de-DE" → "de").
+    if (typeof navigator !== "undefined") {
+      const pref = navigator.language.slice(0, 2).toLowerCase();
+      if (isLang(pref)) set({ lang: pref });
     }
   },
 
@@ -1095,6 +1103,23 @@ export const useRepos = create<ReposState>((set, get) => ({
       set({ error: String(e) });
     }
     set({ forgeLoading: false });
+  },
+
+  setPrOpen: (open) => set({ prOpen: open }),
+
+  createPull: async (title, body, source, target) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Creating pull request…", error: null });
+    try {
+      const url = await api.forgeCreatePull(sel.path, title, body, source, target);
+      set({ prOpen: false, info: "Pull request created." });
+      if (url) await api.openExternal(url);
+      await get().loadPulls();
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    set({ busy: null });
   },
 
   loadStashes: async () => {

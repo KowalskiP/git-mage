@@ -183,6 +183,13 @@ export const forgeClearToken = (provider: string) =>
   invoke<void>("forge_clear_token", { provider });
 export const forgePulls = (path: string) => invoke<ForgePull[]>("forge_pulls", { path });
 export const forgeIssues = (path: string) => invoke<ForgeIssue[]>("forge_issues", { path });
+export const forgeCreatePull = (
+  path: string,
+  title: string,
+  body: string,
+  source: string,
+  target: string,
+) => invoke<string>("forge_create_pull", { path, title, body, source, target });
 export const openExternal = (url: string) => invoke<void>("open_external", { url });
 export const openIn = (kind: "editor" | "terminal" | "finder", path: string) =>
   invoke<void>("open_in", { kind, path });
