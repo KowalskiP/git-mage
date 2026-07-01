@@ -156,8 +156,8 @@ worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
 integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
 native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
 
-Considered next: drag-and-drop merge/rebase on the graph, and extending i18n
-coverage to the remaining hardcoded strings.
+Considered next: drag-and-drop merge/rebase on the graph, and finishing i18n
+coverage of the remaining surfaces (agents, profiles, command palette).
 
 ## Screenshots
 
