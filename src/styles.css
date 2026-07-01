@@ -1542,6 +1542,118 @@ body {
 .pr-body {
   margin-top: 10px;
 }
+
+/* Blame + file history modals */
+.blame,
+.fhist {
+  width: 760px;
+  max-width: 92vw;
+  max-height: 76vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.blame__head,
+.fhist__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.blame__title,
+.fhist__title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.blame__body {
+  overflow: auto;
+  padding: 4px 0;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+}
+.blame__row {
+  display: grid;
+  grid-template-columns: 66px 110px 42px 1fr;
+  gap: 8px;
+  padding: 0 12px;
+  line-height: 1.5;
+  white-space: pre;
+}
+.blame__row:hover {
+  background: var(--bg-hover);
+}
+.blame__sha {
+  color: var(--accent);
+}
+.blame__author {
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.blame__ln {
+  color: var(--text-dim);
+  text-align: right;
+}
+.blame__code {
+  overflow-x: auto;
+}
+.fhist__body {
+  overflow-y: auto;
+  padding: 4px;
+}
+.fhist__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.fhist__row:last-child {
+  border-bottom: none;
+}
+.fhist__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  padding: 2px 0;
+}
+.fhist__open:disabled {
+  cursor: default;
+}
+.fhist__sha {
+  flex: 0 0 auto;
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.fhist__summary {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fhist__meta {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+  font-size: 11px;
+}
 .clone-dest__path {
   flex: 1;
   min-width: 0;

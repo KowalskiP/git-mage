@@ -140,6 +140,8 @@ pub fn run() {
             ipc::commands::repo_identity,
             ipc::commands::last_action,
             ipc::commands::undo,
+            ipc::commands::file_history,
+            ipc::commands::blame,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

@@ -15,10 +15,9 @@ use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
 use crate::forge::{self, Provider};
 use crate::model::{
-    AgentInfo, BranchList, CommitDetail, DiffSides, ForgeInfo, ForgeIssue, ForgePull, GitflowConfig,
-    GraphRow,
-    Hunk, LfsStatus, Profile, RebaseCommit, Remote, RepoMeta, RepoStatus, SigningConfig, StashEntry,
-    Submodule, Worktree,
+    AgentInfo, BlameLine, BranchList, CommitDetail, DiffSides, FileLog, ForgeInfo, ForgeIssue,
+    ForgePull, GitflowConfig, GraphRow, Hunk, LfsStatus, Profile, RebaseCommit, Remote, RepoMeta,
+    RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -710,6 +709,18 @@ pub fn last_action(path: String) -> AppResult<Option<String>> {
 #[tauri::command]
 pub fn undo(path: String) -> AppResult<String> {
     git::undo(&path)
+}
+
+/// Commits that touched `file` (newest first); `rev` scopes to a commit.
+#[tauri::command]
+pub fn file_history(path: String, file: String, rev: String, limit: u32) -> AppResult<Vec<FileLog>> {
+    git::file_history(&path, &file, &rev, limit)
+}
+
+/// Line-by-line blame of `file` at `rev` ("" = working tree).
+#[tauri::command]
+pub fn blame(path: String, file: String, rev: String) -> AppResult<Vec<BlameLine>> {
+    git::blame(&path, &file, &rev)
 }
 
 #[tauri::command]

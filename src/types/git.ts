@@ -90,6 +90,21 @@ export interface BranchList {
   remote: string[];
 }
 
+export interface FileLog {
+  sha: string;
+  summary: string;
+  author: string;
+  time: number;
+}
+
+export interface BlameLine {
+  line: number;
+  sha: string;
+  author: string;
+  time: number;
+  content: string;
+}
+
 export interface Submodule {
   path: string;
   sha: string;

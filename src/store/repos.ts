@@ -68,6 +68,8 @@ interface ReposState {
   reposDrawerOpen: boolean;
   cloneOpen: boolean;
   prOpen: boolean;
+  blameView: { file: string; rev: string } | null;
+  historyView: { file: string; rev: string } | null;
   profilesOpen: boolean;
   profiles: Profile[];
   /** repo path → profile id last applied there (auto-applied on open). */
@@ -83,6 +85,8 @@ interface ReposState {
   toggleTerminal: () => void;
   toggleReposDrawer: (open?: boolean) => void;
   setClone: (open: boolean) => void;
+  setBlameView: (t: { file: string; rev: string } | null) => void;
+  setHistoryView: (t: { file: string; rev: string } | null) => void;
   cloneRepo: (url: string, dir: string) => Promise<void>;
   initRepo: (dir: string) => Promise<void>;
   setProfilesOpen: (open: boolean) => void;
@@ -258,6 +262,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   reposDrawerOpen: true,
   cloneOpen: false,
   prOpen: false,
+  blameView: null,
+  historyView: null,
   profilesOpen: false,
   profiles: [],
   profileByRepo: {},
@@ -271,6 +277,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   toggleTerminal: () => set((s) => ({ showTerminal: !s.showTerminal })),
   toggleReposDrawer: (open) => set((s) => ({ reposDrawerOpen: open ?? !s.reposDrawerOpen })),
   setClone: (open) => set({ cloneOpen: open }),
+  setBlameView: (t) => set({ blameView: t }),
+  setHistoryView: (t) => set({ historyView: t }),
   setInfo: (msg) => set({ info: msg }),
   dismissInfo: () => set({ info: null }),
 

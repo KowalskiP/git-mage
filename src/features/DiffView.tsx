@@ -4,7 +4,8 @@ import { EditorView, lineNumbers } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { diffSides } from "../ipc/commands";
-import type { DiffSides } from "../types/git";
+import { useRepos } from "../store/repos";
+import { WIP_SHA, type DiffSides } from "../types/git";
 
 interface Props {
   repoPath: string;
@@ -28,6 +29,10 @@ const readOnly = [
 const collapse = { margin: 3, minSize: 4 };
 
 export function DiffView({ repoPath, sha, file, onClose }: Props) {
+  const setBlameView = useRepos((s) => s.setBlameView);
+  const setHistoryView = useRepos((s) => s.setHistoryView);
+  // Blame/history at this commit; "" (working tree) for the WIP node.
+  const rev = sha === WIP_SHA ? "" : sha;
   const hostRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<State>("loading");
   const [data, setData] = useState<DiffSides | null>(null);
@@ -96,6 +101,16 @@ export function DiffView({ repoPath, sha, file, onClose }: Props) {
     <div className="diff-overlay">
       <div className="diff-header">
         <span className="diff-title">{file}</span>
+        <button
+          className="link-btn"
+          onClick={() => setHistoryView({ file, rev })}
+          title="File history"
+        >
+          History
+        </button>
+        <button className="link-btn" onClick={() => setBlameView({ file, rev })} title="Blame">
+          Blame
+        </button>
         <div className="seg seg--diff">
           <button
             className={"seg__btn" + (mode === "split" ? " seg__btn--on" : "")}

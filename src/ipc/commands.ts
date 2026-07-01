@@ -7,6 +7,8 @@ import type {
   DiffSides,
   GraphRow,
   Hunk,
+  BlameLine,
+  FileLog,
   RebaseCommit,
   RepoMeta,
   RepoStatus,
@@ -205,6 +207,10 @@ export const profileApply = (path: string, profile: Profile, global: boolean) =>
 export const repoIdentity = (path: string) => invoke<[string, string]>("repo_identity", { path });
 export const undo = (path: string) => invoke<string>("undo", { path });
 export const lastAction = (path: string) => invoke<string | null>("last_action", { path });
+export const fileHistory = (path: string, file: string, rev: string, limit = 100) =>
+  invoke<FileLog[]>("file_history", { path, file, rev, limit });
+export const blame = (path: string, file: string, rev: string) =>
+  invoke<BlameLine[]>("blame", { path, file, rev });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

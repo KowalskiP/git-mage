@@ -17,6 +17,30 @@ pub struct Profile {
     pub ssh_key_path: String,
 }
 
+/// One commit in a file's history (SPEC: file history).
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct FileLog {
+    pub sha: String,
+    pub summary: String,
+    pub author: String,
+    /// Author time, unix epoch seconds.
+    pub time: i64,
+}
+
+/// One annotated line of `git blame` output.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BlameLine {
+    pub line: u32,
+    /// Short (8-char) commit sha that last touched the line.
+    pub sha: String,
+    pub author: String,
+    /// Author time, unix epoch seconds.
+    pub time: i64,
+    pub content: String,
+}
+
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RepoMeta {
