@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRepos } from "../../store/repos";
+import { useT } from "../../i18n/useT";
 import { fuzzyScore } from "../../lib/fuzzy";
 
 interface Cmd {
@@ -15,6 +16,7 @@ interface Cmd {
  * keyboard-driven list.
  */
 export function CommandPalette() {
+  const t = useT();
   const open = useRepos((s) => s.paletteOpen);
   const setPalette = useRepos((s) => s.setPalette);
 
@@ -184,7 +186,7 @@ export function CommandPalette() {
         <input
           ref={inputRef}
           className="palette__input"
-          placeholder="Type a command…"
+          placeholder={t("palette.placeholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKey}
@@ -194,7 +196,7 @@ export function CommandPalette() {
           spellCheck={false}
         />
         <ul className="palette__list" ref={listRef}>
-          {results.length === 0 && <li className="palette__empty">No matching commands</li>}
+          {results.length === 0 && <li className="palette__empty">{t("palette.empty")}</li>}
           {results.map((c, i) => (
             <li
               key={c.id}

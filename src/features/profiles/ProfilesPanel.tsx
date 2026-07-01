@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../../store/repos";
 import { repoIdentity } from "../../ipc/commands";
+import { useT } from "../../i18n/useT";
 import type { Profile } from "../../types/git";
 
 const inputProps = {
@@ -27,6 +28,7 @@ const BLANK: Profile = {
  * config — GitKraken-style profile switching.
  */
 export function ProfilesPanel() {
+  const t = useT();
   const profilesOpen = useRepos((s) => s.profilesOpen);
   const setProfilesOpen = useRepos((s) => s.setProfilesOpen);
   const profiles = useRepos((s) => s.profiles);
@@ -81,7 +83,7 @@ export function ProfilesPanel() {
     <div className="modal-backdrop" onClick={close}>
       <div className="settings" onClick={(e) => e.stopPropagation()}>
         <div className="settings__head">
-          <span className="settings__title">Profiles</span>
+          <span className="settings__title">{t("profiles.title")}</span>
           <button className="toast__close" onClick={close} title="Close">
             ✕
           </button>
@@ -91,22 +93,22 @@ export function ProfilesPanel() {
           {selected && (
             <div className="profiles-current">
               <span className="profiles-current__label">
-                Current identity — {selected.alias ?? selected.name}
+                {t("profiles.current")} — {selected.alias ?? selected.name}
               </span>
               <span className="profiles-current__val">
                 {identity && (identity[0] || identity[1])
                   ? `${identity[0] || "—"} <${identity[1] || "—"}>`
-                  : "not set"}
+                  : t("profiles.notSet")}
               </span>
             </div>
           )}
 
           {editing ? (
             <div className="settings__group">
-              <h4>{editing.id ? "Edit profile" : "New profile"}</h4>
+              <h4>{editing.id ? t("profiles.edit") : t("profiles.new")}</h4>
               <input
                 className="modal-input"
-                placeholder="Profile name (e.g. Work)"
+                placeholder={t("profiles.namePh")}
                 value={editing.name}
                 autoFocus
                 {...inputProps}
@@ -132,13 +134,17 @@ export function ProfilesPanel() {
                   value={editing.signingFormat}
                   onChange={(e) => set({ signingFormat: e.target.value })}
                 >
-                  <option value="">No signing</option>
+                  <option value="">{t("profiles.noSigning")}</option>
                   <option value="openpgp">GPG (openpgp)</option>
                   <option value="ssh">SSH</option>
                 </select>
                 <input
                   className="modal-input"
-                  placeholder={editing.signingFormat === "ssh" ? "signing key path" : "signing key id"}
+                  placeholder={
+                    editing.signingFormat === "ssh"
+                      ? t("profiles.signKeyPathPh")
+                      : t("profiles.signKeyIdPh")
+                  }
                   value={editing.signingKey}
                   disabled={!editing.signingFormat}
                   {...inputProps}
@@ -148,47 +154,49 @@ export function ProfilesPanel() {
               <div className="settings__row">
                 <input
                   className="modal-input"
-                  placeholder="SSH private key path (optional)"
+                  placeholder={t("profiles.sshPh")}
                   value={editing.sshKeyPath}
                   {...inputProps}
                   onChange={(e) => set({ sshKeyPath: e.target.value })}
                 />
                 <button className="tbtn" onClick={browseSshKey}>
-                  Browse…
+                  {t("profiles.browse")}
                 </button>
               </div>
               <div className="modal-actions">
                 <button className="tbtn" onClick={() => setEditing(null)}>
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button className="tbtn tbtn--primary" disabled={!editing.name.trim()} onClick={save}>
-                  Save
+                  {t("common.save")}
                 </button>
               </div>
             </div>
           ) : (
             <div className="settings__group">
               <div className="profiles-head">
-                <h4>Saved profiles</h4>
+                <h4>{t("profiles.saved")}</h4>
                 <button className="tbtn" onClick={() => setEditing({ ...BLANK })}>
-                  + New profile
+                  {t("profiles.addNew")}
                 </button>
               </div>
               {profiles.length === 0 && (
-                <div className="profiles-empty">
-                  No profiles yet. Create one to switch git identities per repo.
-                </div>
+                <div className="profiles-empty">{t("profiles.empty")}</div>
               )}
               {profiles.map((p) => (
                 <div key={p.id} className="profile-row">
                   <div className="profile-row__main">
                     <span className="profile-row__name">
                       {p.name}
-                      {p.id === activeId && <span className="profile-row__active">Active</span>}
+                      {p.id === activeId && (
+                        <span className="profile-row__active">{t("profiles.active")}</span>
+                      )}
                     </span>
                     <span className="profile-row__id">
                       {p.userName || "—"} &lt;{p.userEmail || "—"}&gt;
-                      {p.signingFormat && <span className="profile-row__sign"> · signs</span>}
+                      {p.signingFormat && (
+                        <span className="profile-row__sign"> · {t("profiles.signs")}</span>
+                      )}
                     </span>
                   </div>
                   <div className="profile-row__actions">
@@ -198,7 +206,7 @@ export function ProfilesPanel() {
                       title={selected ? "Apply to the open repo (local config)" : "Open a repo first"}
                       onClick={() => applyProfile(p)}
                     >
-                      Apply
+                      {t("profiles.apply")}
                     </button>
                     <button
                       className="tbtn"
@@ -206,13 +214,13 @@ export function ProfilesPanel() {
                       title="Set as the global git identity (~/.gitconfig)"
                       onClick={() => applyProfile(p, true)}
                     >
-                      Global
+                      {t("profiles.global")}
                     </button>
                     <button className="link-btn" onClick={() => setEditing({ ...p })}>
-                      Edit
+                      {t("profiles.editAction")}
                     </button>
                     <button className="link-btn link-btn--danger" onClick={() => deleteProfile(p.id)}>
-                      Delete
+                      {t("profiles.delete")}
                     </button>
                   </div>
                 </div>

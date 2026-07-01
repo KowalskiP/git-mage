@@ -30,8 +30,8 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
 - **Forge integrations** — GitHub / GitLab / Bitbucket: browse **and create**
   pull/merge requests, browse issues; tokens in the **system keychain**.
 - **Keyboard shortcuts** — editable keymap with a shortcuts panel.
-- **i18n** — English, Russian, German, French, Spanish and Chinese, with a
-  language switcher (git terms stay in English).
+- **i18n** — full UI in English, Russian, German, French, Spanish and Chinese,
+  with a language switcher (git terms stay in English).
 - **Explorer sidebar** — GitKraken-style collapsible, resizable sections (local
   branches foldered by `/`, remotes, pull requests, stashes, worktrees,
   submodules, gitflow, LFS, agents) + a separate collapsible repositories drawer.
@@ -156,8 +156,7 @@ worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
 integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
 native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
 
-Considered next: drag-and-drop merge/rebase on the graph, and finishing i18n
-coverage of the remaining surfaces (agents, profiles, command palette).
+Considered next: drag-and-drop merge/rebase on the graph.
 
 ## Screenshots
 

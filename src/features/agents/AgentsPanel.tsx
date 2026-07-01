@@ -35,7 +35,7 @@ export function AgentsPanel() {
   };
 
   if (!selected) {
-    return <div className="agents-hint agents-hint--pad">Select a repository to manage agent sessions.</div>;
+    return <div className="agents-hint agents-hint--pad">{t("agents.selectRepo")}</div>;
   }
 
   const effectiveAgent = agentId || available[0]?.id || "";
@@ -64,9 +64,9 @@ export function AgentsPanel() {
         </div>
       )}
       <div className="agents-section">
-        <h3>New agent session</h3>
+        <h3>{t("agents.newSession")}</h3>
         {available.length === 0 ? (
-          <div className="agents-hint">No agent CLIs found on PATH.</div>
+          <div className="agents-hint">{t("agents.noClis")}</div>
         ) : (
           <div className="new-session">
             <select
@@ -82,20 +82,20 @@ export function AgentsPanel() {
             </select>
             <input
               className="new-branch__input"
-              placeholder="new branch name"
+              placeholder={t("agents.branchPh")}
               value={branch}
               onChange={(e) => setBranch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && start()}
             />
             <button className="tbtn tbtn--primary" disabled={!canStart} onClick={start}>
-              Start
+              {t("agents.start")}
             </button>
           </div>
         )}
       </div>
 
       <details className="agents-section setup-section">
-        <summary>Setup commands</summary>
+        <summary>{t("agents.setup")}</summary>
         <textarea
           className="setup-textarea"
           placeholder={"# run in the worktree before the agent\nnpm install"}
@@ -104,12 +104,14 @@ export function AgentsPanel() {
           onChange={(e) => setSetup(e.target.value)}
           onBlur={() => setSetting("agent.setup", setup)}
         />
-        <div className="agents-hint">One per line; runs in the new worktree, then the agent starts.</div>
+        <div className="agents-hint">{t("agents.setupHint")}</div>
       </details>
 
       {sessions.length > 0 && (
         <div className="agents-section">
-          <h3>Sessions ({sessions.length})</h3>
+          <h3>
+            {t("agents.sessions")} ({sessions.length})
+          </h3>
           <ul className="session-list">
             {sessions.map((s) => (
               <li
@@ -131,7 +133,7 @@ export function AgentsPanel() {
                     killSession(s.id);
                   }}
                 >
-                  Kill
+                  {t("agents.kill")}
                 </button>
               </li>
             ))}
@@ -140,7 +142,7 @@ export function AgentsPanel() {
       )}
 
       <div className="agents-section">
-        <h3>Agents detected</h3>
+        <h3>{t("agents.detected")}</h3>
         <ul className="agent-list">
           {agents.map((a) => (
             <li

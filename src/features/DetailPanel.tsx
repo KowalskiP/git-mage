@@ -223,13 +223,13 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
             className={"seg__btn" + (mode === "path" ? " seg__btn--on" : "")}
             onClick={() => setMode("path")}
           >
-            Path
+            {t("detail.path")}
           </button>
           <button
             className={"seg__btn" + (mode === "tree" ? " seg__btn--on" : "")}
             onClick={() => setMode("tree")}
           >
-            Tree
+            {t("detail.tree")}
           </button>
         </div>
       </div>
