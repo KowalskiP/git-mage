@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../store/repos";
+import { useT } from "../i18n/useT";
 
 const inputProps = {
   autoComplete: "off",
@@ -18,6 +19,7 @@ export function nameFromUrl(url: string): string {
 
 /** Clone dialog opened from File ▸ Clone… (native menu). */
 export function CloneModal() {
+  const t = useT();
   const cloneOpen = useRepos((s) => s.cloneOpen);
   const setClone = useRepos((s) => s.setClone);
   const cloneRepo = useRepos((s) => s.cloneRepo);
@@ -39,11 +41,11 @@ export function CloneModal() {
   return (
     <div className="modal-backdrop" onClick={() => setClone(false)}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>Clone repository</h3>
+        <h3>{t("clone.title")}</h3>
         <input
           className="modal-input"
           autoFocus
-          placeholder="Repository URL (https:// or git@)"
+          placeholder={t("clone.url")}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => {
@@ -54,15 +56,15 @@ export function CloneModal() {
         />
         <div className="clone-dest">
           <button className="tbtn" onClick={pickParent}>
-            Choose folder…
+            {t("clone.choose")}
           </button>
           <span className="clone-dest__path" title={target || undefined}>
-            {target || "No folder chosen"}
+            {target || t("clone.noFolder")}
           </span>
         </div>
         <div className="modal-actions">
           <button className="tbtn" onClick={() => setClone(false)}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             className="tbtn tbtn--primary"

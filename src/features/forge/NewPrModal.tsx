@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRepos } from "../../store/repos";
+import { useT } from "../../i18n/useT";
 
 const inputProps = {
   autoComplete: "off",
@@ -10,6 +11,7 @@ const inputProps = {
 
 /** Create a pull/merge request from the current branch (File-menu-free flow). */
 export function NewPrModal() {
+  const t = useT();
   const prOpen = useRepos((s) => s.prOpen);
   const setPrOpen = useRepos((s) => s.setPrOpen);
   const createPull = useRepos((s) => s.createPull);
@@ -37,11 +39,11 @@ export function NewPrModal() {
   return (
     <div className="modal-backdrop" onClick={() => setPrOpen(false)}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h3>New pull request</h3>
+        <h3>{t("pr.title")}</h3>
         <input
           className="modal-input"
           autoFocus
-          placeholder="Title"
+          placeholder={t("pr.titlePh")}
           value={title}
           {...inputProps}
           onChange={(e) => setTitle(e.target.value)}
@@ -49,7 +51,7 @@ export function NewPrModal() {
         <div className="pr-branches">
           <input
             className="modal-input"
-            placeholder="source branch"
+            placeholder={t("pr.source")}
             value={source}
             {...inputProps}
             onChange={(e) => setSource(e.target.value)}
@@ -57,7 +59,7 @@ export function NewPrModal() {
           <span className="pr-arrow">→</span>
           <input
             className="modal-input"
-            placeholder="target branch"
+            placeholder={t("pr.target")}
             value={target}
             {...inputProps}
             onChange={(e) => setTarget(e.target.value)}
@@ -65,17 +67,17 @@ export function NewPrModal() {
         </div>
         <textarea
           className="commit-msg pr-body"
-          placeholder="Description (optional)"
+          placeholder={t("pr.desc")}
           rows={4}
           value={body}
           onChange={(e) => setBody(e.target.value)}
         />
         <div className="modal-actions">
           <button className="tbtn" onClick={() => setPrOpen(false)}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button className="tbtn tbtn--primary" disabled={!canCreate} onClick={submit}>
-            {busy ? "Creating…" : "Create"}
+            {busy ? t("common.loading") : t("common.create")}
           </button>
         </div>
       </div>

@@ -11,13 +11,13 @@ interface Props {
   selectedFile: string | null;
 }
 
-const STATUS_TITLES: Record<string, string> = {
-  M: "Modified",
-  A: "Added",
-  D: "Deleted",
-  R: "Renamed",
-  C: "Copied",
-  T: "Type changed",
+const STATUS_KEY: Record<string, string> = {
+  M: "status.modified",
+  A: "status.added",
+  D: "status.deleted",
+  R: "status.renamed",
+  C: "status.copied",
+  T: "status.typeChanged",
 };
 
 const code = (status: string) => (status === "??" ? "U" : status[0]);
@@ -130,8 +130,11 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
       if (!m.has(k)) m.set(k, []);
       m.get(k)!.push(f);
     }
-    return [...m.entries()].map(([k, files]) => ({ title: STATUS_TITLES[k] ?? k, files }));
-  }, [commitFiles]);
+    return [...m.entries()].map(([k, files]) => ({
+      title: STATUS_KEY[k] ? t(STATUS_KEY[k]) : k,
+      files,
+    }));
+  }, [commitFiles, t]);
 
   if (!selectedSha || !row) {
     return <div className="detail-panel detail-panel--empty">{t("detail.selectCommit")}</div>;
@@ -166,7 +169,7 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
       <div className="detail-head">
         {isWip ? (
           <>
-            <h3>Working Directory</h3>
+            <h3>{t("detail.workingDir")}</h3>
             <div className="detail-sub">
               {wipTotal} uncommitted change{wipTotal === 1 ? "" : "s"}
             </div>
@@ -256,7 +259,7 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
 
       <div className="detail-files">
         {loading ? (
-          <div className="graph-msg">Loading…</div>
+          <div className="graph-msg">{t("common.loading")}</div>
         ) : isWip ? (
           <>
             {conflicted.length > 0 && (
@@ -336,7 +339,7 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
                 <FileTree files={g.files} mode="path" selected={selectedFile} onSelect={openUnstaged} />
               </Section>
             ))}
-            {commitFiles.length === 0 && <div className="filetree-empty">No files</div>}
+            {commitFiles.length === 0 && <div className="filetree-empty">{t("detail.noFiles")}</div>}
           </>
         )}
       </div>

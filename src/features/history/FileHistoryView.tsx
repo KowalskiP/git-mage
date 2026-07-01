@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useRepos } from "../../store/repos";
 import { fileHistory } from "../../ipc/commands";
+import { useT } from "../../i18n/useT";
 import type { FileLog } from "../../types/git";
 
 /** Commits that touched a file; jump to one in the graph or blame it. */
 export function FileHistoryView() {
+  const t = useT();
   const target = useRepos((s) => s.historyView);
   const setHistoryView = useRepos((s) => s.setHistoryView);
   const setBlameView = useRepos((s) => s.setBlameView);
@@ -34,15 +36,17 @@ export function FileHistoryView() {
     <div className="modal-backdrop" onClick={close}>
       <div className="fhist" onClick={(e) => e.stopPropagation()}>
         <div className="fhist__head">
-          <span className="fhist__title">History · {target.file}</span>
+          <span className="fhist__title">
+            {t("diff.history")} · {target.file}
+          </span>
           <button className="diff-close" onClick={close} title="Close">
             ✕
           </button>
         </div>
         <div className="fhist__body">
           {err && <div className="graph-msg error">{err}</div>}
-          {!log && !err && <div className="graph-msg">Loading…</div>}
-          {log && log.length === 0 && <div className="graph-msg">No history.</div>}
+          {!log && !err && <div className="graph-msg">{t("common.loading")}</div>}
+          {log && log.length === 0 && <div className="graph-msg">{t("hist.none")}</div>}
           {log?.map((c) => {
             const inGraph = graph.some((r) => r.sha === c.sha);
             return (

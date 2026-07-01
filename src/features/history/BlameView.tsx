@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useRepos } from "../../store/repos";
 import { blame } from "../../ipc/commands";
+import { useT } from "../../i18n/useT";
 import type { BlameLine } from "../../types/git";
 
 const day = (t: number) => (t ? new Date(t * 1000).toLocaleDateString() : "");
 
 /** Line-by-line blame for a file at a revision (opened from the diff header). */
 export function BlameView() {
+  const t = useT();
   const target = useRepos((s) => s.blameView);
   const setBlameView = useRepos((s) => s.setBlameView);
   const repoPath = useRepos((s) => s.selected?.path ?? "");
@@ -40,7 +42,7 @@ export function BlameView() {
         </div>
         <div className="blame__body">
           {err && <div className="graph-msg error">{err}</div>}
-          {!lines && !err && <div className="graph-msg">Loading…</div>}
+          {!lines && !err && <div className="graph-msg">{t("common.loading")}</div>}
           {lines?.map((l) => (
             <div key={l.line} className="blame__row">
               <span className="blame__sha" title={`${l.author} · ${day(l.time)}`}>{l.sha}</span>

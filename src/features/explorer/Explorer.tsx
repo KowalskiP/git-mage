@@ -13,6 +13,7 @@ import { ContextMenu, type MenuItem } from "../ContextMenu";
 import { PromptModal } from "../PromptModal";
 import { Icon, type IconName } from "../Icon";
 import { AgentsPanel } from "../agents/AgentsPanel";
+import { useT } from "../../i18n/useT";
 import { buildTree, type TreeNode } from "./tree";
 import type { LocalBranch } from "../../types/git";
 
@@ -64,6 +65,7 @@ interface PromptState {
  * menu and folds the branch picker / agents tab into one panel.
  */
 export function Explorer() {
+  const t = useT();
   const selected = useRepos((s) => s.selected)!;
   const status = useRepos((s) => s.status);
   const branchTree = useRepos((s) => s.branchTree);
@@ -409,7 +411,7 @@ export function Explorer() {
         </div>
         {forge?.provider && !forge.hasToken && (
           <button className="link-btn" onClick={() => toggleForge(true)} title="Connect access token">
-            Connect
+            {t("exp.connect")}
           </button>
         )}
         <button
@@ -427,7 +429,7 @@ export function Explorer() {
           "local",
           "LOCAL",
           branchTree.local.length === 0 ? (
-            <div className="exp-empty">No branches</div>
+            <div className="exp-empty">{t("exp.noBranches")}</div>
           ) : (
             <div className="exp-tree">{renderTree(localTree, 0, "local", localLeaf)}</div>
           ),
@@ -448,7 +450,7 @@ export function Explorer() {
           "remote",
           "REMOTE",
           remoteNames.length === 0 ? (
-            <div className="exp-empty">No remotes</div>
+            <div className="exp-empty">{t("exp.noRemotes")}</div>
           ) : (
             <div className="exp-tree">
               {remoteNames.map((rn) => {
@@ -484,7 +486,7 @@ export function Explorer() {
             forgeLoading && pulls.length === 0 ? (
               <div className="exp-empty">Loading…</div>
             ) : pulls.length === 0 ? (
-              <div className="exp-empty">No open pull requests</div>
+              <div className="exp-empty">{t("exp.noPulls")}</div>
             ) : (
               <div className="exp-tree">
                 {pulls.map((p) => (
@@ -510,7 +512,7 @@ export function Explorer() {
           "stashes",
           "STASHES",
           stashes.length === 0 ? (
-            <div className="exp-empty">No stashes</div>
+            <div className="exp-empty">{t("exp.noStashes")}</div>
           ) : (
             stashes.map((s) => (
               <div key={s.id} className="exp-row" title={s.message}>

@@ -5,6 +5,7 @@ import { EditorState } from "@codemirror/state";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { diffSides } from "../ipc/commands";
 import { useRepos } from "../store/repos";
+import { useT } from "../i18n/useT";
 import { WIP_SHA, type DiffSides } from "../types/git";
 
 interface Props {
@@ -29,6 +30,7 @@ const readOnly = [
 const collapse = { margin: 3, minSize: 4 };
 
 export function DiffView({ repoPath, sha, file, onClose }: Props) {
+  const t = useT();
   const setBlameView = useRepos((s) => s.setBlameView);
   const setHistoryView = useRepos((s) => s.setHistoryView);
   // Blame/history at this commit; "" (working tree) for the WIP node.
@@ -104,9 +106,9 @@ export function DiffView({ repoPath, sha, file, onClose }: Props) {
         <button
           className="link-btn"
           onClick={() => setHistoryView({ file, rev })}
-          title="File history"
+          title={t("diff.history")}
         >
-          History
+          {t("diff.history")}
         </button>
         <button className="link-btn" onClick={() => setBlameView({ file, rev })} title="Blame">
           Blame
@@ -116,13 +118,13 @@ export function DiffView({ repoPath, sha, file, onClose }: Props) {
             className={"seg__btn" + (mode === "split" ? " seg__btn--on" : "")}
             onClick={() => setMode("split")}
           >
-            Split
+            {t("diff.split")}
           </button>
           <button
             className={"seg__btn" + (mode === "inline" ? " seg__btn--on" : "")}
             onClick={() => setMode("inline")}
           >
-            Inline
+            {t("diff.inline")}
           </button>
         </div>
         <button className="diff-close" onClick={onClose} title="Close diff">
@@ -130,8 +132,8 @@ export function DiffView({ repoPath, sha, file, onClose }: Props) {
         </button>
       </div>
       <div className="diff-body">
-        {state === "loading" && <div className="graph-msg">Loading diff…</div>}
-        {state === "binary" && <div className="graph-msg">Binary file — no text diff.</div>}
+        {state === "loading" && <div className="graph-msg">{t("diff.loadingDiff")}</div>}
+        {state === "binary" && <div className="graph-msg">{t("diff.binary")}</div>}
         {state === "error" && <div className="graph-msg error">{err}</div>}
         <div ref={hostRef} className="cm-merge" style={{ display: state === "ready" ? "block" : "none" }} />
       </div>
