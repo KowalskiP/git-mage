@@ -20,7 +20,7 @@ import type {
 } from "../types/git";
 import * as api from "../ipc/commands";
 import { effectiveBindings } from "../lib/keymap";
-import type { Lang } from "../i18n/dict";
+import { isLang, type Lang } from "../i18n/dict";
 import {
   type Appearance,
   type IconTheme,
@@ -382,13 +382,17 @@ export const useRepos = create<ReposState>((set, get) => ({
   loadLang: async () => {
     try {
       const saved = await api.getSetting(LANG_SETTING);
-      if (saved === "en" || saved === "ru") {
+      if (saved && isLang(saved)) {
         set({ lang: saved });
-      } else if (typeof navigator !== "undefined" && navigator.language.startsWith("ru")) {
-        set({ lang: "ru" }); // first run: follow the OS language
+        return;
       }
     } catch {
-      /* keep default */
+      /* fall through to OS detection */
+    }
+    // First run: follow the OS language if we support it (e.g. "de-DE" → "de").
+    if (typeof navigator !== "undefined") {
+      const pref = navigator.language.slice(0, 2).toLowerCase();
+      if (isLang(pref)) set({ lang: pref });
     }
   },
 
