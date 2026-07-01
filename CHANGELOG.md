@@ -24,6 +24,8 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 - **Icon styles** — Lucide ("Modern") or game-icons.net ("Fantasy"); new
   wizard-hat app icon & logo.
 - **Create pull/merge requests** from the app (GitHub / GitLab / Bitbucket).
+- **Undo** the last commit / checkout (reflog-based, safe) from the palette.
+- Profiles are **auto-applied per repo** on open (remembered choice).
 - **i18n**: added German, French, Spanish and Chinese (git terms stay English).
 - Dismissible agent-intro banner (remembers the choice).
 - **CI** workflow (frontend + backend tests, typecheck, build, clippy) and a
