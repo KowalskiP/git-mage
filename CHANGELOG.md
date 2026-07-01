@@ -23,6 +23,8 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
   interface-scale control.
 - **Icon styles** — Lucide ("Modern") or game-icons.net ("Fantasy"); new
   wizard-hat app icon & logo.
+- **Create pull/merge requests** from the app (GitHub / GitLab / Bitbucket).
+- **i18n**: added German, French, Spanish and Chinese (git terms stay English).
 - Dismissible agent-intro banner (remembers the choice).
 - **CI** workflow (frontend + backend tests, typecheck, build, clippy) and a
   frontend **test harness** (Vitest + Testing Library with Tauri mocked).

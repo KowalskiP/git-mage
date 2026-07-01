@@ -27,10 +27,11 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
 - **Embedded terminal** — multiple shell sessions in a dockable panel.
 - **Command palette** — `⌘K` fuzzy finder over actions, branches and repos.
 - **Submodules · LFS · signing · gitflow** — status & ops for each.
-- **Forge integrations** — GitHub / GitLab / Bitbucket pull/merge requests and
-  issues; personal access tokens stored in the **system keychain**.
+- **Forge integrations** — GitHub / GitLab / Bitbucket: browse **and create**
+  pull/merge requests, browse issues; tokens in the **system keychain**.
 - **Keyboard shortcuts** — editable keymap with a shortcuts panel.
-- **i18n** — English & Russian, with a language switcher.
+- **i18n** — English, Russian, German, French, Spanish and Chinese, with a
+  language switcher (git terms stay in English).
 - **Explorer sidebar** — GitKraken-style collapsible, resizable sections (local
   branches foldered by `/`, remotes, pull requests, stashes, worktrees,
   submodules, gitflow, LFS, agents) + a separate collapsible repositories drawer.
@@ -152,9 +153,9 @@ worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
 integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
 native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
 
-Considered next: pull-request **creation** (forge is read-only today),
-reflog-based **undo**, file history / **blame**, drag-and-drop merge/rebase on
-the graph, per-repo profile auto-apply, and completing the Russian i18n.
+Considered next: reflog-based **undo**, file history / **blame**, drag-and-drop
+merge/rebase on the graph, per-repo profile auto-apply, and extending i18n
+coverage to the remaining hardcoded strings.
 
 ## Screenshots
 
