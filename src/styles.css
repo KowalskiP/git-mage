@@ -1529,6 +1529,19 @@ body {
   gap: 10px;
   margin-top: 10px;
 }
+.pr-branches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.pr-arrow {
+  color: var(--text-dim);
+  flex: 0 0 auto;
+}
+.pr-body {
+  margin-top: 10px;
+}
 .clone-dest__path {
   flex: 1;
   min-width: 0;

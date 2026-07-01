@@ -7,7 +7,7 @@
 
 mod api;
 
-pub use api::{fetch_issues, fetch_pulls};
+pub use api::{create_pull, fetch_issues, fetch_pulls};
 
 use std::process::Command;
 

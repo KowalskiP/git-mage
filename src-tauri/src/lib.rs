@@ -128,6 +128,7 @@ pub fn run() {
             ipc::commands::forge_clear_token,
             ipc::commands::forge_pulls,
             ipc::commands::forge_issues,
+            ipc::commands::forge_create_pull,
             ipc::commands::open_external,
             ipc::commands::open_in,
             ipc::commands::clone_repo,

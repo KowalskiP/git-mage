@@ -106,6 +106,7 @@ export function Explorer() {
   const gitflowFinish = useRepos((s) => s.gitflowFinish);
   const toggleForge = useRepos((s) => s.toggleForge);
   const loadPulls = useRepos((s) => s.loadPulls);
+  const setPrOpen = useRepos((s) => s.setPrOpen);
 
   const [layout, setLayout] = useState<Layout>({});
   const layoutRef = useRef(layout);
@@ -502,7 +503,7 @@ export function Explorer() {
                 ))}
               </div>
             ),
-            { count: pulls.length },
+            { count: pulls.length, actions: plus("New pull request", () => setPrOpen(true)) },
           )}
 
         {sec(
