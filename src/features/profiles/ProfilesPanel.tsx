@@ -34,7 +34,10 @@ export function ProfilesPanel() {
   const deleteProfile = useRepos((s) => s.deleteProfile);
   const applyProfile = useRepos((s) => s.applyProfile);
   const selected = useRepos((s) => s.selected);
+  const profileByRepo = useRepos((s) => s.profileByRepo);
   const busy = useRepos((s) => s.busy);
+
+  const activeId = selected ? profileByRepo[selected.path] : undefined;
 
   const [editing, setEditing] = useState<Profile | null>(null);
   const [identity, setIdentity] = useState<[string, string] | null>(null);
@@ -179,7 +182,10 @@ export function ProfilesPanel() {
               {profiles.map((p) => (
                 <div key={p.id} className="profile-row">
                   <div className="profile-row__main">
-                    <span className="profile-row__name">{p.name}</span>
+                    <span className="profile-row__name">
+                      {p.name}
+                      {p.id === activeId && <span className="profile-row__active">Active</span>}
+                    </span>
                     <span className="profile-row__id">
                       {p.userName || "—"} &lt;{p.userEmail || "—"}&gt;
                       {p.signingFormat && <span className="profile-row__sign"> · signs</span>}

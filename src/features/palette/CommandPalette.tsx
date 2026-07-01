@@ -54,6 +54,7 @@ export function CommandPalette() {
         { id: "pull", title: "Pull", hint: repo, run: wrap(() => s.pull()) },
         { id: "push", title: "Push", hint: repo, run: wrap(() => s.push()) },
         { id: "stash", title: "Stash changes", hint: repo, run: wrap(() => s.stashSave(null, false)) },
+        { id: "undo", title: "Undo last action", hint: "commit / checkout", run: wrap(() => s.undo()) },
         { id: "stage-all", title: "Stage all", hint: repo, run: wrap(() => s.stageAll()) },
         { id: "unstage-all", title: "Unstage all", hint: repo, run: wrap(() => s.unstageAll()) },
         {

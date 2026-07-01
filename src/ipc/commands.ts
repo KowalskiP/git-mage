@@ -203,6 +203,8 @@ export const profileDelete = (id: number) => invoke<void>("profile_delete", { id
 export const profileApply = (path: string, profile: Profile, global: boolean) =>
   invoke<void>("profile_apply", { path, profile, global });
 export const repoIdentity = (path: string) => invoke<[string, string]>("repo_identity", { path });
+export const undo = (path: string) => invoke<string>("undo", { path });
+export const lastAction = (path: string) => invoke<string | null>("last_action", { path });
 
 export const worktreeList = (path: string) => invoke<Worktree[]>("worktree_list", { path });
 export const worktreeAdd = (path: string, name: string, create: boolean) =>

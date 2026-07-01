@@ -700,6 +700,18 @@ pub fn repo_identity(path: String) -> AppResult<(String, String)> {
     git::identity(&path)
 }
 
+/// Subject of the last HEAD reflog action, or null (for the Undo affordance).
+#[tauri::command]
+pub fn last_action(path: String) -> AppResult<Option<String>> {
+    Ok(git::last_action(&path))
+}
+
+/// Undo the last safely-reversible action; returns a short description.
+#[tauri::command]
+pub fn undo(path: String) -> AppResult<String> {
+    git::undo(&path)
+}
+
 #[tauri::command]
 pub async fn worktree_list(path: String) -> AppResult<Vec<Worktree>> {
     git::worktree_list(&path)

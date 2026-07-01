@@ -137,6 +137,48 @@ pub fn reset(path: &str, target: &str, mode: &str) -> AppResult<()> {
     run(path, &["reset", flag, target], false)
 }
 
+/// Subject of the most recent HEAD reflog entry (e.g. "commit: msg",
+/// "checkout: moving from a to b"), or None when there's no reflog yet.
+pub fn last_action(path: &str) -> Option<String> {
+    let out = Command::new("git")
+        .current_dir(path)
+        .args(["reflog", "-1", "--format=%gs"])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if s.is_empty() {
+        None
+    } else {
+        Some(s)
+    }
+}
+
+/// Undo the last *safely reversible* HEAD action:
+///
+/// - a commit → soft reset to HEAD@{1} (keeps the changes staged);
+/// - a checkout → switch back to the previous branch.
+///
+/// Other operations (merge/rebase/reset/…) are left alone — auto-undoing them
+/// can lose work, so we refuse rather than guess. Returns a short description.
+pub fn undo(path: &str) -> AppResult<String> {
+    let subject = last_action(path).ok_or_else(|| AppError::Git("nothing to undo".into()))?;
+    if subject.starts_with("commit") {
+        // covers "commit", "commit (amend)", "commit (initial)"
+        run(path, &["reset", "--soft", "HEAD@{1}"], false)?;
+        Ok("Undid the last commit — changes kept staged".into())
+    } else if subject.starts_with("checkout:") {
+        run(path, &["checkout", "-"], false)?;
+        Ok("Switched back to the previous branch".into())
+    } else {
+        Err(AppError::Git(format!(
+            "Can't safely auto-undo the last action ({subject}). Use the graph's reset/revert instead."
+        )))
+    }
+}
+
 fn sequencer_cmd(kind: &str) -> &'static str {
     if kind == "revert" {
         "revert"
@@ -312,6 +354,41 @@ mod tests {
             .status
             .success();
         assert!(ok, "git {args:?} failed");
+    }
+
+    #[test]
+    fn undo_reverts_last_commit_keeping_changes() {
+        let dir = std::env::temp_dir().join(format!("gitmage-undo-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        g(&dir, &["init", "-q"]);
+        g(&dir, &["config", "user.email", "t@t"]);
+        g(&dir, &["config", "user.name", "t"]);
+        std::fs::write(dir.join("f.txt"), "a\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "first"]);
+        std::fs::write(dir.join("f.txt"), "b\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "second"]);
+
+        assert!(last_action(p).unwrap().starts_with("commit"));
+        assert!(undo(p).unwrap().contains("commit"));
+
+        let head = Command::new("git")
+            .current_dir(&dir)
+            .args(["log", "-1", "--format=%s"])
+            .output()
+            .unwrap();
+        assert_eq!(String::from_utf8_lossy(&head.stdout).trim(), "first");
+        let staged = Command::new("git")
+            .current_dir(&dir)
+            .args(["diff", "--cached", "--name-only"])
+            .output()
+            .unwrap();
+        assert_eq!(String::from_utf8_lossy(&staged.stdout).trim(), "f.txt");
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

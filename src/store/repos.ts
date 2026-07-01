@@ -31,6 +31,7 @@ import {
 } from "../theme";
 
 const APPEARANCE_SETTING = "appearance";
+const PROFILE_MAP_SETTING = "profile.byRepo";
 
 const KEYMAP_SETTING = "keymap.overrides";
 const LANG_SETTING = "locale";
@@ -69,6 +70,8 @@ interface ReposState {
   prOpen: boolean;
   profilesOpen: boolean;
   profiles: Profile[];
+  /** repo path → profile id last applied there (auto-applied on open). */
+  profileByRepo: Record<string, number>;
   paletteOpen: boolean;
   shortcutsOpen: boolean;
   settingsOpen: boolean;
@@ -87,6 +90,7 @@ interface ReposState {
   saveProfile: (p: Profile) => Promise<void>;
   deleteProfile: (id: number) => Promise<void>;
   applyProfile: (p: Profile, global?: boolean) => Promise<void>;
+  undo: () => Promise<void>;
   setInfo: (msg: string | null) => void;
   dismissInfo: () => void;
   setPalette: (open: boolean) => void;
@@ -256,6 +260,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   prOpen: false,
   profilesOpen: false,
   profiles: [],
+  profileByRepo: {},
   paletteOpen: false,
   shortcutsOpen: false,
   settingsOpen: false,
@@ -299,6 +304,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   loadProfiles: async () => {
     try {
       set({ profiles: (await api.profilesList()) ?? [] });
+      const raw = await api.getSetting(PROFILE_MAP_SETTING);
+      if (raw) set({ profileByRepo: JSON.parse(raw) });
     } catch (e) {
       set({ error: String(e) });
     }
@@ -336,10 +343,29 @@ export const useRepos = create<ReposState>((set, get) => ({
           ? `Profile "${p.name}" set as global git identity.`
           : `Profile "${p.name}" applied to ${sel?.alias ?? sel?.name}.`,
       });
+      // Remember the choice per repo so it's re-applied automatically on open.
+      if (!global && sel) {
+        const map = { ...get().profileByRepo, [sel.path]: p.id };
+        set({ profileByRepo: map });
+        api.setSetting(PROFILE_MAP_SETTING, JSON.stringify(map)).catch(() => {});
+      }
     } catch (e) {
       set({ error: String(e) });
     }
     if (!global) await get().loadSigning();
+    set({ busy: null });
+  },
+
+  undo: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: "Undoing…", error: null });
+    try {
+      set({ info: await api.undo(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
     set({ busy: null });
   },
 
@@ -491,6 +517,12 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().loadGitflow(),
       get().loadForge(),
     ]);
+    // Re-apply this repo's remembered identity profile (silent, local config).
+    const pid = get().profileByRepo[repo.path];
+    if (pid) {
+      const prof = get().profiles.find((p) => p.id === pid);
+      if (prof) await api.profileApply(repo.path, prof, false).catch(() => {});
+    }
   },
 
   refreshStatus: async () => {

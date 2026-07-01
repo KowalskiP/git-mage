@@ -211,6 +211,53 @@ describe("createPull", () => {
   });
 });
 
+describe("undo", () => {
+  it("invokes undo and surfaces the description", async () => {
+    useRepos.setState({ selected: repo({ path: "/tmp/x" }) });
+    invokeMock.mockImplementation((async (cmd: string) =>
+      cmd === "undo" ? "Undid the last commit" : defaultInvoke(cmd)) as never);
+
+    await useRepos.getState().undo();
+
+    expect(invokeMock).toHaveBeenCalledWith("undo", { path: "/tmp/x" });
+    expect(useRepos.getState().info).toBe("Undid the last commit");
+  });
+});
+
+describe("profile auto-apply per repo", () => {
+  const prof = {
+    id: 3,
+    name: "Work",
+    userName: "W",
+    userEmail: "w@e.com",
+    signingKey: "",
+    signingFormat: "",
+    sshKeyPath: "",
+  };
+
+  it("remembers the applied profile for the repo", async () => {
+    useRepos.setState({ selected: repo({ path: "/tmp/x" }) });
+    await useRepos.getState().applyProfile(prof);
+
+    expect(useRepos.getState().profileByRepo["/tmp/x"]).toBe(3);
+    expect(invokeMock).toHaveBeenCalledWith("set_setting", {
+      key: "profile.byRepo",
+      value: JSON.stringify({ "/tmp/x": 3 }),
+    });
+  });
+
+  it("auto-applies the remembered profile when a repo opens", async () => {
+    useRepos.setState({ profiles: [prof], profileByRepo: { "/tmp/x": 3 } });
+    await useRepos.getState().select(repo({ id: 2, path: "/tmp/x", name: "x" }));
+
+    expect(invokeMock).toHaveBeenCalledWith("profile_apply", {
+      path: "/tmp/x",
+      profile: prof,
+      global: false,
+    });
+  });
+});
+
 describe("ui toggles", () => {
   it("toggleReposDrawer flips and forces state", () => {
     const st = useRepos.getState();

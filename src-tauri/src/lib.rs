@@ -138,6 +138,8 @@ pub fn run() {
             ipc::commands::profile_delete,
             ipc::commands::profile_apply,
             ipc::commands::repo_identity,
+            ipc::commands::last_action,
+            ipc::commands::undo,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,
