@@ -25,6 +25,7 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
   wizard-hat app icon & logo.
 - **Create pull/merge requests** from the app (GitHub / GitLab / Bitbucket).
 - **Undo** the last commit / checkout (reflog-based, safe) from the palette.
+- **File history & blame** from the diff header (jump to a commit or blame a rev).
 - Profiles are **auto-applied per repo** on open (remembered choice).
 - **i18n**: added German, French, Spanish and Chinese (git terms stay English).
 - Dismissible agent-intro banner (remembers the choice).

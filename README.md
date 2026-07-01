@@ -40,6 +40,8 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
 - **Identity profiles** — reusable name/email + signing/SSH-key profiles, applied
   per-repo (local config) or globally, and **auto-applied** when a repo re-opens.
 - **Undo** — reflog-based undo of the last commit / checkout (command palette).
+- **File history & blame** — from the diff header: list a file's commits (jump to
+  one in the graph) or view line-by-line blame at any revision.
 - **Themes** — dark / light / system, a custom **color editor** with reset, and an
   **interface-scale** control.
 - **Icon styles** — clean **Modern** (Lucide) or a **Fantasy** set (game-icons.net).
@@ -154,8 +156,8 @@ worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
 integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
 native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
 
-Considered next: file history / **blame**, drag-and-drop merge/rebase on the
-graph, and extending i18n coverage to the remaining hardcoded strings.
+Considered next: drag-and-drop merge/rebase on the graph, and extending i18n
+coverage to the remaining hardcoded strings.
 
 ## Screenshots
 
