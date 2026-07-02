@@ -7,6 +7,7 @@ import {
   KEYMAP_ACTIONS,
   type KeymapAction,
 } from "../../lib/keymap";
+import { useT } from "../../i18n/useT";
 
 /**
  * Keyboard-shortcuts reference + editor (SPEC §M5). Lists every bindable action
@@ -14,6 +15,7 @@ import {
  * keys (Backspace clears, Esc cancels). Overrides persist via the store.
  */
 export function ShortcutsPanel() {
+  const t = useT();
   const open = useRepos((s) => s.shortcutsOpen);
   const setShortcuts = useRepos((s) => s.setShortcuts);
   const keymap = useRepos((s) => s.keymap);
@@ -73,10 +75,10 @@ export function ShortcutsPanel() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shortcuts__head">
-          <span className="shortcuts__title">Keyboard shortcuts</span>
+          <span className="shortcuts__title">{t("settings.shortcuts")}</span>
           <div className="shortcuts__head-actions">
             <button className="link-btn" onClick={() => resetAll()}>
-              Reset all
+              {t("shortcuts.resetAll")}
             </button>
             <button className="diff-close" onClick={() => setShortcuts(false)} title="Close">
               ✕
@@ -98,7 +100,7 @@ export function ShortcutsPanel() {
                         title="Reset to default"
                         onClick={() => resetBinding(a.id)}
                       >
-                        reset
+                        {t("shortcuts.reset")}
                       </button>
                     )}
                     {capturing === a.id ? (
@@ -110,7 +112,7 @@ export function ShortcutsPanel() {
                         onKeyDown={onCapture}
                         onBlur={() => setCapturing(null)}
                       >
-                        Press keys… (Esc cancels)
+                        {t("shortcuts.capture")}
                       </div>
                     ) : (
                       <button

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRepos } from "../store/repos";
 import { conflictContent } from "../ipc/commands";
+import { useT } from "../i18n/useT";
 
 type Choice = "ours" | "theirs" | "both";
 
@@ -63,6 +64,7 @@ export function ConflictEditor({
   file: string;
   onClose: () => void;
 }) {
+  const t = useT();
   const saveResolution = useRepos((s) => s.saveResolution);
   const openMergetool = useRepos((s) => s.openMergetool);
   const [segs, setSegs] = useState<Seg[] | null>(null);
@@ -103,9 +105,9 @@ export function ConflictEditor({
     <div className="diff-overlay">
       <div className="diff-header">
         <span className="diff-title">{file}</span>
-        <span className="hunk-mode">Resolve conflicts — pick a side per block</span>
+        <span className="hunk-mode">{t("conflict.help")}</span>
         <button className="tbtn" onClick={() => openMergetool(file)} title="Open in external merge tool">
-          External tool
+          {t("conflict.externalTool")}
         </button>
         <button className="diff-close" onClick={onClose} title="Close">
           ✕
@@ -113,7 +115,7 @@ export function ConflictEditor({
       </div>
       <div className="diff-body hunk-body">
         {err && <div className="graph-msg error">{err}</div>}
-        {!err && !segs && <div className="graph-msg">Loading…</div>}
+        {!err && !segs && <div className="graph-msg">{t("common.loading")}</div>}
         {segs &&
           segs.map((seg, i) =>
             seg.kind === "text" ? (
@@ -152,10 +154,13 @@ export function ConflictEditor({
       </div>
       <div className="cflt-footer">
         <span className="detail-sub">
-          {conflicts.filter((s) => s.choice !== null).length}/{conflicts.length} blocks resolved
+          {t("conflict.blocksResolved", {
+            n: conflicts.filter((s) => s.choice !== null).length,
+            m: conflicts.length,
+          })}
         </span>
         <button className="tbtn tbtn--primary" disabled={!allResolved || busy} onClick={save}>
-          {busy ? "Saving…" : "Save resolution"}
+          {busy ? t("common.loading") : t("conflict.save")}
         </button>
       </div>
     </div>

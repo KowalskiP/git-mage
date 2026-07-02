@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRepos } from "../store/repos";
 import { rebaseTodoCommits } from "../ipc/commands";
+import { useT } from "../i18n/useT";
 import type { RebaseCommit } from "../types/git";
 
 type Action = "pick" | "squash" | "fixup" | "drop";
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function RebaseModal({ repoPath, base, onClose }: Props) {
+  const t = useT();
   const rebaseInteractive = useRepos((s) => s.rebaseInteractive);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [err, setErr] = useState("");
@@ -74,8 +76,8 @@ export function RebaseModal({ repoPath, base, onClose }: Props) {
       <div className="modal modal--wide" onClick={(e) => e.stopPropagation()}>
         <h3>Interactive rebase</h3>
         {err && <div className="commit-err">{err}</div>}
-        {!rows && !err && <div className="graph-msg">Loading…</div>}
-        {rows && rows.length === 0 && <div className="graph-msg">No commits above this one.</div>}
+        {!rows && !err && <div className="graph-msg">{t("common.loading")}</div>}
+        {rows && rows.length === 0 && <div className="graph-msg">{t("rebase.noCommits")}</div>}
         {rows && rows.length > 0 && (
           <ul className="rebase-list">
             {rows.map((row, i) => (
@@ -129,7 +131,7 @@ export function RebaseModal({ repoPath, base, onClose }: Props) {
         )}
         <div className="modal-actions">
           <button className="tbtn" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             className="tbtn tbtn--primary"

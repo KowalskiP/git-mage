@@ -153,6 +153,14 @@ const en: Dict = {
   "op.inProgress": "{op} in progress",
   "op.conflictsLeft": "{n} conflicts left",
   "op.allResolved": "all resolved",
+  "rebase.noCommits": "No commits above this one.",
+  "conflict.help": "Resolve conflicts — pick a side per block",
+  "conflict.externalTool": "External tool",
+  "conflict.blocksResolved": "{n}/{m} blocks resolved",
+  "conflict.save": "Save resolution",
+  "shortcuts.resetAll": "Reset all",
+  "shortcuts.reset": "reset",
+  "shortcuts.capture": "Press keys… (Esc cancels)",
 };
 
 const ru: Dict = {
@@ -285,6 +293,14 @@ const ru: Dict = {
   "op.inProgress": "{op} в процессе",
   "op.conflictsLeft": "осталось конфликтов: {n}",
   "op.allResolved": "все разрешены",
+  "rebase.noCommits": "Нет commit выше этого.",
+  "conflict.help": "Разрешите конфликты — выберите сторону для каждого блока",
+  "conflict.externalTool": "Внешний инструмент",
+  "conflict.blocksResolved": "разрешено блоков: {n}/{m}",
+  "conflict.save": "Сохранить разрешение",
+  "shortcuts.resetAll": "Сбросить всё",
+  "shortcuts.reset": "сброс",
+  "shortcuts.capture": "Нажмите клавиши… (Esc — отмена)",
 };
 
 const de: Dict = {
@@ -417,6 +433,14 @@ const de: Dict = {
   "op.inProgress": "{op} läuft",
   "op.conflictsLeft": "{n} Konflikte übrig",
   "op.allResolved": "alle gelöst",
+  "rebase.noCommits": "Keine Commits über diesem.",
+  "conflict.help": "Konflikte lösen — pro Block eine Seite wählen",
+  "conflict.externalTool": "Externes Tool",
+  "conflict.blocksResolved": "{n}/{m} Blöcke gelöst",
+  "conflict.save": "Auflösung speichern",
+  "shortcuts.resetAll": "Alle zurücksetzen",
+  "shortcuts.reset": "zurücksetzen",
+  "shortcuts.capture": "Tasten drücken… (Esc bricht ab)",
 };
 
 const fr: Dict = {
@@ -549,6 +573,14 @@ const fr: Dict = {
   "op.inProgress": "{op} en cours",
   "op.conflictsLeft": "{n} conflits restants",
   "op.allResolved": "tout est résolu",
+  "rebase.noCommits": "Aucun commit au-dessus de celui-ci.",
+  "conflict.help": "Résolvez les conflits — choisissez un côté par bloc",
+  "conflict.externalTool": "Outil externe",
+  "conflict.blocksResolved": "{n}/{m} blocs résolus",
+  "conflict.save": "Enregistrer la résolution",
+  "shortcuts.resetAll": "Tout réinitialiser",
+  "shortcuts.reset": "réinit.",
+  "shortcuts.capture": "Appuyez sur des touches… (Échap annule)",
 };
 
 const es: Dict = {
@@ -681,6 +713,14 @@ const es: Dict = {
   "op.inProgress": "{op} en curso",
   "op.conflictsLeft": "{n} conflictos restantes",
   "op.allResolved": "todo resuelto",
+  "rebase.noCommits": "No hay commits por encima de este.",
+  "conflict.help": "Resuelve los conflictos — elige un lado por bloque",
+  "conflict.externalTool": "Herramienta externa",
+  "conflict.blocksResolved": "{n}/{m} bloques resueltos",
+  "conflict.save": "Guardar resolución",
+  "shortcuts.resetAll": "Restablecer todo",
+  "shortcuts.reset": "restablecer",
+  "shortcuts.capture": "Pulsa teclas… (Esc cancela)",
 };
 
 const zh: Dict = {
@@ -813,6 +853,14 @@ const zh: Dict = {
   "op.inProgress": "{op} 进行中",
   "op.conflictsLeft": "剩余 {n} 个冲突",
   "op.allResolved": "全部已解决",
+  "rebase.noCommits": "此提交之上没有 commit。",
+  "conflict.help": "解决冲突 — 每个块选择一侧",
+  "conflict.externalTool": "外部工具",
+  "conflict.blocksResolved": "已解决 {n}/{m} 个块",
+  "conflict.save": "保存解决结果",
+  "shortcuts.resetAll": "全部重置",
+  "shortcuts.reset": "重置",
+  "shortcuts.capture": "按下按键…（Esc 取消）",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru, de, fr, es, zh };
