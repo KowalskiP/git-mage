@@ -161,6 +161,19 @@ const en: Dict = {
   "shortcuts.resetAll": "Reset all",
   "shortcuts.reset": "reset",
   "shortcuts.capture": "Press keys… (Esc cancels)",
+  "keymap.group.general": "General",
+  "keymap.group.view": "View",
+  "keymap.group.sync": "Sync",
+  "keymap.group.changes": "Changes",
+  "keymap.action.palette": "Command palette",
+  "keymap.action.shortcuts": "Keyboard shortcuts",
+  "keymap.action.toggleTerminal": "Toggle terminal",
+  "keymap.action.refresh": "Refresh",
+  "keymap.action.fetch": "Fetch",
+  "keymap.action.pull": "Pull",
+  "keymap.action.push": "Push",
+  "keymap.action.stageAll": "Stage all",
+  "keymap.action.stash": "Stash changes",
 };
 
 const ru: Dict = {
@@ -301,6 +314,19 @@ const ru: Dict = {
   "shortcuts.resetAll": "Сбросить всё",
   "shortcuts.reset": "сброс",
   "shortcuts.capture": "Нажмите клавиши… (Esc — отмена)",
+  "keymap.group.general": "Основные",
+  "keymap.group.view": "Вид",
+  "keymap.group.sync": "Синхронизация",
+  "keymap.group.changes": "Изменения",
+  "keymap.action.palette": "Палитра команд",
+  "keymap.action.shortcuts": "Горячие клавиши",
+  "keymap.action.toggleTerminal": "Показать/скрыть терминал",
+  "keymap.action.refresh": "Обновить",
+  "keymap.action.fetch": "Fetch",
+  "keymap.action.pull": "Pull",
+  "keymap.action.push": "Push",
+  "keymap.action.stageAll": "Stage all",
+  "keymap.action.stash": "Stash changes",
 };
 
 const de: Dict = {
@@ -441,6 +467,19 @@ const de: Dict = {
   "shortcuts.resetAll": "Alle zurücksetzen",
   "shortcuts.reset": "zurücksetzen",
   "shortcuts.capture": "Tasten drücken… (Esc bricht ab)",
+  "keymap.group.general": "Allgemein",
+  "keymap.group.view": "Ansicht",
+  "keymap.group.sync": "Sync",
+  "keymap.group.changes": "Änderungen",
+  "keymap.action.palette": "Befehlspalette",
+  "keymap.action.shortcuts": "Tastenkürzel",
+  "keymap.action.toggleTerminal": "Terminal umschalten",
+  "keymap.action.refresh": "Aktualisieren",
+  "keymap.action.fetch": "Fetch",
+  "keymap.action.pull": "Pull",
+  "keymap.action.push": "Push",
+  "keymap.action.stageAll": "Stage all",
+  "keymap.action.stash": "Stash changes",
 };
 
 const fr: Dict = {
@@ -581,6 +620,19 @@ const fr: Dict = {
   "shortcuts.resetAll": "Tout réinitialiser",
   "shortcuts.reset": "réinit.",
   "shortcuts.capture": "Appuyez sur des touches… (Échap annule)",
+  "keymap.group.general": "Général",
+  "keymap.group.view": "Affichage",
+  "keymap.group.sync": "Sync",
+  "keymap.group.changes": "Modifications",
+  "keymap.action.palette": "Palette de commandes",
+  "keymap.action.shortcuts": "Raccourcis clavier",
+  "keymap.action.toggleTerminal": "Basculer le terminal",
+  "keymap.action.refresh": "Actualiser",
+  "keymap.action.fetch": "Fetch",
+  "keymap.action.pull": "Pull",
+  "keymap.action.push": "Push",
+  "keymap.action.stageAll": "Stage all",
+  "keymap.action.stash": "Stash changes",
 };
 
 const es: Dict = {
@@ -721,6 +773,19 @@ const es: Dict = {
   "shortcuts.resetAll": "Restablecer todo",
   "shortcuts.reset": "restablecer",
   "shortcuts.capture": "Pulsa teclas… (Esc cancela)",
+  "keymap.group.general": "General",
+  "keymap.group.view": "Vista",
+  "keymap.group.sync": "Sincronización",
+  "keymap.group.changes": "Cambios",
+  "keymap.action.palette": "Paleta de comandos",
+  "keymap.action.shortcuts": "Atajos de teclado",
+  "keymap.action.toggleTerminal": "Alternar terminal",
+  "keymap.action.refresh": "Actualizar",
+  "keymap.action.fetch": "Fetch",
+  "keymap.action.pull": "Pull",
+  "keymap.action.push": "Push",
+  "keymap.action.stageAll": "Stage all",
+  "keymap.action.stash": "Stash changes",
 };
 
 const zh: Dict = {
@@ -861,6 +926,19 @@ const zh: Dict = {
   "shortcuts.resetAll": "全部重置",
   "shortcuts.reset": "重置",
   "shortcuts.capture": "按下按键…（Esc 取消）",
+  "keymap.group.general": "常规",
+  "keymap.group.view": "视图",
+  "keymap.group.sync": "同步",
+  "keymap.group.changes": "更改",
+  "keymap.action.palette": "命令面板",
+  "keymap.action.shortcuts": "键盘快捷键",
+  "keymap.action.toggleTerminal": "切换终端",
+  "keymap.action.refresh": "刷新",
+  "keymap.action.fetch": "Fetch",
+  "keymap.action.pull": "Pull",
+  "keymap.action.push": "Push",
+  "keymap.action.stageAll": "Stage all",
+  "keymap.action.stash": "Stash changes",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru, de, fr, es, zh };

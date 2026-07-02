@@ -26,6 +26,13 @@ export function ShortcutsPanel() {
   const [capturing, setCapturing] = useState<string | null>(null);
   const captureRef = useRef<HTMLDivElement>(null);
 
+  // Localize an action/group name, falling back to the registry's English text
+  // if a locale hasn't got a key for it yet (translate() echoes unknown keys).
+  const tr = (key: string, fallback: string) => {
+    const s = t(key);
+    return s === key ? fallback : s;
+  };
+
   const eff = useMemo(() => effectiveBindings(keymap), [keymap]);
   const groups = useMemo(() => {
     const m = new Map<string, KeymapAction[]>();
@@ -88,12 +95,12 @@ export function ShortcutsPanel() {
         <div className="shortcuts__body">
           {groups.map(([group, actions]) => (
             <section key={group} className="shortcuts__group">
-              <h4>{group}</h4>
+              <h4>{tr(`keymap.group.${group.toLowerCase()}`, group)}</h4>
               {actions.map((a) => {
                 const overridden = a.id in keymap;
                 return (
                   <div key={a.id} className="shortcut-row">
-                    <span className="shortcut-label">{a.label}</span>
+                    <span className="shortcut-label">{tr(`keymap.action.${a.id}`, a.label)}</span>
                     {overridden && (
                       <button
                         className="link-btn shortcut-reset"

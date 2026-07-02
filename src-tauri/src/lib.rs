@@ -48,6 +48,7 @@ pub fn run() {
             ipc::commands::set_favorite,
             ipc::commands::repo_status,
             ipc::commands::graph_load,
+            ipc::commands::graph_more,
             ipc::commands::commit_detail,
             ipc::commands::commit_diff,
             ipc::commands::wip_diff,

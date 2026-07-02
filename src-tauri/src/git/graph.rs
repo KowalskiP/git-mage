@@ -7,7 +7,7 @@
 use std::process::Command;
 
 use crate::error::{AppError, AppResult};
-use crate::model::{GraphEdge, GraphRow};
+use crate::model::{GraphEdge, GraphPage, GraphRow};
 
 const US: char = '\u{1f}'; // unit separator between fields
 const RS: char = '\u{1e}'; // record separator between commits
@@ -24,25 +24,56 @@ struct Commit {
     summary: String,
 }
 
-/// Load up to `limit` commits across all refs and compute their graph layout.
-pub fn graph(path: &str, limit: usize) -> AppResult<Vec<GraphRow>> {
+/// Load the first page of the commit graph (up to `limit` commits) and lay it
+/// out from scratch. Prepends the working-directory (WIP) node when dirty.
+pub fn graph(path: &str, limit: usize) -> AppResult<GraphPage> {
+    graph_page(path, 0, limit, Vec::new())
+}
+
+/// Load a later page: `skip` real commits in, up to `limit` more, resuming the
+/// lane layout from `lanes` (the cursor returned by the previous page). No WIP
+/// node — that only belongs at the very top (`skip == 0`, via `graph`).
+pub fn graph_more(
+    path: &str,
+    skip: usize,
+    limit: usize,
+    lanes: Vec<Option<String>>,
+) -> AppResult<GraphPage> {
+    graph_page(path, skip, limit, lanes)
+}
+
+/// Shared paging core: collect the window `[skip, skip + limit)` of commits and
+/// continue the lane sweep from `lanes_in`. The WIP node is prepended only on
+/// the first page so it never re-appears mid-history.
+fn graph_page(
+    path: &str,
+    skip: usize,
+    limit: usize,
+    lanes_in: Vec<Option<String>>,
+) -> AppResult<GraphPage> {
     // Prefer gix (no process spawn); fall back to the git CLI on any gix error.
-    let mut commits = match collect_commits_gix(path, limit) {
+    let mut commits = match collect_commits_gix(path, skip, limit) {
         Ok(c) => c,
-        Err(_) => collect_commits_cli(path, limit)?,
+        Err(_) => collect_commits_cli(path, skip, limit)?,
     };
+    // Fewer commits than the cap → the history is exhausted after this page.
+    let at_end = commits.len() < limit;
 
     // Prepend a synthetic working-directory node when the tree is dirty, so the
     // graph shows uncommitted changes as a node off HEAD (GitKraken-style).
-    if let Some(wip) = working_dir_node(path) {
-        commits.insert(0, wip);
+    if skip == 0 {
+        if let Some(wip) = working_dir_node(path) {
+            commits.insert(0, wip);
+        }
     }
 
-    Ok(layout(commits))
+    let Layout { rows, lanes } = layout_from(commits, lanes_in);
+    Ok(GraphPage { rows, lanes, at_end })
 }
 
-/// Commit data via `gix` revwalk across all refs (no process spawn).
-fn collect_commits_gix(path: &str, limit: usize) -> AppResult<Vec<Commit>> {
+/// Commit data via `gix` revwalk across all refs (no process spawn), skipping
+/// the first `skip` commits and taking up to `limit`.
+fn collect_commits_gix(path: &str, skip: usize, limit: usize) -> AppResult<Vec<Commit>> {
     use std::collections::HashMap;
 
     let repo = gix::open(path).map_err(|e| AppError::Git(format!("gix open: {e}")))?;
@@ -80,11 +111,16 @@ fn collect_commits_gix(path: &str, limit: usize) -> AppResult<Vec<Commit>> {
         .map_err(|e| AppError::Git(format!("gix revwalk: {e}")))?;
 
     let mut commits = Vec::new();
+    let mut skipped = 0usize;
     for info in walk {
         if commits.len() >= limit {
             break;
         }
         let info = info.map_err(|e| AppError::Git(format!("gix walk: {e}")))?;
+        if skipped < skip {
+            skipped += 1;
+            continue;
+        }
         let oid = info.id;
         let commit = repo
             .find_commit(oid)
@@ -111,7 +147,7 @@ fn collect_commits_gix(path: &str, limit: usize) -> AppResult<Vec<Commit>> {
 }
 
 /// Commit data via the git CLI (`git log --all`) — fallback for `collect_commits_gix`.
-fn collect_commits_cli(path: &str, limit: usize) -> AppResult<Vec<Commit>> {
+fn collect_commits_cli(path: &str, skip: usize, limit: usize) -> AppResult<Vec<Commit>> {
     let fmt = format!("{US}%H{US}%P{US}%an{US}%at{US}%D{US}%s{RS}");
     let out = Command::new("git")
         .current_dir(path)
@@ -121,6 +157,7 @@ fn collect_commits_cli(path: &str, limit: usize) -> AppResult<Vec<Commit>> {
             "log",
             "--all",
             "--date-order",
+            &format!("--skip={skip}"),
             &format!("--max-count={limit}"),
             &format!("--format={fmt}"),
         ])
@@ -205,10 +242,20 @@ fn color_of(col: usize) -> u32 {
     (col % 8) as u32
 }
 
+/// A laid-out page: the rows plus the terminal lane state (the cursor a later
+/// page resumes from). See [`GraphPage`] for the wire form.
+struct Layout {
+    rows: Vec<GraphRow>,
+    lanes: Vec<Option<String>>,
+}
+
 /// Lane-assignment sweep. `lanes[c]` holds the sha each column is currently
-/// routing toward (the next commit expected in that column).
-fn layout(commits: Vec<Commit>) -> Vec<GraphRow> {
-    let mut lanes: Vec<Option<String>> = Vec::new();
+/// routing toward (the next commit expected in that column). `lanes_in` seeds
+/// the sweep so a later page continues exactly where the previous one stopped;
+/// pass an empty vec for the first page. Returns the rows and the final lane
+/// vector to hand to the next page.
+fn layout_from(commits: Vec<Commit>, lanes_in: Vec<Option<String>>) -> Layout {
+    let mut lanes: Vec<Option<String>> = lanes_in;
     let mut rows = Vec::with_capacity(commits.len());
 
     for c in &commits {
@@ -309,7 +356,13 @@ fn layout(commits: Vec<Commit>) -> Vec<GraphRow> {
         lanes = next;
     }
 
-    rows
+    Layout { rows, lanes }
+}
+
+/// Lay out a page from scratch (empty seed lanes). Kept for the unit tests.
+#[cfg(test)]
+fn layout(commits: Vec<Commit>) -> Vec<GraphRow> {
+    layout_from(commits, Vec::new()).rows
 }
 
 #[cfg(test)]
@@ -358,9 +411,77 @@ mod tests {
             git(&["add", "."]);
             git(&["commit", "-q", "-m", &format!("c{i}")]);
         }
-        let rows = graph(p, 5).unwrap();
-        let commits = rows.iter().filter(|r| !r.wip).count();
+        let page = graph(p, 5).unwrap();
+        let commits = page.rows.iter().filter(|r| !r.wip).count();
         assert_eq!(commits, 5, "graph must cap at the requested limit");
+        assert!(!page.at_end, "12 commits, limit 5 → more pages remain");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn paging_reassembles_the_full_graph() {
+        // Appending pages (resuming the lane cursor) must produce byte-for-byte
+        // the same rows as one full load — the core append-only invariant.
+        use std::process::Command;
+        let dir = std::env::temp_dir().join(format!("gitmage-graphpage-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        let git = |args: &[&str]| {
+            assert!(
+                Command::new("git").current_dir(&dir).args(args).output().unwrap().status.success(),
+                "git {args:?}"
+            );
+        };
+        git(&["init", "-q", "-b", "main"]);
+        git(&["config", "user.email", "t@t"]);
+        git(&["config", "user.name", "t"]);
+        // Build some branching history so lanes span the page seams.
+        for i in 0..8 {
+            std::fs::write(dir.join("f.txt"), format!("{i}\n")).unwrap();
+            git(&["add", "."]);
+            git(&["commit", "-q", "-m", &format!("c{i}")]);
+        }
+        git(&["checkout", "-q", "-b", "side", "HEAD~4"]);
+        for i in 0..4 {
+            std::fs::write(dir.join("s.txt"), format!("{i}\n")).unwrap();
+            git(&["add", "."]);
+            git(&["commit", "-q", "-m", &format!("s{i}")]);
+        }
+        git(&["checkout", "-q", "main"]);
+        git(&["merge", "-q", "--no-ff", "-m", "merge side", "side"]);
+
+        // Clean tree so neither path grows a WIP node (keeps the comparison exact).
+        let full = graph(p, 1000).unwrap();
+        let total = full.rows.len();
+        assert!(total >= 13, "expected the merged history, got {total}");
+        assert!(full.at_end);
+
+        // Reassemble via small pages, carrying the lane cursor across each seam.
+        let mut paged: Vec<GraphRow> = Vec::new();
+        let mut lanes: Vec<Option<String>> = Vec::new();
+        let mut skip = 0usize;
+        loop {
+            let page = graph_more(p, skip, 3, lanes.clone()).unwrap();
+            skip += page.rows.len();
+            lanes = page.lanes;
+            let done = page.at_end;
+            paged.extend(page.rows);
+            if done {
+                break;
+            }
+        }
+
+        assert_eq!(paged.len(), total, "paged row count must match full load");
+        for (a, b) in full.rows.iter().zip(paged.iter()) {
+            assert_eq!(a.sha, b.sha, "row order diverged");
+            assert_eq!(a.column, b.column, "column diverged at {}", a.sha);
+            assert_eq!(a.color, b.color, "color diverged at {}", a.sha);
+            assert_eq!(a.edges.len(), b.edges.len(), "edge count diverged at {}", a.sha);
+            for (ea, eb) in a.edges.iter().zip(b.edges.iter()) {
+                assert_eq!((ea.from, ea.to, ea.color), (eb.from, eb.to, eb.color));
+            }
+        }
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -371,12 +492,12 @@ mod tests {
         if !std::path::Path::new(r).join(".git").exists() {
             return;
         }
-        let mut g: Vec<String> = collect_commits_gix(r, 5000)
+        let mut g: Vec<String> = collect_commits_gix(r, 0, 5000)
             .unwrap()
             .into_iter()
             .map(|c| c.sha)
             .collect();
-        let mut c: Vec<String> = collect_commits_cli(r, 5000)
+        let mut c: Vec<String> = collect_commits_cli(r, 0, 5000)
             .unwrap()
             .into_iter()
             .map(|c| c.sha)

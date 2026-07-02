@@ -51,6 +51,15 @@ export interface GraphRow {
   wip: boolean;
 }
 
+/** One page of the commit graph plus the cursor to fetch the next page. */
+export interface GraphPage {
+  rows: GraphRow[];
+  /** Opaque lane cursor: pass straight back to `graphMore` for the next page. */
+  lanes: (string | null)[];
+  /** True when the history is exhausted (no further pages). */
+  atEnd: boolean;
+}
+
 export interface StashEntry {
   id: string;
   message: string;

@@ -5,7 +5,7 @@ import type {
   AgentSession,
   CommitDetail,
   DiffSides,
-  GraphRow,
+  GraphPage,
   Hunk,
   BlameLine,
   FileLog,
@@ -39,7 +39,10 @@ export const setFavorite = (id: number, favorite: boolean) =>
 export const repoStatus = (path: string) => invoke<RepoStatus>("repo_status", { path });
 
 export const graphLoad = (path: string, limit?: number) =>
-  invoke<GraphRow[]>("graph_load", { path, limit });
+  invoke<GraphPage>("graph_load", { path, limit });
+
+export const graphMore = (path: string, skip: number, limit: number, lanes: (string | null)[]) =>
+  invoke<GraphPage>("graph_more", { path, skip, limit, lanes });
 
 export const commitDetail = (path: string, sha: string) =>
   invoke<CommitDetail>("commit_detail", { path, sha });

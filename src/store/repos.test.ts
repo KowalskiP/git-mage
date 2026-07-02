@@ -25,10 +25,12 @@ async function defaultInvoke(cmd: string, args?: Record<string, unknown>): Promi
     case "remote_list":
     case "submodule_list":
     case "profiles_list":
-    case "graph_load":
     case "forge_pulls":
     case "forge_issues":
       return [];
+    case "graph_load":
+    case "graph_more":
+      return { rows: [], lanes: [], atEnd: true };
     case "branch_list":
       return { local: [{ name: "main", current: true, ahead: 0, behind: 0 }], remote: [] };
     case "repo_status":

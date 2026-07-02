@@ -13,7 +13,8 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
 ## Features
 
 - **Commit graph** — Rust lane-layout + virtualized canvas, with a working-copy
-  (WIP) node and rich commit detail.
+  (WIP) node and rich commit detail; **append-only pagination** streams deep
+  history as you scroll (each page resumes the lane layout, no re-fetch).
 - **Working copy** — stage/unstage by file, hunk or line; commit & amend;
   side-by-side / inline diffs (CodeMirror).
 - **Branches & operations** — create/checkout/rename/delete, tags,
@@ -158,8 +159,8 @@ worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
 integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
 native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
 
-Considered next: an incremental (append-only) graph fetch for very deep scrolls,
-and localizing the keymap action labels.
+Considered next: server-side graph filtering (by branch/author/path) for very
+large repositories, and richer diff/blame virtualization for huge files.
 
 ## Screenshots
 

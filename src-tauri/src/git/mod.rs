@@ -22,7 +22,7 @@ mod submodule;
 mod worktree;
 
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
-pub use graph::graph;
+pub use graph::{graph, graph_more};
 pub use gitflow::{gitflow_finish, gitflow_init, gitflow_start, gitflow_status};
 pub use history::{blame, file_history};
 pub use hunk::{apply_hunk, file_hunks};

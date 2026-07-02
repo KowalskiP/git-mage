@@ -16,7 +16,7 @@ use crate::terminal::{TermSession, Terminals};
 use crate::forge::{self, Provider};
 use crate::model::{
     AgentInfo, BlameLine, BranchList, CommitDetail, DiffSides, FileLog, ForgeInfo, ForgeIssue,
-    ForgePull, GitflowConfig, GraphRow, Hunk, LfsStatus, Profile, RebaseCommit, Remote, RepoMeta,
+    ForgePull, GitflowConfig, GraphPage, Hunk, LfsStatus, Profile, RebaseCommit, Remote, RepoMeta,
     RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
@@ -53,8 +53,20 @@ pub async fn repo_status(path: String) -> AppResult<RepoStatus> {
 }
 
 #[tauri::command]
-pub async fn graph_load(path: String, limit: Option<usize>) -> AppResult<Vec<GraphRow>> {
+pub async fn graph_load(path: String, limit: Option<usize>) -> AppResult<GraphPage> {
     git::graph(&path, limit.unwrap_or(2000))
+}
+
+/// Append-only next page: `skip` real commits in, up to `limit` more, resuming
+/// the lane layout from the `lanes` cursor the previous page returned.
+#[tauri::command]
+pub async fn graph_more(
+    path: String,
+    skip: usize,
+    limit: usize,
+    lanes: Vec<Option<String>>,
+) -> AppResult<GraphPage> {
+    git::graph_more(&path, skip, limit, lanes)
 }
 
 #[tauri::command]

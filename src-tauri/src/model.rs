@@ -106,6 +106,22 @@ pub struct GraphRow {
     pub wip: bool,
 }
 
+/// One page of the commit graph, plus the cursor needed to fetch the next page.
+///
+/// The lane layout is a stateful sweep from newest to oldest, so an append-only
+/// scroll can't just fetch "the next N commits" — it must resume the sweep with
+/// the lane state left behind by the previous page. `lanes` is that opaque
+/// cursor (each entry is the sha a column is routing toward, or null for an
+/// empty column); callers pass it straight back to `graph_more`.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GraphPage {
+    pub rows: Vec<GraphRow>,
+    pub lanes: Vec<Option<String>>,
+    /// True when fewer commits than requested were available (history is done).
+    pub at_end: bool,
+}
+
 /// A local branch with its tracking state, for the sidebar tree (SPEC §6.4).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

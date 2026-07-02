@@ -30,10 +30,19 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
   reset.
 - Profiles are **auto-applied per repo** on open (remembered choice).
 - **i18n**: added German, French, Spanish and Chinese, and localized the full UI
-  chrome across all locales (git terms stay English).
+  chrome across all locales — including interactive-rebase, conflict-editor and
+  keyboard-shortcut panels and the keymap action/group labels (git terms stay
+  English).
 - Dismissible agent-intro banner (remembers the choice).
 - **CI** workflow (frontend + backend tests, typecheck, build, clippy) and a
   frontend **test harness** (Vitest + Testing Library with Tauri mocked).
+
+### Performance
+- **Commit graph — append-only pagination.** The graph loads a page at a time and
+  now *appends* each further page as you scroll, resuming the lane layout from an
+  opaque cursor instead of re-fetching and re-laying-out the whole history. Deep
+  scrolls stay O(page) per step; scroll position no longer jumps. A backend
+  invariant test proves paged assembly is byte-identical to a single full load.
 
 ### Added — M7 (polish)
 - Unified **Settings** panel (language, commit signing, shortcuts launcher).

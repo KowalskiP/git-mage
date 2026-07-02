@@ -44,8 +44,9 @@ interface ReposState {
   status: RepoStatus | null;
   graph: GraphRow[];
   graphLoading: boolean;
-  graphLimit: number;
   graphAtEnd: boolean;
+  /** Opaque lane cursor from the last page, resumed by `loadMoreGraph`. */
+  graphCursor: (string | null)[];
   selectedSha: string | null;
   branches: string[];
   branchTree: BranchList;
@@ -227,8 +228,8 @@ function saveAppearance(
 const EMPTY_REPO_STATE = {
   status: null,
   graph: [],
-  graphLimit: GRAPH_PAGE,
   graphAtEnd: false,
+  graphCursor: [],
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] } as BranchList,
@@ -251,8 +252,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   status: null,
   graph: [],
   graphLoading: false,
-  graphLimit: GRAPH_PAGE,
   graphAtEnd: false,
+  graphCursor: [],
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] },
@@ -565,19 +566,23 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
   },
 
+  // Load (or refresh to) the first page. Resets the scroll cursor: a mutation
+  // that triggers a refresh puts the user back at the top of fresh history.
   loadGraph: async () => {
     const sel = get().selected;
     if (!sel) return;
-    const limit = get().graphLimit;
     set({ graphLoading: true });
     try {
-      const graph = await api.graphLoad(sel.path, limit);
+      const page = await api.graphLoad(sel.path, GRAPH_PAGE);
       // Keep the current selection if still present, else select the top node.
       const cur = get().selectedSha;
-      const keep = cur && graph.some((r) => r.sha === cur) ? cur : graph[0]?.sha ?? null;
-      // Fewer real commits than the cap → the whole history is loaded.
-      const commits = graph.filter((r) => !r.wip).length;
-      set({ graph, selectedSha: keep, graphAtEnd: commits < limit });
+      const keep = cur && page.rows.some((r) => r.sha === cur) ? cur : page.rows[0]?.sha ?? null;
+      set({
+        graph: page.rows,
+        graphCursor: page.lanes,
+        graphAtEnd: page.atEnd,
+        selectedSha: keep,
+      });
     } catch (e) {
       set({ error: String(e) });
     } finally {
@@ -585,12 +590,26 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
   },
 
-  // Infinite scroll: grow the cap by a page and reload (lane layout needs the
-  // history contiguous from HEAD, so we re-fetch rather than append).
+  // Infinite scroll: fetch the next page and append it, resuming the lane
+  // layout from the cursor so the seam is seamless (O(page), not O(history)).
   loadMoreGraph: async () => {
     if (get().graphAtEnd || get().graphLoading) return;
-    set({ graphLimit: get().graphLimit + GRAPH_PAGE });
-    await get().loadGraph();
+    const sel = get().selected;
+    if (!sel) return;
+    const skip = get().graph.filter((r) => !r.wip).length;
+    set({ graphLoading: true });
+    try {
+      const page = await api.graphMore(sel.path, skip, GRAPH_PAGE, get().graphCursor);
+      set((s) => ({
+        graph: [...s.graph, ...page.rows],
+        graphCursor: page.lanes,
+        graphAtEnd: page.atEnd,
+      }));
+    } catch (e) {
+      set({ error: String(e) });
+    } finally {
+      set({ graphLoading: false });
+    }
   },
 
   selectNode: (sha) => set({ selectedSha: sha }),
