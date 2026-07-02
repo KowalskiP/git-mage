@@ -143,6 +143,16 @@ const en: Dict = {
   "palette.empty": "No matching commands",
   "detail.path": "Path",
   "detail.tree": "Tree",
+  "common.refresh": "Refresh",
+  "common.abort": "Abort",
+  "forge.disconnect": "Disconnect",
+  "forge.noRemote": "No supported forge remote for this repo.",
+  "forge.detects": "GitMage detects GitHub, GitLab and Bitbucket remotes.",
+  "forge.tokenStored": "The token is stored in your system keychain, never in the app database.",
+  "forge.noIssues": "No open issues.",
+  "op.inProgress": "{op} in progress",
+  "op.conflictsLeft": "{n} conflicts left",
+  "op.allResolved": "all resolved",
 };
 
 const ru: Dict = {
@@ -265,6 +275,16 @@ const ru: Dict = {
   "palette.empty": "Нет подходящих команд",
   "detail.path": "Путь",
   "detail.tree": "Дерево",
+  "common.refresh": "Обновить",
+  "common.abort": "Прервать",
+  "forge.disconnect": "Отключить",
+  "forge.noRemote": "Нет поддерживаемого forge-remote для этого репозитория.",
+  "forge.detects": "GitMage распознаёт remote GitHub, GitLab и Bitbucket.",
+  "forge.tokenStored": "Токен хранится в системном keychain, не в базе приложения.",
+  "forge.noIssues": "Нет открытых issue.",
+  "op.inProgress": "{op} в процессе",
+  "op.conflictsLeft": "осталось конфликтов: {n}",
+  "op.allResolved": "все разрешены",
 };
 
 const de: Dict = {
@@ -387,6 +407,16 @@ const de: Dict = {
   "palette.empty": "Keine passenden Befehle",
   "detail.path": "Pfad",
   "detail.tree": "Baum",
+  "common.refresh": "Aktualisieren",
+  "common.abort": "Abbrechen",
+  "forge.disconnect": "Trennen",
+  "forge.noRemote": "Kein unterstütztes Forge-Remote für dieses Repository.",
+  "forge.detects": "GitMage erkennt GitHub-, GitLab- und Bitbucket-Remotes.",
+  "forge.tokenStored": "Der Token liegt im System-Keychain, nie in der App-Datenbank.",
+  "forge.noIssues": "Keine offenen Issues.",
+  "op.inProgress": "{op} läuft",
+  "op.conflictsLeft": "{n} Konflikte übrig",
+  "op.allResolved": "alle gelöst",
 };
 
 const fr: Dict = {
@@ -509,6 +539,16 @@ const fr: Dict = {
   "palette.empty": "Aucune commande correspondante",
   "detail.path": "Chemin",
   "detail.tree": "Arbre",
+  "common.refresh": "Actualiser",
+  "common.abort": "Abandonner",
+  "forge.disconnect": "Déconnecter",
+  "forge.noRemote": "Aucun remote de forge pris en charge pour ce dépôt.",
+  "forge.detects": "GitMage détecte les remotes GitHub, GitLab et Bitbucket.",
+  "forge.tokenStored": "Le jeton est stocké dans le trousseau système, jamais dans la base de l'app.",
+  "forge.noIssues": "Aucune issue ouverte.",
+  "op.inProgress": "{op} en cours",
+  "op.conflictsLeft": "{n} conflits restants",
+  "op.allResolved": "tout est résolu",
 };
 
 const es: Dict = {
@@ -631,6 +671,16 @@ const es: Dict = {
   "palette.empty": "No hay comandos coincidentes",
   "detail.path": "Ruta",
   "detail.tree": "Árbol",
+  "common.refresh": "Actualizar",
+  "common.abort": "Cancelar",
+  "forge.disconnect": "Desconectar",
+  "forge.noRemote": "No hay un remote de forge compatible para este repositorio.",
+  "forge.detects": "GitMage detecta remotes de GitHub, GitLab y Bitbucket.",
+  "forge.tokenStored": "El token se guarda en el llavero del sistema, nunca en la base de la app.",
+  "forge.noIssues": "Sin issues abiertas.",
+  "op.inProgress": "{op} en curso",
+  "op.conflictsLeft": "{n} conflictos restantes",
+  "op.allResolved": "todo resuelto",
 };
 
 const zh: Dict = {
@@ -753,6 +803,16 @@ const zh: Dict = {
   "palette.empty": "没有匹配的命令",
   "detail.path": "路径",
   "detail.tree": "树",
+  "common.refresh": "刷新",
+  "common.abort": "中止",
+  "forge.disconnect": "断开",
+  "forge.noRemote": "此仓库没有受支持的 forge remote。",
+  "forge.detects": "GitMage 可识别 GitHub、GitLab 和 Bitbucket 的 remote。",
+  "forge.tokenStored": "令牌保存在系统钥匙串中，不会存入应用数据库。",
+  "forge.noIssues": "无开放的 issue。",
+  "op.inProgress": "{op} 进行中",
+  "op.conflictsLeft": "剩余 {n} 个冲突",
+  "op.allResolved": "全部已解决",
 };
 
 export const DICT: Record<Lang, Dict> = { en, ru, de, fr, es, zh };

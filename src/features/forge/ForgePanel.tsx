@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRepos } from "../../store/repos";
 import { openExternal } from "../../ipc/commands";
+import { useT } from "../../i18n/useT";
 
 const PROVIDER_NAME: Record<string, string> = {
   github: "GitHub",
@@ -19,6 +20,7 @@ const TOKEN_HINT: Record<string, string> = {
  * browse open pull/merge requests and issues for the current repo.
  */
 export function ForgePanel() {
+  const t = useT();
   const show = useRepos((s) => s.showForge);
   const toggleForge = useRepos((s) => s.toggleForge);
   const forge = useRepos((s) => s.forge);
@@ -46,9 +48,9 @@ export function ForgePanel() {
     if (!provider) {
       return (
         <div className="forge-empty">
-          No supported forge remote for this repo.
+          {t("forge.noRemote")}
           {forge?.host ? ` (remote host: ${forge.host})` : ""}
-          <div className="forge-hint">GitMage detects GitHub, GitLab and Bitbucket remotes.</div>
+          <div className="forge-hint">{t("forge.detects")}</div>
         </div>
       );
     }
@@ -80,11 +82,9 @@ export function ForgePanel() {
               setToken("");
             }}
           >
-            Connect
+            {t("exp.connect")}
           </button>
-          <div className="forge-hint forge-hint--dim">
-            The token is stored in your system keychain, never in the app database.
-          </div>
+          <div className="forge-hint forge-hint--dim">{t("forge.tokenStored")}</div>
         </div>
       );
     }
@@ -138,16 +138,18 @@ export function ForgePanel() {
           </button>
           <div className="forge-tabs__spacer" />
           <button className="link-btn" onClick={refresh} disabled={loading}>
-            {loading ? "Loading…" : "Refresh"}
+            {loading ? t("common.loading") : t("common.refresh")}
           </button>
           <button className="link-btn link-btn--danger" onClick={() => clearForgeToken()}>
-            Disconnect
+            {t("forge.disconnect")}
           </button>
         </div>
         <ul className="forge-list">
-          {loading && <li className="forge-empty">Loading…</li>}
+          {loading && <li className="forge-empty">{t("common.loading")}</li>}
           {!loading && empty && (
-            <li className="forge-empty">No open {tab === "pulls" ? "pull requests" : "issues"}.</li>
+            <li className="forge-empty">
+              {tab === "pulls" ? t("exp.noPulls") : t("forge.noIssues")}
+            </li>
           )}
           {!loading && rows}
         </ul>

@@ -237,14 +237,14 @@ export function DetailPanel({ onOpenFile, onOpenConflict, selectedFile }: Props)
       {isWip && opInProgress && (
         <div className="merge-banner">
           <span className="merge-banner__label">
-            {opLabel} in progress
+            {t("op.inProgress", { op: opLabel })}
             {conflicted.length > 0
-              ? ` — ${conflicted.length} conflict${conflicted.length === 1 ? "" : "s"} left`
-              : " — all resolved"}
+              ? ` — ${t("op.conflictsLeft", { n: conflicted.length })}`
+              : ` — ${t("op.allResolved")}`}
           </span>
           <div className="merge-banner__actions">
             <button className="tbtn" onClick={() => opAbort()}>
-              Abort
+              {t("common.abort")}
             </button>
             <button
               className="tbtn tbtn--primary"
