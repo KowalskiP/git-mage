@@ -6,6 +6,11 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-02
+
+First public release — the full M0–M7 milestone set plus the GitKraken-style UI
+pass. macOS bundles (aarch64 + x86_64) are attached to this release.
+
 ### Added — UI overhaul, appearance & tooling
 - **Explorer sidebar** (GitKraken-style): collapsible, individually resizable
   sections — LOCAL branches foldered by `/` (current marker, ahead/behind,
