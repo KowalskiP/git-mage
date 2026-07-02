@@ -6,6 +6,14 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-02
+
+### Added
+- **Linux builds** — releases now ship a **`.deb`** (Debian/Ubuntu) and a
+  universal **AppImage** for x86_64, built on ubuntu-22.04 for broad glibc
+  compatibility. The AppImage self-updates via the updater manifest
+  (`latest.json` gains a `linux-x86_64` entry); the `.deb` is managed by apt.
+
 ## [0.2.0] - 2026-07-02
 
 ### Added
