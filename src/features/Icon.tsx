@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   Plus,
   Settings,
+  Tag,
   Terminal,
   UserRound,
   Workflow,
@@ -37,6 +38,7 @@ export type IconName =
   | "close"
   | "branch"
   | "remote"
+  | "tag"
   | "pr"
   | "worktree"
   | "submodule"
@@ -60,6 +62,7 @@ const LUCIDE: Record<IconName, LucideIcon> = {
   close: X,
   branch: GitBranch,
   remote: Cloud,
+  tag: Tag,
   pr: GitPullRequest,
   worktree: FolderTree,
   submodule: Package,

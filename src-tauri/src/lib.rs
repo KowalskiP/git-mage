@@ -142,6 +142,8 @@ pub fn run() {
             ipc::commands::undo,
             ipc::commands::file_history,
             ipc::commands::blame,
+            ipc::commands::tag_list,
+            ipc::commands::branch_delete_remote,
             ipc::commands::worktree_list,
             ipc::commands::worktree_add,
             ipc::commands::worktree_remove,

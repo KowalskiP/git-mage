@@ -66,6 +66,7 @@ export function CommitGraph() {
   const mergeBranches = useRepos((s) => s.mergeBranches);
   const rebaseBranchOnto = useRepos((s) => s.rebaseBranchOnto);
   const resetBranchTo = useRepos((s) => s.resetBranchTo);
+  const cherryPickOnto = useRepos((s) => s.cherryPickOnto);
   const cherryPick = useRepos((s) => s.cherryPick);
   const revert = useRepos((s) => s.revert);
   const reset = useRepos((s) => s.reset);
@@ -92,6 +93,7 @@ export function CommitGraph() {
     onSubmit: (v: string) => void;
   } | null>(null);
   const [rebaseBase, setRebaseBase] = useState<string | null>(null);
+  const [dropSha, setDropSha] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [matchPos, setMatchPos] = useState(0);
 
@@ -229,22 +231,29 @@ export function CommitGraph() {
     e.dataTransfer.setData("text/plain", ref.name);
   }
 
-  function onRowDragOver(e: React.DragEvent) {
-    if (!draggedRef.current) return;
+  function onRowDragOver(e: React.DragEvent, row: GraphRow) {
+    if (!draggedRef.current || row.wip) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    if (dropSha !== row.sha) setDropSha(row.sha);
+  }
+
+  function endDrag() {
+    draggedRef.current = null;
+    setDropSha(null);
   }
 
   function runDrop(a: DropAction) {
     if (a.type === "merge") mergeBranches(a.from, a.into);
     else if (a.type === "rebase") rebaseBranchOnto(a.branch, a.onto);
+    else if (a.type === "cherrypick") cherryPickOnto(a.branch, a.sha);
     else resetBranchTo(a.branch, a.sha, a.mode);
   }
 
   function onRowDrop(e: React.DragEvent, row: GraphRow) {
     e.preventDefault();
     const src = draggedRef.current;
-    draggedRef.current = null;
+    endDrag();
     if (!src || row.wip) return;
     let branch: DragRef | undefined;
     for (const r of row.refs) {
@@ -435,12 +444,13 @@ export function CommitGraph() {
                 "commit-row" +
                 (active ? " commit-row--active" : "") +
                 (isMatch ? " commit-row--match" : "") +
-                (isCurrent ? " commit-row--match-current" : "")
+                (isCurrent ? " commit-row--match-current" : "") +
+                (dropSha === row.sha ? " commit-row--drop" : "")
               }
               style={{ top: i * ROW_H, left: graphW, height: ROW_H }}
               onClick={() => selectNode(row.sha)}
               onContextMenu={(e) => commitMenu(e, row)}
-              onDragOver={onRowDragOver}
+              onDragOver={(e) => onRowDragOver(e, row)}
               onDrop={(e) => onRowDrop(e, row)}
             >
               <div className="commit-row__main">
@@ -457,6 +467,7 @@ export function CommitGraph() {
                           ? (e) => onRefDragStart(e, { name: p.name, kind: p.kind as "local" | "remote" })
                           : undefined
                       }
+                      onDragEnd={drag ? endDrag : undefined}
                       onContextMenu={(e) => refMenu(e, r)}
                     >
                       {r.replace("tag: ", "").replace("HEAD -> ", "")}

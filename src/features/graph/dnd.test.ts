@@ -9,8 +9,12 @@ describe("buildDropMenu", () => {
     );
     expect(acts.find((a) => a.type === "merge")).toMatchObject({ from: "feature", into: "main" });
     expect(acts.find((a) => a.type === "rebase")).toMatchObject({ branch: "feature", onto: "main" });
-    // plus generic rebase-onto-commit + 3 resets
+    // plus generic rebase-onto-commit, cherry-pick + 3 resets
     expect(acts.filter((a) => a.type === "reset")).toHaveLength(3);
+    expect(acts.find((a) => a.type === "cherrypick")).toMatchObject({
+      branch: "feature",
+      sha: "abcdef1234",
+    });
   });
 
   it("marks hard reset as danger", () => {

@@ -81,6 +81,9 @@ export const createBranchAt = (path: string, name: string, at: string, checkout:
   invoke<void>("create_branch_at", { path, name, at, checkout });
 export const branchDelete = (path: string, name: string, force: boolean) =>
   invoke<void>("branch_delete", { path, name, force });
+export const branchDeleteRemote = (path: string, remote: string, branch: string) =>
+  invoke<void>("branch_delete_remote", { path, remote, branch });
+export const tagList = (path: string) => invoke<string[]>("tag_list", { path });
 export const branchRename = (path: string, oldName: string, newName: string) =>
   invoke<void>("branch_rename", { path, old: oldName, new: newName });
 export const tagCreate = (path: string, name: string, at: string) =>

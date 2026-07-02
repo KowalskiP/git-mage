@@ -711,6 +711,18 @@ pub fn undo(path: String) -> AppResult<String> {
     git::undo(&path)
 }
 
+/// All tags, newest first.
+#[tauri::command]
+pub fn tag_list(path: String) -> AppResult<Vec<String>> {
+    git::tag_list(&path)
+}
+
+/// Delete a branch on a remote (`git push <remote> --delete <branch>`).
+#[tauri::command]
+pub async fn branch_delete_remote(path: String, remote: String, branch: String) -> AppResult<()> {
+    git::branch_delete_remote(&path, &remote, &branch)
+}
+
 /// Commits that touched `file` (newest first); `rev` scopes to a commit.
 #[tauri::command]
 pub fn file_history(path: String, file: String, rev: String, limit: u32) -> AppResult<Vec<FileLog>> {

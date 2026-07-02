@@ -45,6 +45,7 @@ interface ReposState {
   selectedSha: string | null;
   branches: string[];
   branchTree: BranchList;
+  tags: string[];
   remotes: Remote[];
   stashes: StashEntry[];
   worktrees: Worktree[];
@@ -142,9 +143,12 @@ interface ReposState {
   mergeBranches: (from: string, into: string) => Promise<void>;
   rebaseBranchOnto: (branch: string, onto: string) => Promise<void>;
   resetBranchTo: (branch: string, sha: string, mode: string) => Promise<void>;
+  cherryPickOnto: (branch: string, sha: string) => Promise<void>;
   createBranchAt: (name: string, at: string, checkout: boolean) => Promise<void>;
   branchDelete: (name: string, force: boolean) => Promise<void>;
+  deleteRemoteBranch: (remote: string, branch: string) => Promise<void>;
   branchRename: (oldName: string, newName: string) => Promise<void>;
+  loadTags: () => Promise<void>;
   tagCreate: (name: string, at: string) => Promise<void>;
   tagDelete: (name: string) => Promise<void>;
   loadAgents: () => Promise<void>;
@@ -221,6 +225,7 @@ const EMPTY_REPO_STATE = {
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] } as BranchList,
+  tags: [],
   remotes: [],
   stashes: [],
   worktrees: [],
@@ -242,6 +247,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] },
+  tags: [],
   remotes: [],
   stashes: [],
   worktrees: [],
@@ -519,6 +525,7 @@ export const useRepos = create<ReposState>((set, get) => ({
       get().refreshStatus(),
       get().loadGraph(),
       get().loadBranches(),
+      get().loadTags(),
       get().loadStashes(),
       get().loadWorktrees(),
       get().loadRemotes(),
@@ -663,6 +670,29 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
   },
 
+  loadTags: async () => {
+    const sel = get().selected;
+    if (!sel) return;
+    try {
+      set({ tags: await api.tagList(sel.path) });
+    } catch (e) {
+      set({ error: String(e) });
+    }
+  },
+
+  deleteRemoteBranch: async (remote, branch) => {
+    const sel = get().selected;
+    if (!sel) return;
+    set({ busy: `Deleting ${remote}/${branch}…`, error: null });
+    try {
+      await api.branchDeleteRemote(sel.path, remote, branch);
+    } catch (e) {
+      set({ error: String(e) });
+    }
+    await Promise.all([get().loadBranches(), get().loadGraph()]);
+    set({ busy: null });
+  },
+
   addRemote: async (name, url) => {
     const sel = get().selected;
     if (!sel) return;
@@ -781,6 +811,14 @@ export const useRepos = create<ReposState>((set, get) => ({
     await get().reset(sha, mode);
   },
 
+  cherryPickOnto: async (branch, sha) => {
+    if (branch !== get().status?.branch) {
+      await get().checkout(branch);
+      if (get().error) return;
+    }
+    await get().cherryPick(sha);
+  },
+
   createBranchAt: async (name, at, checkout) => {
     const sel = get().selected;
     if (!sel) return;
@@ -829,7 +867,7 @@ export const useRepos = create<ReposState>((set, get) => ({
     } catch (e) {
       set({ error: String(e) });
     }
-    await get().loadGraph();
+    await Promise.all([get().loadGraph(), get().loadTags()]);
     set({ busy: null });
   },
 
@@ -842,7 +880,7 @@ export const useRepos = create<ReposState>((set, get) => ({
     } catch (e) {
       set({ error: String(e) });
     }
-    await get().loadGraph();
+    await Promise.all([get().loadGraph(), get().loadTags()]);
     set({ busy: null });
   },
 

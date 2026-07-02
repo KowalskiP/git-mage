@@ -24,6 +24,7 @@ const DEFAULT_OPEN = new Set(["local", "remote", "pulls"]);
 const SECTION_ICON: Record<string, IconName> = {
   local: "branch",
   remote: "remote",
+  tags: "tag",
   pulls: "pr",
   stashes: "stash",
   worktrees: "worktree",
@@ -69,6 +70,7 @@ export function Explorer() {
   const selected = useRepos((s) => s.selected)!;
   const status = useRepos((s) => s.status);
   const branchTree = useRepos((s) => s.branchTree);
+  const tags = useRepos((s) => s.tags);
   const remotes = useRepos((s) => s.remotes);
   const stashes = useRepos((s) => s.stashes);
   const worktrees = useRepos((s) => s.worktrees);
@@ -88,7 +90,10 @@ export function Explorer() {
   const rebase = useRepos((s) => s.rebase);
   const createBranch = useRepos((s) => s.createBranch);
   const branchDelete = useRepos((s) => s.branchDelete);
+  const deleteRemoteBranch = useRepos((s) => s.deleteRemoteBranch);
   const branchRename = useRepos((s) => s.branchRename);
+  const createBranchAt = useRepos((s) => s.createBranchAt);
+  const tagDelete = useRepos((s) => s.tagDelete);
   const addRemote = useRepos((s) => s.addRemote);
   const removeRemote = useRepos((s) => s.removeRemote);
   const renameRemote = useRepos((s) => s.renameRemote);
@@ -239,7 +244,39 @@ export function Explorer() {
       items.push({ label: `Merge into ${current}`, onClick: () => merge(full) });
       items.push({ label: `Rebase ${current} onto ${full}`, onClick: () => rebase(full) });
     }
+    const slash = full.indexOf("/");
+    if (slash > 0) {
+      const remote = full.slice(0, slash);
+      items.push({
+        label: `Delete ${short} on ${remote}`,
+        danger: true,
+        onClick: () => deleteRemoteBranch(remote, short),
+      });
+    }
     setMenu({ x: e.clientX, y: e.clientY, items });
+  }
+
+  function tagMenu(e: ReactMouseEvent, tag: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { label: `Checkout ${tag}`, onClick: () => checkout(tag) },
+        {
+          label: "Create branch here…",
+          onClick: () =>
+            setPrompt({
+              title: `New branch at ${tag}`,
+              placeholder: "branch name",
+              submitLabel: "Create",
+              onSubmit: (n) => createBranchAt(n, tag, true),
+            }),
+        },
+        { label: "Delete tag", danger: true, onClick: () => tagDelete(tag) },
+      ],
+    });
   }
 
   function remoteMenu(e: ReactMouseEvent, name: string) {
@@ -477,6 +514,28 @@ export function Explorer() {
             </div>
           ),
           { count: remoteNames.length, actions: plus("Add remote", addRemoteFlow) },
+        )}
+
+        {sec(
+          "tags",
+          "TAGS",
+          tags.length === 0 ? (
+            <div className="exp-empty">{t("exp.noTags")}</div>
+          ) : (
+            tags.map((tag) => (
+              <div
+                key={tag}
+                className="exp-branch"
+                title={tag}
+                onDoubleClick={() => checkout(tag)}
+                onContextMenu={(e) => tagMenu(e, tag)}
+              >
+                <span className="exp-branch__dot" />
+                <span className="exp-branch__name">{tag}</span>
+              </div>
+            ))
+          ),
+          { count: tags.length },
         )}
 
         {forge?.hasToken &&

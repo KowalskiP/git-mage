@@ -33,12 +33,12 @@ pub use worktree::{
     worktree_add, worktree_list, worktree_lock, worktree_prune, worktree_remove,
 };
 pub use ops::{
-    branch_delete, branch_list, branch_rename, checkout, cherry_pick, clone, conflict_content,
-    create_branch, create_branch_at, fetch, init, last_action, launch_difftool, launch_mergetool,
-    list_branches, merge, merge_abort,
+    branch_delete, branch_delete_remote, branch_list, branch_rename, checkout, cherry_pick, clone,
+    conflict_content, create_branch, create_branch_at, fetch, init, last_action, launch_difftool,
+    launch_mergetool, list_branches, merge, merge_abort,
     merge_continue, pull, push, rebase, rebase_abort, rebase_continue, rebase_interactive,
     rebase_todo_commits, reset, resolve_side, revert, sequencer_abort, sequencer_continue,
-    tag_create, tag_delete, undo, write_resolution,
+    tag_create, tag_delete, tag_list, undo, write_resolution,
 };
 pub use profile::{apply_profile, identity};
 pub use remotes::{remote_add, remote_list, remote_remove, remote_rename, remote_set_url};

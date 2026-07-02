@@ -18,6 +18,7 @@ export interface DropTarget {
 export type DropAction =
   | { type: "merge"; from: string; into: string; label: string }
   | { type: "rebase"; branch: string; onto: string; label: string }
+  | { type: "cherrypick"; branch: string; sha: string; label: string }
   | {
       type: "reset";
       branch: string;
@@ -55,6 +56,12 @@ export function buildDropMenu(src: DragRef, target: DropTarget): DropAction[] {
       branch: src.name,
       onto: target.sha,
       label: `Rebase ${src.name} onto ${short}`,
+    });
+    out.push({
+      type: "cherrypick",
+      branch: src.name,
+      sha: target.sha,
+      label: `Cherry-pick ${short} onto ${src.name}`,
     });
     for (const mode of ["soft", "mixed", "hard"] as const) {
       out.push({

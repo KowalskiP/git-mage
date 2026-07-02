@@ -179,6 +179,30 @@ pub fn undo(path: &str) -> AppResult<String> {
     }
 }
 
+/// All tags, newest first (by creation date).
+pub fn tag_list(path: &str) -> AppResult<Vec<String>> {
+    let out = Command::new("git")
+        .current_dir(path)
+        .args(["tag", "--sort=-creatordate"])
+        .output()
+        .map_err(|e| AppError::Git(format!("git: {e}")))?;
+    if !out.status.success() {
+        return Err(AppError::Git(
+            String::from_utf8_lossy(&out.stderr).trim().to_string(),
+        ));
+    }
+    Ok(String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter(|l| !l.is_empty())
+        .map(str::to_string)
+        .collect())
+}
+
+/// Delete `branch` on `remote` (network: `git push <remote> --delete <branch>`).
+pub fn branch_delete_remote(path: &str, remote: &str, branch: &str) -> AppResult<()> {
+    run(path, &["push", remote, "--delete", branch], true)
+}
+
 fn sequencer_cmd(kind: &str) -> &'static str {
     if kind == "revert" {
         "revert"
@@ -387,6 +411,41 @@ mod tests {
             .output()
             .unwrap();
         assert_eq!(String::from_utf8_lossy(&staged.stdout).trim(), "f.txt");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn tag_list_newest_first_and_remote_branch_delete() {
+        let dir = std::env::temp_dir().join(format!("gitmage-tags-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        g(&dir, &["init", "-q", "-b", "main"]);
+        g(&dir, &["config", "user.email", "t@t"]);
+        g(&dir, &["config", "user.name", "t"]);
+        std::fs::write(dir.join("f.txt"), "x\n").unwrap();
+        g(&dir, &["add", "."]);
+        g(&dir, &["commit", "-q", "-m", "c1"]);
+        g(&dir, &["tag", "v1"]);
+        g(&dir, &["tag", "v2"]);
+        let tags = tag_list(p).unwrap();
+        assert_eq!(tags.len(), 2);
+        assert!(tags.contains(&"v1".to_string()) && tags.contains(&"v2".to_string()));
+
+        // bare remote + a pushed branch, then delete it on the remote.
+        let bare = dir.join("remote.git");
+        g(&dir, &["init", "-q", "--bare", bare.to_str().unwrap()]);
+        g(&dir, &["remote", "add", "origin", bare.to_str().unwrap()]);
+        g(&dir, &["branch", "feature"]);
+        g(&dir, &["push", "-q", "origin", "feature"]);
+        assert!(branch_delete_remote(p, "origin", "feature").is_ok());
+        let refs = Command::new("git")
+            .current_dir(&bare)
+            .args(["for-each-ref", "--format=%(refname)", "refs/heads"])
+            .output()
+            .unwrap();
+        assert!(!String::from_utf8_lossy(&refs.stdout).contains("feature"));
 
         let _ = std::fs::remove_dir_all(&dir);
     }
