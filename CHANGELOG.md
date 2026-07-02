@@ -6,6 +6,26 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-02
+
+### Added
+- **Windows builds** — releases now ship a Windows **x64 NSIS installer (`.exe`)**
+  and an **`.msi`** alongside the macOS bundles, with Windows entries in the
+  updater manifest (`latest.json`) so in-app auto-update works on Windows too.
+
+### Changed
+- **Native menu is cross-platform.** macOS keeps its conventional app menu;
+  Windows/Linux get a **File + Help** layout with the app-level actions
+  (Preferences / Profiles / Check for Updates / Exit) folded in, and the
+  macOS-only Services / Hide / Show-All items dropped there.
+- **Open in editor / terminal / file manager** is implemented on **Windows**
+  (VS Code, Explorer, a new terminal) and **Linux** (VS Code, `xdg-open`),
+  replacing the previous macOS-only behaviour.
+
+### CI
+- Added a **Windows build job** (clippy + release compile) so per-OS breakage is
+  caught before a release.
+
 ## [0.1.0] - 2026-07-02
 
 First public release — the full M0–M7 milestone set plus the GitKraken-style UI
