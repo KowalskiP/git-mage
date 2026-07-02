@@ -8,8 +8,8 @@ name: release
 #   TAURI_SIGNING_PRIVATE_KEY           contents of your updater private key
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  (empty if the key has no password)
 #
-# Before the first release: replace OWNER/REPO in tauri.conf.json's updater
-# endpoint with your GitHub owner/repo.
+# The updater endpoint in tauri.conf.json points at KowalskiP/git-mage; on a
+# fork, point it at your own GitHub owner/repo before the first release.
 
 on:
   push:

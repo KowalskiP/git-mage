@@ -119,10 +119,13 @@ releases from **GitHub Releases** — no Apple account or paid hosting required.
 Update integrity is guaranteed by Tauri's own signing key (separate from Apple
 code signing).
 
-**One-time setup (on your fork):**
+The updater endpoint in [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json)
+points at `KowalskiP/git-mage`.
 
-1. In [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json), replace
-   `OWNER/REPO` in `plugins.updater.endpoints` with your GitHub `owner/repo`.
+**One-time setup (on a fork):**
+
+1. In [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json), point
+   `plugins.updater.endpoints` at your own GitHub `owner/repo`.
 2. Generate an updater keypair (if you don't reuse the bundled public key):
    ```sh
    npm run tauri signer generate -- -w ~/.gitmage/updater.key

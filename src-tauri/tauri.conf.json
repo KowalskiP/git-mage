@@ -26,7 +26,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/OWNER/REPO/releases/latest/download/latest.json"
+        "https://github.com/KowalskiP/git-mage/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhEMUFGQkU5NEEzODMwQkQKUldTOU1EaEs2ZnNhallGTG9VVUZZbm1UZnJDcHlOTm1hV3lVLzRTellhd1Y4dE93aWpIOVJBR0YK"
     }

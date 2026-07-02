@@ -5,6 +5,14 @@
   "type": "module",
   "description": "GitMage — open-source, fast, lightweight Git client (Tauri + Rust + React)",
   "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KowalskiP/git-mage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KowalskiP/git-mage/issues"
+  },
+  "homepage": "https://github.com/KowalskiP/git-mage#readme",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
