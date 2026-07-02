@@ -258,6 +258,65 @@ describe("profile auto-apply per repo", () => {
   });
 });
 
+describe("drag-and-drop branch ops", () => {
+  const withStatus = (branch: string) =>
+    useRepos.setState({
+      selected: repo({ path: "/tmp/x" }),
+      status: {
+        branch,
+        upstream: null,
+        ahead: 0,
+        behind: 0,
+        staged: [],
+        unstaged: [],
+        untracked: [],
+        conflicted: [],
+        mergeInProgress: false,
+        rebaseInProgress: false,
+        sequencer: "",
+      },
+    });
+
+  it("mergeBranches merges directly when the target is already current", async () => {
+    withStatus("main");
+    await useRepos.getState().mergeBranches("feature", "main");
+    expect(invokeMock).not.toHaveBeenCalledWith("checkout", expect.anything());
+    expect(invokeMock).toHaveBeenCalledWith("merge", { path: "/tmp/x", refname: "feature" });
+  });
+
+  it("mergeBranches checks out the target branch first when it isn't current", async () => {
+    withStatus("main");
+    await useRepos.getState().mergeBranches("feature", "release");
+    expect(invokeMock).toHaveBeenCalledWith("checkout", { path: "/tmp/x", refname: "release" });
+    expect(invokeMock).toHaveBeenCalledWith("merge", { path: "/tmp/x", refname: "feature" });
+  });
+
+  it("rebaseBranchOnto checks out the branch then rebases", async () => {
+    withStatus("main");
+    await useRepos.getState().rebaseBranchOnto("feature", "main");
+    expect(invokeMock).toHaveBeenCalledWith("checkout", { path: "/tmp/x", refname: "feature" });
+    expect(invokeMock).toHaveBeenCalledWith("rebase", { path: "/tmp/x", onto: "main" });
+  });
+
+  it("resetBranchTo checks out the branch then resets", async () => {
+    withStatus("main");
+    await useRepos.getState().resetBranchTo("dev", "abc123", "hard");
+    expect(invokeMock).toHaveBeenCalledWith("checkout", { path: "/tmp/x", refname: "dev" });
+    expect(invokeMock).toHaveBeenCalledWith("reset", { path: "/tmp/x", target: "abc123", mode: "hard" });
+  });
+
+  it("bails out (no merge) if the checkout fails", async () => {
+    withStatus("main");
+    invokeMock.mockImplementation((async (cmd: string) => {
+      if (cmd === "checkout") throw new Error("dirty working tree");
+      return defaultInvoke(cmd);
+    }) as never);
+    await useRepos.getState().mergeBranches("feature", "release");
+    expect(invokeMock).toHaveBeenCalledWith("checkout", { path: "/tmp/x", refname: "release" });
+    expect(invokeMock).not.toHaveBeenCalledWith("merge", expect.anything());
+  });
+});
+
 describe("ui toggles", () => {
   it("toggleReposDrawer flips and forces state", () => {
     const st = useRepos.getState();
