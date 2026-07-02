@@ -158,8 +158,8 @@ worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
 integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
 native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
 
-Considered next: a large-repo performance pass (100k+ commits), and localizing
-the last few low-traffic panels (interactive-rebase editor, conflict editor).
+Considered next: an incremental (append-only) graph fetch for very deep scrolls,
+and localizing the keymap action labels.
 
 ## Screenshots
 
