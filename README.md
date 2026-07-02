@@ -43,7 +43,7 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
 - **File history & blame** — from the diff header: list a file's commits (jump to
   one in the graph) or view line-by-line blame at any revision.
 - **Graph drag-and-drop** — drag a branch onto another branch or commit to merge,
-  rebase or reset.
+  rebase, reset or cherry-pick, with a drop-target highlight.
 - **Themes** — dark / light / system, a custom **color editor** with reset, and an
   **interface-scale** control.
 - **Icon styles** — clean **Modern** (Lucide) or a **Fantasy** set (game-icons.net).
