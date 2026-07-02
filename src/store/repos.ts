@@ -32,6 +32,8 @@ import {
 
 const APPEARANCE_SETTING = "appearance";
 const PROFILE_MAP_SETTING = "profile.byRepo";
+/** Commits fetched per graph page (initial cap + each scroll-driven load). */
+const GRAPH_PAGE = 2000;
 
 const KEYMAP_SETTING = "keymap.overrides";
 const LANG_SETTING = "locale";
@@ -42,6 +44,8 @@ interface ReposState {
   status: RepoStatus | null;
   graph: GraphRow[];
   graphLoading: boolean;
+  graphLimit: number;
+  graphAtEnd: boolean;
   selectedSha: string | null;
   branches: string[];
   branchTree: BranchList;
@@ -120,6 +124,7 @@ interface ReposState {
   select: (repo: RepoMeta) => Promise<void>;
   refreshStatus: () => Promise<void>;
   loadGraph: () => Promise<void>;
+  loadMoreGraph: () => Promise<void>;
   selectNode: (sha: string) => void;
   stage: (files: string[]) => Promise<void>;
   unstage: (files: string[]) => Promise<void>;
@@ -222,6 +227,8 @@ function saveAppearance(
 const EMPTY_REPO_STATE = {
   status: null,
   graph: [],
+  graphLimit: GRAPH_PAGE,
+  graphAtEnd: false,
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] } as BranchList,
@@ -244,6 +251,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   status: null,
   graph: [],
   graphLoading: false,
+  graphLimit: GRAPH_PAGE,
+  graphAtEnd: false,
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] },
@@ -559,18 +568,29 @@ export const useRepos = create<ReposState>((set, get) => ({
   loadGraph: async () => {
     const sel = get().selected;
     if (!sel) return;
+    const limit = get().graphLimit;
     set({ graphLoading: true });
     try {
-      const graph = await api.graphLoad(sel.path);
+      const graph = await api.graphLoad(sel.path, limit);
       // Keep the current selection if still present, else select the top node.
       const cur = get().selectedSha;
       const keep = cur && graph.some((r) => r.sha === cur) ? cur : graph[0]?.sha ?? null;
-      set({ graph, selectedSha: keep });
+      // Fewer real commits than the cap → the whole history is loaded.
+      const commits = graph.filter((r) => !r.wip).length;
+      set({ graph, selectedSha: keep, graphAtEnd: commits < limit });
     } catch (e) {
       set({ error: String(e) });
     } finally {
       set({ graphLoading: false });
     }
+  },
+
+  // Infinite scroll: grow the cap by a page and reload (lane layout needs the
+  // history contiguous from HEAD, so we re-fetch rather than append).
+  loadMoreGraph: async () => {
+    if (get().graphAtEnd || get().graphLoading) return;
+    set({ graphLimit: get().graphLimit + GRAPH_PAGE });
+    await get().loadGraph();
   },
 
   selectNode: (sha) => set({ selectedSha: sha }),

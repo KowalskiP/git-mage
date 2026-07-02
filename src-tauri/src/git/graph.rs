@@ -338,6 +338,33 @@ mod tests {
     }
 
     #[test]
+    fn graph_respects_the_limit() {
+        use std::process::Command;
+        let dir = std::env::temp_dir().join(format!("gitmage-graphlimit-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        let git = |args: &[&str]| {
+            assert!(
+                Command::new("git").current_dir(&dir).args(args).output().unwrap().status.success(),
+                "git {args:?}"
+            );
+        };
+        git(&["init", "-q", "-b", "main"]);
+        git(&["config", "user.email", "t@t"]);
+        git(&["config", "user.name", "t"]);
+        for i in 0..12 {
+            std::fs::write(dir.join("f.txt"), format!("{i}\n")).unwrap();
+            git(&["add", "."]);
+            git(&["commit", "-q", "-m", &format!("c{i}")]);
+        }
+        let rows = graph(p, 5).unwrap();
+        let commits = rows.iter().filter(|r| !r.wip).count();
+        assert_eq!(commits, 5, "graph must cap at the requested limit");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn gix_matches_cli_on_real_repo() {
         // Only runs on a machine that has this repo checked out.
         let r = "/Users/kowalski/Projects/done-it-ai";

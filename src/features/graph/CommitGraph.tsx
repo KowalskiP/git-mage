@@ -58,6 +58,7 @@ export function CommitGraph() {
   const graphLoading = useRepos((s) => s.graphLoading);
   const selectedSha = useRepos((s) => s.selectedSha);
   const selectNode = useRepos((s) => s.selectNode);
+  const loadMoreGraph = useRepos((s) => s.loadMoreGraph);
   const status = useRepos((s) => s.status);
   const error = useRepos((s) => s.error);
   const checkout = useRepos((s) => s.checkout);
@@ -297,6 +298,8 @@ export function CommitGraph() {
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null;
       setScrollTop(el.scrollTop);
+      // Near the bottom → pull the next page of older commits.
+      if (el.scrollHeight - el.scrollTop - el.clientHeight < 600) loadMoreGraph();
     });
   }
 
