@@ -26,6 +26,8 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 - **Create pull/merge requests** from the app (GitHub / GitLab / Bitbucket).
 - **Undo** the last commit / checkout (reflog-based, safe) from the palette.
 - **File history & blame** from the diff header (jump to a commit or blame a rev).
+- **Graph drag-and-drop**: drag a branch onto a branch/commit to merge, rebase or
+  reset.
 - Profiles are **auto-applied per repo** on open (remembered choice).
 - **i18n**: added German, French, Spanish and Chinese, and localized the full UI
   chrome across all locales (git terms stay English).

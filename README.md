@@ -42,6 +42,8 @@ No cloud. No built-in AI API calls. No paywall. No telemetry.
 - **Undo** — reflog-based undo of the last commit / checkout (command palette).
 - **File history & blame** — from the diff header: list a file's commits (jump to
   one in the graph) or view line-by-line blame at any revision.
+- **Graph drag-and-drop** — drag a branch onto another branch or commit to merge,
+  rebase or reset.
 - **Themes** — dark / light / system, a custom **color editor** with reset, and an
   **interface-scale** control.
 - **Icon styles** — clean **Modern** (Lucide) or a **Fantasy** set (game-icons.net).
@@ -156,7 +158,8 @@ worktrees & agents → terminal/palette/submodules/LFS/gitflow/signing → forge
 integrations → polish), followed by a GitKraken-style UI pass (explorer sidebar,
 native menu, profiles, theming & icons). See [`docs/SPEC.md`](docs/SPEC.md) §11.
 
-Considered next: drag-and-drop merge/rebase on the graph.
+Considered next: finishing i18n coverage of the last hardcoded strings, richer
+drag-and-drop affordances (drop indicators, cherry-pick), and larger-repo perf.
 
 ## Screenshots
 
