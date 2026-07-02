@@ -139,6 +139,9 @@ interface ReposState {
   pull: () => Promise<void>;
   push: () => Promise<void>;
   merge: (refname: string) => Promise<void>;
+  mergeBranches: (from: string, into: string) => Promise<void>;
+  rebaseBranchOnto: (branch: string, onto: string) => Promise<void>;
+  resetBranchTo: (branch: string, sha: string, mode: string) => Promise<void>;
   createBranchAt: (name: string, at: string, checkout: boolean) => Promise<void>;
   branchDelete: (name: string, force: boolean) => Promise<void>;
   branchRename: (oldName: string, newName: string) => Promise<void>;
@@ -749,6 +752,33 @@ export const useRepos = create<ReposState>((set, get) => ({
     }
     await Promise.all([get().refreshStatus(), get().loadGraph(), get().loadBranches()]);
     set({ busy: null });
+  },
+
+  // Drag-and-drop helpers: check out the branch that must be current for the op,
+  // then run it. Bail if the checkout fails (e.g. dirty tree) so we never act on
+  // the wrong branch.
+  mergeBranches: async (from, into) => {
+    if (into !== get().status?.branch) {
+      await get().checkout(into);
+      if (get().error) return;
+    }
+    await get().merge(from);
+  },
+
+  rebaseBranchOnto: async (branch, onto) => {
+    if (branch !== get().status?.branch) {
+      await get().checkout(branch);
+      if (get().error) return;
+    }
+    await get().rebase(onto);
+  },
+
+  resetBranchTo: async (branch, sha, mode) => {
+    if (branch !== get().status?.branch) {
+      await get().checkout(branch);
+      if (get().error) return;
+    }
+    await get().reset(sha, mode);
   },
 
   createBranchAt: async (name, at, checkout) => {

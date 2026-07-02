@@ -829,6 +829,12 @@ body {
   white-space: nowrap;
   border: 1px solid transparent;
 }
+.ref[draggable="true"] {
+  cursor: grab;
+}
+.ref[draggable="true"]:active {
+  cursor: grabbing;
+}
 .ref--local {
   background: rgba(139, 92, 246, 0.18);
   color: #c4b5fd;

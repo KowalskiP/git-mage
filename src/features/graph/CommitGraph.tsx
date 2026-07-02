@@ -6,6 +6,7 @@ import { ContextMenu, type MenuItem } from "../ContextMenu";
 import { PromptModal } from "../PromptModal";
 import { RebaseModal } from "../RebaseModal";
 import { GraphActions } from "./GraphActions";
+import { buildDropMenu, type DragRef, type DropAction } from "./dnd";
 
 const ROW_H = 26;
 const COL_W = 14;
@@ -62,6 +63,9 @@ export function CommitGraph() {
   const checkout = useRepos((s) => s.checkout);
   const merge = useRepos((s) => s.merge);
   const rebase = useRepos((s) => s.rebase);
+  const mergeBranches = useRepos((s) => s.mergeBranches);
+  const rebaseBranchOnto = useRepos((s) => s.rebaseBranchOnto);
+  const resetBranchTo = useRepos((s) => s.resetBranchTo);
   const cherryPick = useRepos((s) => s.cherryPick);
   const revert = useRepos((s) => s.revert);
   const reset = useRepos((s) => s.reset);
@@ -75,6 +79,7 @@ export function CommitGraph() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const draggedRef = useRef<DragRef | null>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportH, setViewportH] = useState(0);
   const rafRef = useRef<number | null>(null);
@@ -214,6 +219,53 @@ export function CommitGraph() {
       return;
     }
     setMenu({ x: e.clientX, y: e.clientY, items });
+  }
+
+  // ---- drag & drop: drag a branch ref onto a branch/commit ----
+  function onRefDragStart(e: React.DragEvent, ref: DragRef) {
+    e.stopPropagation();
+    draggedRef.current = ref;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", ref.name);
+  }
+
+  function onRowDragOver(e: React.DragEvent) {
+    if (!draggedRef.current) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }
+
+  function runDrop(a: DropAction) {
+    if (a.type === "merge") mergeBranches(a.from, a.into);
+    else if (a.type === "rebase") rebaseBranchOnto(a.branch, a.onto);
+    else resetBranchTo(a.branch, a.sha, a.mode);
+  }
+
+  function onRowDrop(e: React.DragEvent, row: GraphRow) {
+    e.preventDefault();
+    const src = draggedRef.current;
+    draggedRef.current = null;
+    if (!src || row.wip) return;
+    let branch: DragRef | undefined;
+    for (const r of row.refs) {
+      const p = parseRef(r);
+      if (p.kind === "local") {
+        branch = { name: p.name, kind: "local" };
+        break;
+      }
+      if (p.kind === "remote" && !branch) branch = { name: p.name, kind: "remote" };
+    }
+    const actions = buildDropMenu(src, { sha: row.sha, branch, current: currentBranch });
+    if (actions.length === 0) return;
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: actions.map((a) => ({
+        label: a.label,
+        danger: a.type === "reset" && a.mode === "hard",
+        onClick: () => runDrop(a),
+      })),
+    });
   }
 
   const changeCount = status
@@ -388,17 +440,29 @@ export function CommitGraph() {
               style={{ top: i * ROW_H, left: graphW, height: ROW_H }}
               onClick={() => selectNode(row.sha)}
               onContextMenu={(e) => commitMenu(e, row)}
+              onDragOver={onRowDragOver}
+              onDrop={(e) => onRowDrop(e, row)}
             >
               <div className="commit-row__main">
-                {row.refs.map((r) => (
-                  <span
-                    key={r}
-                    className={"ref " + refKind(r)}
-                    onContextMenu={(e) => refMenu(e, r)}
-                  >
-                    {r.replace("tag: ", "").replace("HEAD -> ", "")}
-                  </span>
-                ))}
+                {row.refs.map((r) => {
+                  const p = parseRef(r);
+                  const drag = p.kind === "local" || p.kind === "remote";
+                  return (
+                    <span
+                      key={r}
+                      className={"ref " + refKind(r)}
+                      draggable={drag}
+                      onDragStart={
+                        drag
+                          ? (e) => onRefDragStart(e, { name: p.name, kind: p.kind as "local" | "remote" })
+                          : undefined
+                      }
+                      onContextMenu={(e) => refMenu(e, r)}
+                    >
+                      {r.replace("tag: ", "").replace("HEAD -> ", "")}
+                    </span>
+                  );
+                })}
                 <span className="commit-row__summary">{row.summary}</span>
               </div>
               <span className="commit-row__author">{row.author}</span>
