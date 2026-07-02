@@ -9,6 +9,14 @@ use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Emitter, Runtime};
 
 /// Build the application menu. Wired via `Builder::menu`.
+///
+/// macOS gets the conventional app menu (About / Services / Hide / Quit under a
+/// "GitMage" menu). Windows/Linux have no app-menu convention and don't support
+/// the Services/Hide/Show-All predefined items, so those platforms fold the
+/// app-level actions into File + a Help menu instead.
+// Explicit `return` per cfg branch keeps the two platform arms unambiguous (only
+// one is ever compiled); that's clearer here than relying on tail-expr position.
+#[allow(clippy::needless_return)]
 pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let about = AboutMetadata {
         name: Some("GitMage".into()),
@@ -16,42 +24,26 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         ..Default::default()
     };
 
-    let app_menu = Submenu::with_items(
-        app,
-        "GitMage",
-        true,
-        &[
-            &PredefinedMenuItem::about(app, Some("About GitMage"), Some(about))?,
-            &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, "check_update", "Check for Updates…", true, None::<&str>)?,
-            &MenuItem::with_id(app, "settings", "Preferences…", true, Some("CmdOrCtrl+,"))?,
-            &MenuItem::with_id(app, "profiles", "Profiles…", true, None::<&str>)?,
-            &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::services(app, None)?,
-            &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::hide(app, None)?,
-            &PredefinedMenuItem::hide_others(app, None)?,
-            &PredefinedMenuItem::show_all(app, None)?,
-            &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::quit(app, None)?,
-        ],
-    )?;
+    // OS-appropriate label for the "reveal folder in the file manager" item.
+    let reveal_label = if cfg!(target_os = "windows") {
+        "Reveal in Explorer"
+    } else if cfg!(target_os = "macos") {
+        "Reveal in Finder"
+    } else {
+        "Reveal in File Manager"
+    };
 
-    let file_menu = Submenu::with_items(
-        app,
-        "File",
-        true,
-        &[
-            &MenuItem::with_id(app, "clone", "Clone…", true, None::<&str>)?,
-            &MenuItem::with_id(app, "init", "New Repository…", true, None::<&str>)?,
-            &MenuItem::with_id(app, "open_repo", "Open Repository…", true, Some("CmdOrCtrl+O"))?,
-            &MenuItem::with_id(app, "close_repo", "Close Repository", true, Some("CmdOrCtrl+W"))?,
-            &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(app, "open_editor", "Open in VS Code", true, None::<&str>)?,
-            &MenuItem::with_id(app, "open_terminal", "Open in Terminal", true, None::<&str>)?,
-            &MenuItem::with_id(app, "open_finder", "Reveal in Finder", true, None::<&str>)?,
-        ],
-    )?;
+    // Items shared across platforms.
+    let clone = MenuItem::with_id(app, "clone", "Clone…", true, None::<&str>)?;
+    let init = MenuItem::with_id(app, "init", "New Repository…", true, None::<&str>)?;
+    let open_repo = MenuItem::with_id(app, "open_repo", "Open Repository…", true, Some("CmdOrCtrl+O"))?;
+    let close_repo = MenuItem::with_id(app, "close_repo", "Close Repository", true, Some("CmdOrCtrl+W"))?;
+    let open_editor = MenuItem::with_id(app, "open_editor", "Open in VS Code", true, None::<&str>)?;
+    let open_terminal = MenuItem::with_id(app, "open_terminal", "Open in Terminal", true, None::<&str>)?;
+    let open_finder = MenuItem::with_id(app, "open_finder", reveal_label, true, None::<&str>)?;
+    let check_update = MenuItem::with_id(app, "check_update", "Check for Updates…", true, None::<&str>)?;
+    let settings = MenuItem::with_id(app, "settings", "Preferences…", true, Some("CmdOrCtrl+,"))?;
+    let profiles = MenuItem::with_id(app, "profiles", "Profiles…", true, None::<&str>)?;
 
     let edit_menu = Submenu::with_items(
         app,
@@ -79,7 +71,79 @@ pub fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
         ],
     )?;
 
-    Menu::with_items(app, &[&app_menu, &file_menu, &edit_menu, &window_menu])
+    #[cfg(target_os = "macos")]
+    {
+        let app_menu = Submenu::with_items(
+            app,
+            "GitMage",
+            true,
+            &[
+                &PredefinedMenuItem::about(app, Some("About GitMage"), Some(about))?,
+                &PredefinedMenuItem::separator(app)?,
+                &check_update,
+                &settings,
+                &profiles,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::services(app, None)?,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::hide(app, None)?,
+                &PredefinedMenuItem::hide_others(app, None)?,
+                &PredefinedMenuItem::show_all(app, None)?,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::quit(app, None)?,
+            ],
+        )?;
+        let file_menu = Submenu::with_items(
+            app,
+            "File",
+            true,
+            &[
+                &clone,
+                &init,
+                &open_repo,
+                &close_repo,
+                &PredefinedMenuItem::separator(app)?,
+                &open_editor,
+                &open_terminal,
+                &open_finder,
+            ],
+        )?;
+        return Menu::with_items(app, &[&app_menu, &file_menu, &edit_menu, &window_menu]);
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let file_menu = Submenu::with_items(
+            app,
+            "File",
+            true,
+            &[
+                &clone,
+                &init,
+                &open_repo,
+                &close_repo,
+                &PredefinedMenuItem::separator(app)?,
+                &open_editor,
+                &open_terminal,
+                &open_finder,
+                &PredefinedMenuItem::separator(app)?,
+                &settings,
+                &profiles,
+                &PredefinedMenuItem::separator(app)?,
+                &PredefinedMenuItem::quit(app, Some("Exit"))?,
+            ],
+        )?;
+        let help_menu = Submenu::with_items(
+            app,
+            "Help",
+            true,
+            &[
+                &check_update,
+                &PredefinedMenuItem::about(app, Some("About GitMage"), Some(about))?,
+            ],
+        )?;
+        return Menu::with_items(app, &[&file_menu, &edit_menu, &window_menu, &help_menu]);
+    }
 }
 
 /// Forward custom menu items to the webview. Wired via `Builder::on_menu_event`.

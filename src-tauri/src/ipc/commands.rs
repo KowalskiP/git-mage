@@ -650,10 +650,52 @@ pub fn open_in(kind: String, path: String) -> AppResult<()> {
         cmd.spawn().map_err(|e| AppError::Msg(format!("open: {e}")))?;
         Ok(())
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "windows")]
     {
-        let _ = (kind, path);
-        Err(AppError::Msg("open_in is only implemented on macOS".into()))
+        // `code` is a .cmd shim (needs cmd.exe for PATH resolution); Explorer and
+        // a new terminal are launched with the repo as the working directory so
+        // paths with spaces don't need escaping.
+        let mut cmd = match kind.as_str() {
+            "editor" => {
+                let mut c = std::process::Command::new("cmd");
+                c.current_dir(&path).args(["/C", "code", "."]);
+                c
+            }
+            "terminal" => {
+                let mut c = std::process::Command::new("cmd");
+                c.current_dir(&path).args(["/C", "start", "cmd"]);
+                c
+            }
+            "finder" => {
+                let mut c = std::process::Command::new("explorer");
+                c.arg(&path);
+                c
+            }
+            _ => return Err(AppError::Msg(format!("unknown target: {kind}"))),
+        };
+        cmd.spawn().map_err(|e| AppError::Msg(format!("open: {e}")))?;
+        Ok(())
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let mut cmd = match kind.as_str() {
+            "editor" => {
+                let mut c = std::process::Command::new("code");
+                c.arg(&path);
+                c
+            }
+            "finder" => {
+                let mut c = std::process::Command::new("xdg-open");
+                c.arg(&path);
+                c
+            }
+            // No portable "open a terminal here" on Linux desktops.
+            "terminal" => return Err(AppError::Msg("open in terminal is unsupported on Linux".into())),
+            _ => return Err(AppError::Msg(format!("unknown target: {kind}"))),
+        };
+        cmd.spawn().map_err(|e| AppError::Msg(format!("open: {e}")))?;
+        Ok(())
     }
 }
 
