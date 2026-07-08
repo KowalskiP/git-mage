@@ -3,6 +3,7 @@
 //! the porcelain reader can be unit-tested on sample output.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::{BlameLine, FileLog};
@@ -20,7 +21,7 @@ pub fn file_history(path: &str, file: &str, rev: &str, limit: u32) -> AppResult<
     }
     args.push("--");
     args.push(file);
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(&args)
         .output()
@@ -56,7 +57,7 @@ pub fn blame(path: &str, file: &str, rev: &str) -> AppResult<Vec<BlameLine>> {
     }
     args.push("--");
     args.push(file);
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(&args)
         .output()
@@ -116,7 +117,7 @@ mod tests {
 
     fn g(dir: &Path, args: &[&str]) {
         assert!(
-            Command::new("git").current_dir(dir).args(args).output().unwrap().status.success(),
+            Command::new("git").hide_console().current_dir(dir).args(args).output().unwrap().status.success(),
             "git {args:?}"
         );
     }

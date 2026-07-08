@@ -8,12 +8,13 @@
 
 use std::collections::HashMap;
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::{LfsFile, LfsStatus};
 
 fn output(path: &str, args: &[&str]) -> std::io::Result<std::process::Output> {
-    Command::new("git").current_dir(path).args(args).output()
+    Command::new("git").hide_console().current_dir(path).args(args).output()
 }
 
 /// Aggregate LFS state for the repo. Never errors on a healthy repo — if
@@ -131,6 +132,7 @@ fn locks_map(path: &str) -> HashMap<String, String> {
 
 fn run(path: &str, args: &[&str], network: bool) -> AppResult<()> {
     let mut cmd = Command::new("git");
+    cmd.hide_console();
     cmd.current_dir(path).args(args);
     if network {
         cmd.env("GIT_TERMINAL_PROMPT", "0");
@@ -173,13 +175,13 @@ mod tests {
 
     fn g(dir: &Path, args: &[&str]) {
         assert!(
-            Command::new("git").current_dir(dir).args(args).output().unwrap().status.success(),
+            Command::new("git").hide_console().current_dir(dir).args(args).output().unwrap().status.success(),
             "git {args:?}"
         );
     }
 
     fn lfs_available() -> bool {
-        Command::new("git")
+        Command::new("git").hide_console()
             .args(["lfs", "version"])
             .output()
             .map(|o| o.status.success())

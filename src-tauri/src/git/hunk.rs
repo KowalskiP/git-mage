@@ -3,6 +3,7 @@
 
 use std::io::Write;
 use std::process::{Command, Stdio};
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::Hunk;
@@ -17,7 +18,7 @@ pub fn file_hunks(path: &str, file: &str, staged: bool) -> AppResult<Vec<Hunk>> 
     args.push("--");
     args.push(file);
 
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(&args)
         .output()
@@ -68,7 +69,7 @@ pub fn apply_hunk(path: &str, patch: &str, reverse: bool) -> AppResult<()> {
     }
     args.push("-");
 
-    let mut child = Command::new("git")
+    let mut child = Command::new("git").hide_console()
         .current_dir(path)
         .args(&args)
         .stdin(Stdio::piped())

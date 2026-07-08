@@ -1,6 +1,7 @@
 //! Stash operations (SPEC §6.4): save / list / apply / pop / drop.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::StashEntry;
@@ -8,7 +9,7 @@ use crate::model::StashEntry;
 const US: char = '\u{1f}';
 
 fn run(path: &str, args: &[&str]) -> AppResult<()> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(args)
         .output()
@@ -24,7 +25,7 @@ fn run(path: &str, args: &[&str]) -> AppResult<()> {
 }
 
 pub fn stash_list(path: &str) -> AppResult<Vec<StashEntry>> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["stash", "list", &format!("--format=%gd{US}%s")])
         .output()
@@ -78,7 +79,7 @@ mod tests {
     use std::path::Path;
 
     fn git(dir: &Path, args: &[&str]) {
-        let ok = Command::new("git")
+        let ok = Command::new("git").hide_console()
             .current_dir(dir)
             .args(args)
             .output()

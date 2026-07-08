@@ -2,12 +2,13 @@
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::Worktree;
 
 fn run(path: &str, args: &[&str]) -> AppResult<()> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(args)
         .output()
@@ -22,7 +23,7 @@ fn run(path: &str, args: &[&str]) -> AppResult<()> {
 
 /// All worktrees of the repo; the first one is the primary worktree.
 pub fn worktree_list(path: &str) -> AppResult<Vec<Worktree>> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["worktree", "list", "--porcelain"])
         .output()
@@ -79,7 +80,7 @@ pub fn worktree_list(path: &str) -> AppResult<Vec<Worktree>> {
 
 /// (ahead, behind, uncommitted-change-count) for a worktree, via one `git status`.
 fn worktree_summary(wt: &str) -> (u32, u32, u32) {
-    let Ok(out) = Command::new("git")
+    let Ok(out) = Command::new("git").hide_console()
         .current_dir(wt)
         .args(["status", "--porcelain=v1", "--branch"])
         .output()
@@ -157,7 +158,7 @@ mod tests {
 
     fn g(dir: &Path, args: &[&str]) {
         assert!(
-            Command::new("git").current_dir(dir).args(args).output().unwrap().status.success(),
+            Command::new("git").hide_console().current_dir(dir).args(args).output().unwrap().status.success(),
             "git {args:?}"
         );
     }

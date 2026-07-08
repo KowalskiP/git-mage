@@ -1,13 +1,14 @@
 //! Submodule operations (SPEC §6.8): list with status, init/update, sync.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::Submodule;
 
 /// Submodules with their working state (`git submodule status`).
 pub fn submodule_list(path: &str) -> AppResult<Vec<Submodule>> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["-c", "core.quotePath=false", "submodule", "status"])
         .output()
@@ -50,6 +51,7 @@ pub fn submodule_list(path: &str) -> AppResult<Vec<Submodule>> {
 
 fn run(path: &str, args: &[&str], network: bool) -> AppResult<()> {
     let mut cmd = Command::new("git");
+    cmd.hide_console();
     cmd.current_dir(path).args(args);
     if network {
         cmd.env("GIT_TERMINAL_PROMPT", "0");
@@ -91,7 +93,7 @@ mod tests {
 
     fn g(dir: &Path, args: &[&str]) {
         assert!(
-            Command::new("git").current_dir(dir).args(args).output().unwrap().status.success(),
+            Command::new("git").hide_console().current_dir(dir).args(args).output().unwrap().status.success(),
             "git {args:?}"
         );
     }

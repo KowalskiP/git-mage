@@ -4,12 +4,13 @@
 //! by `git flow init` so it interoperates with repos already using gitflow.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::GitflowConfig;
 
 fn run(path: &str, args: &[&str]) -> AppResult<()> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(args)
         .output()
@@ -25,7 +26,7 @@ fn run(path: &str, args: &[&str]) -> AppResult<()> {
 }
 
 fn config_get(path: &str, key: &str) -> Option<String> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["config", "--get", key])
         .output()
@@ -38,7 +39,7 @@ fn config_get(path: &str, key: &str) -> Option<String> {
 }
 
 fn branch_exists(path: &str, name: &str) -> bool {
-    Command::new("git")
+    Command::new("git").hide_console()
         .current_dir(path)
         .args(["rev-parse", "--verify", "--quiet", &format!("refs/heads/{name}")])
         .output()
@@ -47,7 +48,7 @@ fn branch_exists(path: &str, name: &str) -> bool {
 }
 
 fn current_branch(path: &str) -> String {
-    Command::new("git")
+    Command::new("git").hide_console()
         .current_dir(path)
         .args(["rev-parse", "--abbrev-ref", "HEAD"])
         .output()
@@ -194,7 +195,7 @@ mod tests {
 
     fn g(dir: &Path, args: &[&str]) {
         assert!(
-            Command::new("git").current_dir(dir).args(args).output().unwrap().status.success(),
+            Command::new("git").hide_console().current_dir(dir).args(args).output().unwrap().status.success(),
             "git {args:?}"
         );
     }
@@ -260,7 +261,7 @@ mod tests {
         gitflow_finish(p, "release", "1.0").unwrap();
 
         // Tag exists and main contains the release work.
-        let tags = Command::new("git").current_dir(&dir).args(["tag"]).output().unwrap();
+        let tags = Command::new("git").hide_console().current_dir(&dir).args(["tag"]).output().unwrap();
         assert!(String::from_utf8_lossy(&tags.stdout).contains("1.0"), "tag created");
         assert!(!branch_exists(p, "release/1.0"), "release branch deleted");
 

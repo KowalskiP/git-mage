@@ -5,6 +5,7 @@
 //! A later step swaps the data source to `gix` revwalk without touching the layout.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::{GraphEdge, GraphPage, GraphRow};
@@ -149,7 +150,7 @@ fn collect_commits_gix(path: &str, skip: usize, limit: usize) -> AppResult<Vec<C
 /// Commit data via the git CLI (`git log --all`) — fallback for `collect_commits_gix`.
 fn collect_commits_cli(path: &str, skip: usize, limit: usize) -> AppResult<Vec<Commit>> {
     let fmt = format!("{US}%H{US}%P{US}%an{US}%at{US}%D{US}%s{RS}");
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args([
             "-c",
@@ -181,7 +182,7 @@ fn collect_commits_cli(path: &str, skip: usize, limit: usize) -> AppResult<Vec<C
 
 /// A WIP commit (parent = HEAD) when the working tree has changes, else None.
 fn working_dir_node(path: &str) -> Option<Commit> {
-    let status = Command::new("git")
+    let status = Command::new("git").hide_console()
         .current_dir(path)
         .args(["status", "--porcelain"])
         .output()
@@ -189,7 +190,7 @@ fn working_dir_node(path: &str) -> Option<Commit> {
     if !status.status.success() || status.stdout.is_empty() {
         return None;
     }
-    let head = Command::new("git")
+    let head = Command::new("git").hide_console()
         .current_dir(path)
         .args(["rev-parse", "--verify", "HEAD"])
         .output()
@@ -399,7 +400,7 @@ mod tests {
         let p = dir.to_str().unwrap();
         let git = |args: &[&str]| {
             assert!(
-                Command::new("git").current_dir(&dir).args(args).output().unwrap().status.success(),
+                Command::new("git").hide_console().current_dir(&dir).args(args).output().unwrap().status.success(),
                 "git {args:?}"
             );
         };
@@ -429,7 +430,7 @@ mod tests {
         let p = dir.to_str().unwrap();
         let git = |args: &[&str]| {
             assert!(
-                Command::new("git").current_dir(&dir).args(args).output().unwrap().status.success(),
+                Command::new("git").hide_console().current_dir(&dir).args(args).output().unwrap().status.success(),
                 "git {args:?}"
             );
         };

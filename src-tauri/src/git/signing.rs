@@ -3,13 +3,14 @@
 //! `git commit`, which honours `commit.gpgsign`/`gpg.format`/`user.signingkey`.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::SigningConfig;
 
 /// Read a single git config value (local → global fallback), trimmed.
 fn config_get(path: &str, key: &str) -> Option<String> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["config", "--get", key])
         .output()
@@ -26,7 +27,7 @@ fn config_get(path: &str, key: &str) -> Option<String> {
 }
 
 fn config_set(path: &str, key: &str, value: &str) -> AppResult<()> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["config", key, value])
         .output()
@@ -58,7 +59,7 @@ pub fn set_signing(path: &str, sign: bool, format: &str, key: &str) -> AppResult
     }
     // Allow clearing the key by passing an empty string.
     if key.is_empty() {
-        let _ = Command::new("git")
+        let _ = Command::new("git").hide_console()
             .current_dir(path)
             .args(["config", "--unset", "user.signingkey"])
             .output();
@@ -76,7 +77,7 @@ mod tests {
 
     fn g(dir: &Path, args: &[&str]) {
         assert!(
-            Command::new("git").current_dir(dir).args(args).output().unwrap().status.success(),
+            Command::new("git").hide_console().current_dir(dir).args(args).output().unwrap().status.success(),
             "git {args:?}"
         );
     }

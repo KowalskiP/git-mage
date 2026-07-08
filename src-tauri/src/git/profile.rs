@@ -4,6 +4,7 @@
 
 use std::path::PathBuf;
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::Profile;
@@ -15,7 +16,7 @@ fn set(cwd: &PathBuf, global: bool, key: &str, value: &str) -> AppResult<()> {
     }
     args.push(key);
     args.push(value);
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(cwd)
         .args(&args)
         .output()
@@ -29,7 +30,7 @@ fn set(cwd: &PathBuf, global: bool, key: &str, value: &str) -> AppResult<()> {
 }
 
 fn get(path: &str, key: &str) -> String {
-    Command::new("git")
+    Command::new("git").hide_console()
         .current_dir(path)
         .args(["config", "--get", key])
         .output()
@@ -86,7 +87,7 @@ mod tests {
 
     fn g(dir: &Path, args: &[&str]) {
         assert!(
-            Command::new("git").current_dir(dir).args(args).output().unwrap().status.success(),
+            Command::new("git").hide_console().current_dir(dir).args(args).output().unwrap().status.success(),
             "git {args:?}"
         );
     }

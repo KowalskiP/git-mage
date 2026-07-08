@@ -3,6 +3,7 @@
 //! and disable interactive prompts so they fail fast instead of hanging.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::{BranchList, LocalBranch, RebaseCommit};
@@ -11,6 +12,7 @@ const US: char = '\u{1f}';
 
 fn run(path: &str, args: &[&str], network: bool) -> AppResult<()> {
     let mut cmd = Command::new("git");
+    cmd.hide_console();
     cmd.current_dir(path).args(args);
     if network {
         // Never block on a TTY prompt or a merge editor in a headless process.
@@ -57,6 +59,7 @@ fn askpass_helper() -> Option<String> {
 /// system credential helper / SSH agent; we never block on a TTY prompt.
 pub fn clone(url: &str, dir: &str) -> AppResult<()> {
     let mut cmd = Command::new("git");
+    cmd.hide_console();
     cmd.args(["clone", url, dir]);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     let out = cmd
@@ -73,7 +76,7 @@ pub fn clone(url: &str, dir: &str) -> AppResult<()> {
 /// the initial branch.
 pub fn init(dir: &str) -> AppResult<()> {
     std::fs::create_dir_all(dir).map_err(|e| AppError::Git(format!("mkdir: {e}")))?;
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(dir)
         .args(["init", "-q", "-b", "main"])
         .output()
@@ -140,7 +143,7 @@ pub fn reset(path: &str, target: &str, mode: &str) -> AppResult<()> {
 /// Subject of the most recent HEAD reflog entry (e.g. "commit: msg",
 /// "checkout: moving from a to b"), or None when there's no reflog yet.
 pub fn last_action(path: &str) -> Option<String> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["reflog", "-1", "--format=%gs"])
         .output()
@@ -181,7 +184,7 @@ pub fn undo(path: &str) -> AppResult<String> {
 
 /// All tags, newest first (by creation date).
 pub fn tag_list(path: &str) -> AppResult<Vec<String>> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["tag", "--sort=-creatordate"])
         .output()
@@ -229,7 +232,7 @@ pub fn resolve_side(path: &str, file: &str, ours: bool) -> AppResult<()> {
 }
 
 fn tool_configured(path: &str, key: &str) -> bool {
-    Command::new("git")
+    Command::new("git").hide_console()
         .current_dir(path)
         .args(["config", "--get", key])
         .output()
@@ -244,7 +247,7 @@ pub fn launch_difftool(path: &str, file: &str) -> AppResult<()> {
             "No external diff tool configured (set git config diff.tool)".into(),
         ));
     }
-    Command::new("git")
+    Command::new("git").hide_console()
         .current_dir(path)
         .args(["difftool", "--no-prompt", "--", file])
         .spawn()
@@ -259,7 +262,7 @@ pub fn launch_mergetool(path: &str, file: &str) -> AppResult<()> {
             "No external merge tool configured (set git config merge.tool)".into(),
         ));
     }
-    Command::new("git")
+    Command::new("git").hide_console()
         .current_dir(path)
         .args(["mergetool", "--no-prompt", file])
         .spawn()
@@ -305,7 +308,7 @@ pub fn rebase_abort(path: &str) -> AppResult<()> {
 
 /// Commits in `base..HEAD` (non-merge), oldest first — the interactive-rebase range.
 pub fn rebase_todo_commits(path: &str, base: &str) -> AppResult<Vec<RebaseCommit>> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args([
             "log",
@@ -341,7 +344,7 @@ pub fn rebase_interactive(path: &str, base: &str, todo: &str) -> AppResult<()> {
     std::fs::write(&tmp, todo).map_err(|e| AppError::Git(format!("write todo: {e}")))?;
 
     let seq_editor = format!("cp '{}'", tmp.display());
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["rebase", "-i", base])
         .env("GIT_SEQUENCE_EDITOR", seq_editor)
@@ -370,7 +373,7 @@ mod tests {
     use std::path::Path;
 
     fn g(dir: &Path, args: &[&str]) {
-        let ok = Command::new("git")
+        let ok = Command::new("git").hide_console()
             .current_dir(dir)
             .args(args)
             .output()
@@ -399,13 +402,13 @@ mod tests {
         assert!(last_action(p).unwrap().starts_with("commit"));
         assert!(undo(p).unwrap().contains("commit"));
 
-        let head = Command::new("git")
+        let head = Command::new("git").hide_console()
             .current_dir(&dir)
             .args(["log", "-1", "--format=%s"])
             .output()
             .unwrap();
         assert_eq!(String::from_utf8_lossy(&head.stdout).trim(), "first");
-        let staged = Command::new("git")
+        let staged = Command::new("git").hide_console()
             .current_dir(&dir)
             .args(["diff", "--cached", "--name-only"])
             .output()
@@ -440,7 +443,7 @@ mod tests {
         g(&dir, &["branch", "feature"]);
         g(&dir, &["push", "-q", "origin", "feature"]);
         assert!(branch_delete_remote(p, "origin", "feature").is_ok());
-        let refs = Command::new("git")
+        let refs = Command::new("git").hide_console()
             .current_dir(&bare)
             .args(["for-each-ref", "--format=%(refname)", "refs/heads"])
             .output()
@@ -529,7 +532,7 @@ mod tests {
     #[test]
     fn cherry_pick_revert_reset_and_sequencer() {
         fn rev(dir: &Path, r: &str) -> String {
-            let o = Command::new("git").current_dir(dir).args(["rev-parse", r]).output().unwrap();
+            let o = Command::new("git").hide_console().current_dir(dir).args(["rev-parse", r]).output().unwrap();
             String::from_utf8_lossy(&o.stdout).trim().to_string()
         }
 
@@ -597,7 +600,7 @@ mod tests {
         g(&dir, &["add", "."]);
         g(&dir, &["commit", "-q", "-m", "base"]);
 
-        let out = Command::new("git")
+        let out = Command::new("git").hide_console()
             .current_dir(&dir)
             .args(["rev-parse", "--abbrev-ref", "HEAD"])
             .output()
@@ -654,7 +657,7 @@ mod tests {
         g(&dir, &["commit", "-qam", "c3"]);
 
         let base = {
-            let o = Command::new("git")
+            let o = Command::new("git").hide_console()
                 .current_dir(&dir)
                 .args(["rev-parse", "HEAD~2"])
                 .output()
@@ -673,7 +676,7 @@ mod tests {
         rebase_interactive(p, &base, &todo).unwrap();
 
         let count = {
-            let o = Command::new("git")
+            let o = Command::new("git").hide_console()
                 .current_dir(&dir)
                 .args(["rev-list", "--count", "HEAD"])
                 .output()
@@ -752,7 +755,7 @@ pub fn tag_delete(path: &str, name: &str) -> AppResult<()> {
 
 /// Local branch short names.
 pub fn list_branches(path: &str) -> AppResult<Vec<String>> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["for-each-ref", "--format=%(refname:short)", "refs/heads"])
         .output()
@@ -788,7 +791,7 @@ fn parse_track(s: &str) -> (u32, u32) {
 /// Local branches (current + ahead/behind) and remote-tracking branches, for
 /// the sidebar explorer (SPEC §6.4).
 pub fn branch_list(path: &str) -> AppResult<BranchList> {
-    let local_out = Command::new("git")
+    let local_out = Command::new("git").hide_console()
         .current_dir(path)
         .args([
             "for-each-ref",
@@ -814,7 +817,7 @@ pub fn branch_list(path: &str) -> AppResult<BranchList> {
         local.push(LocalBranch { name, current, ahead, behind });
     }
 
-    let remote_out = Command::new("git")
+    let remote_out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["for-each-ref", "--format=%(refname:short)", "refs/remotes"])
         .output()

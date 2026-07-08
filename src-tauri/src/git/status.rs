@@ -1,4 +1,5 @@
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::{FileEntry, RepoStatus};
@@ -8,7 +9,7 @@ use crate::model::{FileEntry, RepoStatus};
 /// M0: parses `git status --porcelain=v1 --branch` (quotePath disabled so UTF-8
 /// paths are not escaped). M1 migrates this to `gix::status` per SPEC §5.2.
 pub fn status(path: &str) -> AppResult<RepoStatus> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args([
             "-c",
@@ -46,7 +47,7 @@ pub fn status(path: &str) -> AppResult<RepoStatus> {
         st.branch = Some(b);
     }
 
-    st.merge_in_progress = Command::new("git")
+    st.merge_in_progress = Command::new("git").hide_console()
         .current_dir(path)
         .args(["rev-parse", "-q", "--verify", "MERGE_HEAD"])
         .output()
@@ -77,7 +78,7 @@ pub fn status(path: &str) -> AppResult<RepoStatus> {
 
 /// Resolve the repo's `.git` directory (absolute), or None.
 fn git_dir(path: &str) -> Option<std::path::PathBuf> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(["rev-parse", "--git-dir"])
         .output()

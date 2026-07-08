@@ -10,6 +10,7 @@ mod api;
 pub use api::{create_pull, fetch_issues, fetch_pulls};
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::ForgeInfo;
@@ -105,7 +106,7 @@ fn parse_remote_url(url: &str) -> Option<(String, String)> {
 /// The origin remote URL (falls back to the first configured remote).
 fn remote_url(path: &str) -> Option<String> {
     let try_remote = |name: &str| {
-        Command::new("git")
+        Command::new("git").hide_console()
             .current_dir(path)
             .args(["remote", "get-url", name])
             .output()
@@ -118,7 +119,7 @@ fn remote_url(path: &str) -> Option<String> {
         return Some(u);
     }
     // Otherwise pick the first remote listed.
-    let out = Command::new("git").current_dir(path).args(["remote"]).output().ok()?;
+    let out = Command::new("git").hide_console().current_dir(path).args(["remote"]).output().ok()?;
     let first = String::from_utf8_lossy(&out.stdout).lines().next()?.trim().to_string();
     if first.is_empty() {
         None
@@ -281,7 +282,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let p = dir.to_str().unwrap();
         let g = |args: &[&str]| {
-            Command::new("git").current_dir(&dir).args(args).output().unwrap();
+            Command::new("git").hide_console().current_dir(&dir).args(args).output().unwrap();
         };
         g(&["init", "-q"]);
 

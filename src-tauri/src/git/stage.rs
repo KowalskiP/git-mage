@@ -1,11 +1,12 @@
 //! Working-directory mutations: staging and committing (SPEC §6.3).
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 
 fn run(path: &str, args: &[&str]) -> AppResult<()> {
-    let out = Command::new("git")
+    let out = Command::new("git").hide_console()
         .current_dir(path)
         .args(args)
         .output()

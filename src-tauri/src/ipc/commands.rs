@@ -10,6 +10,7 @@ use tauri::{AppHandle, State};
 use crate::db::Db;
 use crate::error::{AppError, AppResult};
 use crate::git;
+use crate::git::cmd::HideConsole;
 use crate::agents;
 use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
@@ -624,6 +625,7 @@ pub async fn open_external(url: String) -> AppResult<()> {
     let mut cmd = std::process::Command::new("xdg-open");
 
     cmd.arg(&url);
+    cmd.hide_console(); // no Windows console flash (no-op elsewhere)
     cmd.spawn().map_err(|e| AppError::Msg(format!("open: {e}")))?;
     Ok(())
 }
@@ -673,6 +675,9 @@ pub fn open_in(kind: String, path: String) -> AppResult<()> {
             }
             _ => return Err(AppError::Msg(format!("unknown target: {kind}"))),
         };
+        // Suppress the transient launcher console (a "terminal" still opens its
+        // own window via `start cmd`).
+        cmd.hide_console();
         cmd.spawn().map_err(|e| AppError::Msg(format!("open: {e}")))?;
         Ok(())
     }

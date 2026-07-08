@@ -2,6 +2,7 @@
 //! M1: sourced from system `git`. Diffs are returned as unified-diff text.
 
 use std::process::Command;
+use crate::git::cmd::HideConsole;
 
 use crate::error::{AppError, AppResult};
 use crate::model::{CommitDetail, DiffSides, FileEntry};
@@ -9,7 +10,7 @@ use crate::model::{CommitDetail, DiffSides, FileEntry};
 const US: char = '\u{1f}';
 
 fn run(path: &str, args: &[&str]) -> AppResult<std::process::Output> {
-    Command::new("git")
+    Command::new("git").hide_console()
         .current_dir(path)
         .args(args)
         .output()
@@ -186,7 +187,7 @@ pub fn diff_sides(path: &str, sha: &str, file: &str) -> AppResult<DiffSides> {
 
 /// Contents of `<rev>` (e.g. "HEAD:path" or "sha^:path"); empty if it doesn't exist.
 fn show_side(path: &str, rev: &str) -> (String, bool) {
-    match Command::new("git")
+    match Command::new("git").hide_console()
         .current_dir(path)
         .args(["-c", "core.quotePath=false", "show", rev])
         .output()

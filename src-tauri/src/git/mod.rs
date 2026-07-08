@@ -5,6 +5,7 @@
 //! and shell out to system `git` for the porcelain working-tree status.
 //! M1 will move status onto `gix::status` (see `status.rs`).
 
+pub mod cmd;
 mod commit;
 mod gitflow;
 mod graph;

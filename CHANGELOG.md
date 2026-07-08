@@ -6,6 +6,17 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-08
+
+### Fixed
+- **Windows: console windows flashing in and out** when opening a repository
+  ([#1](https://github.com/KowalskiP/git-mage/issues/1)). Every `git` subprocess
+  (status, graph, branches, …) and the filesystem-watcher refresh now spawn with
+  `CREATE_NO_WINDOW`, so no console window pops up. Same fix applied to the
+  browser-link and "open in editor" launchers.
+- **About dialog showed `0.1.0`** regardless of the actual version — the Rust
+  crate version was never bumped; all version numbers are now in sync.
+
 ## [0.3.0] - 2026-07-02
 
 ### Added

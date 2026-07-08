@@ -1,7 +1,7 @@
 {
   "name": "gitmage",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "GitMage — open-source, fast, lightweight Git client (Tauri + Rust + React)",
   "license": "GPL-3.0-or-later",
