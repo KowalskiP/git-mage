@@ -38,11 +38,16 @@ export const setFavorite = (id: number, favorite: boolean) =>
 
 export const repoStatus = (path: string) => invoke<RepoStatus>("repo_status", { path });
 
-export const graphLoad = (path: string, limit?: number) =>
-  invoke<GraphPage>("graph_load", { path, limit });
+export const graphLoad = (path: string, limit?: number, refs?: string[]) =>
+  invoke<GraphPage>("graph_load", { path, limit, refs });
 
-export const graphMore = (path: string, skip: number, limit: number, lanes: (string | null)[]) =>
-  invoke<GraphPage>("graph_more", { path, skip, limit, lanes });
+export const graphMore = (
+  path: string,
+  skip: number,
+  limit: number,
+  lanes: (string | null)[],
+  refs?: string[],
+) => invoke<GraphPage>("graph_more", { path, skip, limit, lanes, refs });
 
 export const commitDetail = (path: string, sha: string) =>
   invoke<CommitDetail>("commit_detail", { path, sha });

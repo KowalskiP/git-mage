@@ -80,6 +80,51 @@ beforeEach(() => {
   invokeMock.mockImplementation(defaultInvoke as never);
 });
 
+describe("graph filter (solo / pin)", () => {
+  beforeEach(() => {
+    useRepos.setState({ selected: repo({ path: "/tmp/g" }), pinnedRefs: [] });
+  });
+
+  it("soloBranch shows only that branch and passes it as the graph ref filter", async () => {
+    await useRepos.getState().soloBranch("feature/x");
+    expect(useRepos.getState().pinnedRefs).toEqual(["feature/x"]);
+    expect(invokeMock).toHaveBeenCalledWith(
+      "graph_load",
+      expect.objectContaining({ path: "/tmp/g", refs: ["feature/x"] }),
+    );
+  });
+
+  it("togglePin adds then removes a branch from the filter", async () => {
+    await useRepos.getState().togglePin("main");
+    expect(useRepos.getState().pinnedRefs).toEqual(["main"]);
+    await useRepos.getState().togglePin("dev");
+    expect(useRepos.getState().pinnedRefs).toEqual(["main", "dev"]);
+    await useRepos.getState().togglePin("main");
+    expect(useRepos.getState().pinnedRefs).toEqual(["dev"]);
+  });
+
+  it("clearGraphFilter empties the filter and reloads with no refs (all branches)", async () => {
+    useRepos.setState({ pinnedRefs: ["main"] });
+    invokeMock.mockClear();
+    await useRepos.getState().clearGraphFilter();
+    expect(useRepos.getState().pinnedRefs).toEqual([]);
+    expect(invokeMock).toHaveBeenCalledWith(
+      "graph_load",
+      expect.objectContaining({ path: "/tmp/g", refs: undefined }),
+    );
+  });
+
+  it("loadBranches drops pins for branches that no longer exist", async () => {
+    useRepos.setState({ pinnedRefs: ["main", "gone"] });
+    invokeMock.mockImplementation((async (cmd: string) =>
+      cmd === "branch_list"
+        ? { local: [{ name: "main", current: true, ahead: 0, behind: 0 }], remote: ["origin/main"] }
+        : defaultInvoke(cmd)) as never);
+    await useRepos.getState().loadBranches();
+    expect(useRepos.getState().pinnedRefs).toEqual(["main"]);
+  });
+});
+
 describe("loadBranches", () => {
   it("populates branchTree and derives the flat branch list", async () => {
     useRepos.setState({ selected: repo() });

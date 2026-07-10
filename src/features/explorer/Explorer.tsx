@@ -84,6 +84,9 @@ export function Explorer() {
   const reposDrawerOpen = useRepos((s) => s.reposDrawerOpen);
   const toggleReposDrawer = useRepos((s) => s.toggleReposDrawer);
   const closeRepo = useRepos((s) => s.closeRepo);
+  const pinnedRefs = useRepos((s) => s.pinnedRefs);
+  const togglePin = useRepos((s) => s.togglePin);
+  const soloBranch = useRepos((s) => s.soloBranch);
 
   const checkout = useRepos((s) => s.checkout);
   const merge = useRepos((s) => s.merge);
@@ -219,6 +222,11 @@ export function Explorer() {
       items.push({ label: `Merge into ${current}`, onClick: () => merge(name) });
       items.push({ label: `Rebase ${current} onto ${name}`, onClick: () => rebase(name) });
     }
+    items.push({ label: t("graph.solo"), onClick: () => soloBranch(name) });
+    items.push({
+      label: pinnedRefs.includes(name) ? t("graph.unpin") : t("graph.pin"),
+      onClick: () => togglePin(name),
+    });
     items.push({
       label: "Rename…",
       onClick: () =>
@@ -244,6 +252,11 @@ export function Explorer() {
       items.push({ label: `Merge into ${current}`, onClick: () => merge(full) });
       items.push({ label: `Rebase ${current} onto ${full}`, onClick: () => rebase(full) });
     }
+    items.push({ label: t("graph.solo"), onClick: () => soloBranch(full) });
+    items.push({
+      label: pinnedRefs.includes(full) ? t("graph.unpin") : t("graph.pin"),
+      onClick: () => togglePin(full),
+    });
     const slash = full.indexOf("/");
     if (slash > 0) {
       const remote = full.slice(0, slash);
@@ -353,9 +366,30 @@ export function Explorer() {
     });
   }
 
+  const pinBtn = (ref: string) => {
+    const pinned = pinnedRefs.includes(ref);
+    return (
+      <button
+        className={"exp-pin" + (pinned ? " exp-pin--on" : "")}
+        title={pinned ? t("graph.unpin") : t("graph.pin")}
+        aria-label={pinned ? t("graph.unpin") : t("graph.pin")}
+        onClick={(e) => {
+          e.stopPropagation();
+          void togglePin(ref);
+        }}
+      >
+        <Icon name="pin" size={12} />
+      </button>
+    );
+  };
+
   const localLeaf = (b: LocalBranch, node: TreeNode<LocalBranch>, depth: number) => (
     <div
-      className={"exp-branch" + (b.current ? " exp-branch--current" : "")}
+      className={
+        "exp-branch" +
+        (b.current ? " exp-branch--current" : "") +
+        (pinnedRefs.includes(node.path) ? " exp-branch--pinned" : "")
+      }
       style={{ paddingLeft: 10 + depth * 13 }}
       title={node.path}
       onDoubleClick={() => !b.current && checkout(node.path)}
@@ -367,12 +401,13 @@ export function Explorer() {
         {b.ahead > 0 && <span className="trk trk--ahead">↑{b.ahead}</span>}
         {b.behind > 0 && <span className="trk trk--behind">↓{b.behind}</span>}
       </span>
+      {pinBtn(node.path)}
     </div>
   );
 
   const remoteLeaf = (full: string, node: TreeNode<string>, depth: number) => (
     <div
-      className="exp-branch"
+      className={"exp-branch" + (pinnedRefs.includes(full) ? " exp-branch--pinned" : "")}
       style={{ paddingLeft: 10 + depth * 13 }}
       title={full}
       onDoubleClick={() => checkout(node.path)}
@@ -380,6 +415,7 @@ export function Explorer() {
     >
       <span className="exp-branch__dot" />
       <span className="exp-branch__name">{node.name}</span>
+      {pinBtn(full)}
     </div>
   );
 

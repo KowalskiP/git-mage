@@ -14,6 +14,7 @@ import {
   Package,
   PanelLeftClose,
   PanelLeftOpen,
+  Pin,
   Plus,
   Settings,
   Tag,
@@ -47,6 +48,7 @@ export type IconName =
   | "folderOpen"
   | "gitflow"
   | "lfs"
+  | "pin"
   | "drawerOpen"
   | "drawerClosed";
 
@@ -71,6 +73,7 @@ const LUCIDE: Record<IconName, LucideIcon> = {
   folderOpen: FolderOpen,
   gitflow: Workflow,
   lfs: Database,
+  pin: Pin,
   drawerOpen: PanelLeftClose,
   drawerClosed: PanelLeftOpen,
 };

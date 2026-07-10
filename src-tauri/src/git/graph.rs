@@ -27,8 +27,11 @@ struct Commit {
 
 /// Load the first page of the commit graph (up to `limit` commits) and lay it
 /// out from scratch. Prepends the working-directory (WIP) node when dirty.
-pub fn graph(path: &str, limit: usize) -> AppResult<GraphPage> {
-    graph_page(path, 0, limit, Vec::new())
+///
+/// `refs` narrows the graph to a chosen set of branches (GitKraken-style
+/// solo/pin) — `None` walks every ref (`--all`).
+pub fn graph(path: &str, limit: usize, refs: Option<Vec<String>>) -> AppResult<GraphPage> {
+    graph_page(path, 0, limit, Vec::new(), refs)
 }
 
 /// Load a later page: `skip` real commits in, up to `limit` more, resuming the
@@ -39,8 +42,9 @@ pub fn graph_more(
     skip: usize,
     limit: usize,
     lanes: Vec<Option<String>>,
+    refs: Option<Vec<String>>,
 ) -> AppResult<GraphPage> {
-    graph_page(path, skip, limit, lanes)
+    graph_page(path, skip, limit, lanes, refs)
 }
 
 /// Shared paging core: collect the window `[skip, skip + limit)` of commits and
@@ -51,12 +55,14 @@ fn graph_page(
     skip: usize,
     limit: usize,
     lanes_in: Vec<Option<String>>,
+    refs: Option<Vec<String>>,
 ) -> AppResult<GraphPage> {
-    // Prefer gix (no process spawn); fall back to the git CLI on any gix error.
-    let mut commits = match collect_commits_gix(path, skip, limit) {
-        Ok(c) => c,
-        Err(_) => collect_commits_cli(path, skip, limit)?,
-    };
+    // `git log --topo-order` keeps each branch's commits contiguous so lanes open
+    // and close quickly instead of running down as a "wall" of parallel lines
+    // when a repo has many branches (issue #2). Topo order needs the CLI (gix's
+    // rev-walk only offers breadth-first / commit-time), and one collector keeps
+    // page ordering consistent for the resumable lane cursor.
+    let mut commits = collect_commits_cli(path, skip, limit, refs.as_deref())?;
     // Fewer commits than the cap → the history is exhausted after this page.
     let at_end = commits.len() < limit;
 
@@ -72,8 +78,7 @@ fn graph_page(
     Ok(GraphPage { rows, lanes, at_end })
 }
 
-/// Commit data via `gix` revwalk across all refs (no process spawn), skipping
-/// the first `skip` commits and taking up to `limit`.
+#[cfg(any())] // retired: gix rev-walk can't produce `--topo-order` (see graph_page)
 fn collect_commits_gix(path: &str, skip: usize, limit: usize) -> AppResult<Vec<Commit>> {
     use std::collections::HashMap;
 
@@ -147,21 +152,44 @@ fn collect_commits_gix(path: &str, skip: usize, limit: usize) -> AppResult<Vec<C
     Ok(commits)
 }
 
-/// Commit data via the git CLI (`git log --all`) — fallback for `collect_commits_gix`.
-fn collect_commits_cli(path: &str, skip: usize, limit: usize) -> AppResult<Vec<Commit>> {
+/// Commit data via `git log --topo-order`. `refs` (branch/tag names) narrows the
+/// walk to a chosen set of branches; `None`/empty walks everything (`--all`).
+fn collect_commits_cli(
+    path: &str,
+    skip: usize,
+    limit: usize,
+    refs: Option<&[String]>,
+) -> AppResult<Vec<Commit>> {
     let fmt = format!("{US}%H{US}%P{US}%an{US}%at{US}%D{US}%s{RS}");
-    let out = Command::new("git").hide_console()
-        .current_dir(path)
-        .args([
-            "-c",
-            "log.showSignature=false",
-            "log",
-            "--all",
-            "--date-order",
-            &format!("--skip={skip}"),
-            &format!("--max-count={limit}"),
-            &format!("--format={fmt}"),
-        ])
+    let skip_arg = format!("--skip={skip}");
+    let max_arg = format!("--max-count={limit}");
+    let fmt_arg = format!("--format={fmt}");
+    let mut cmd = Command::new("git");
+    cmd.hide_console().current_dir(path).args([
+        "-c",
+        "log.showSignature=false",
+        "log",
+        "--topo-order",
+        &skip_arg,
+        &max_arg,
+        &fmt_arg,
+    ]);
+    match refs {
+        // Solo/pin: walk only the chosen refs, always anchoring HEAD so the
+        // current position (and the WIP node's parent) stays in the graph.
+        // `--ignore-missing` tolerates a pinned branch that was since deleted
+        // (skip it instead of erroring); trailing `--` disambiguates refs/paths.
+        Some(list) if !list.is_empty() => {
+            cmd.arg("--ignore-missing");
+            cmd.arg("HEAD");
+            cmd.args(list);
+            cmd.arg("--");
+        }
+        _ => {
+            cmd.arg("--all");
+        }
+    }
+    let out = cmd
         .output()
         .map_err(|e| AppError::Git(format!("git log: {e}")))?;
 
@@ -412,10 +440,55 @@ mod tests {
             git(&["add", "."]);
             git(&["commit", "-q", "-m", &format!("c{i}")]);
         }
-        let page = graph(p, 5).unwrap();
+        let page = graph(p, 5, None).unwrap();
         let commits = page.rows.iter().filter(|r| !r.wip).count();
         assert_eq!(commits, 5, "graph must cap at the requested limit");
         assert!(!page.at_end, "12 commits, limit 5 → more pages remain");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn ref_filter_narrows_the_graph_to_chosen_branches() {
+        use std::process::Command;
+        let dir = std::env::temp_dir().join(format!("gitmage-graphfilter-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        let git = |args: &[&str]| {
+            assert!(
+                Command::new("git").hide_console().current_dir(&dir).args(args).output().unwrap().status.success(),
+                "git {args:?}"
+            );
+        };
+        git(&["init", "-q", "-b", "main"]);
+        git(&["config", "user.email", "t@t"]);
+        git(&["config", "user.name", "t"]);
+        let commit = |git: &dyn Fn(&[&str]), file: &str, msg: &str| {
+            std::fs::write(dir.join(file), msg).unwrap();
+            git(&["add", "."]);
+            git(&["commit", "-q", "-m", msg]);
+        };
+        // main: c0..c1, branch feature at c1, feature: f0..f1, then main diverges: c2.
+        commit(&git, "f.txt", "c0");
+        commit(&git, "f.txt", "c1");
+        git(&["checkout", "-q", "-b", "feature"]);
+        commit(&git, "g.txt", "f0");
+        commit(&git, "g.txt", "f1");
+        git(&["checkout", "-q", "main"]);
+        commit(&git, "f.txt", "c2");
+        // Currently on `main`; solo `feature` → HEAD(main) is anchored, so we see
+        // main's tip too, but the filter must exclude nothing feature can reach.
+        // Solo `main` (while on main) must exclude feature's unique commits.
+        let solo_main = graph(p, 100, Some(vec!["main".to_string()])).unwrap();
+        assert!(solo_main.rows.iter().any(|r| r.summary == "c2"), "main tip present");
+        assert!(
+            !solo_main.rows.iter().any(|r| r.summary == "f1"),
+            "feature's unique commits must be filtered out of a main-only graph"
+        );
+        // Unfiltered walks everything.
+        let all = graph(p, 100, None).unwrap();
+        assert!(all.rows.iter().any(|r| r.summary == "f1"), "all-refs graph includes feature");
+        assert!(all.rows.iter().any(|r| r.summary == "c2"), "all-refs graph includes main");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -453,7 +526,7 @@ mod tests {
         git(&["merge", "-q", "--no-ff", "-m", "merge side", "side"]);
 
         // Clean tree so neither path grows a WIP node (keeps the comparison exact).
-        let full = graph(p, 1000).unwrap();
+        let full = graph(p, 1000, None).unwrap();
         let total = full.rows.len();
         assert!(total >= 13, "expected the merged history, got {total}");
         assert!(full.at_end);
@@ -463,7 +536,7 @@ mod tests {
         let mut lanes: Vec<Option<String>> = Vec::new();
         let mut skip = 0usize;
         loop {
-            let page = graph_more(p, skip, 3, lanes.clone()).unwrap();
+            let page = graph_more(p, skip, 3, lanes.clone(), None).unwrap();
             skip += page.rows.len();
             lanes = page.lanes;
             let done = page.at_end;
@@ -484,29 +557,6 @@ mod tests {
             }
         }
         let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn gix_matches_cli_on_real_repo() {
-        // Only runs on a machine that has this repo checked out.
-        let r = "/Users/kowalski/Projects/done-it-ai";
-        if !std::path::Path::new(r).join(".git").exists() {
-            return;
-        }
-        let mut g: Vec<String> = collect_commits_gix(r, 0, 5000)
-            .unwrap()
-            .into_iter()
-            .map(|c| c.sha)
-            .collect();
-        let mut c: Vec<String> = collect_commits_cli(r, 0, 5000)
-            .unwrap()
-            .into_iter()
-            .map(|c| c.sha)
-            .collect();
-        assert!(!g.is_empty(), "gix returned no commits");
-        g.sort();
-        c.sort();
-        assert_eq!(g, c, "gix and cli commit sets differ");
     }
 
     #[test]

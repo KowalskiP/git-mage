@@ -47,6 +47,12 @@ interface ReposState {
   graphAtEnd: boolean;
   /** Opaque lane cursor from the last page, resumed by `loadMoreGraph`. */
   graphCursor: (string | null)[];
+  /**
+   * GitKraken-style graph filter: branch/ref names the graph is narrowed to
+   * (solo/pin). Empty → show every branch (`--all`). Keeps a many-branch repo's
+   * graph readable instead of a wall of parallel lanes.
+   */
+  pinnedRefs: string[];
   selectedSha: string | null;
   branches: string[];
   branchTree: BranchList;
@@ -126,6 +132,12 @@ interface ReposState {
   refreshStatus: () => Promise<void>;
   loadGraph: () => Promise<void>;
   loadMoreGraph: () => Promise<void>;
+  /** Pin/unpin a branch in the graph filter (reloads the graph). */
+  togglePin: (ref: string) => Promise<void>;
+  /** Show only this branch in the graph (replace the filter with just it). */
+  soloBranch: (ref: string) => Promise<void>;
+  /** Clear the graph filter — show every branch again. */
+  clearGraphFilter: () => Promise<void>;
   selectNode: (sha: string) => void;
   stage: (files: string[]) => Promise<void>;
   unstage: (files: string[]) => Promise<void>;
@@ -230,6 +242,7 @@ const EMPTY_REPO_STATE = {
   graph: [],
   graphAtEnd: false,
   graphCursor: [],
+  pinnedRefs: [] as string[],
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] } as BranchList,
@@ -254,6 +267,7 @@ export const useRepos = create<ReposState>((set, get) => ({
   graphLoading: false,
   graphAtEnd: false,
   graphCursor: [],
+  pinnedRefs: [],
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] },
@@ -571,9 +585,11 @@ export const useRepos = create<ReposState>((set, get) => ({
   loadGraph: async () => {
     const sel = get().selected;
     if (!sel) return;
+    const pinned = get().pinnedRefs;
+    const refs = pinned.length ? pinned : undefined;
     set({ graphLoading: true });
     try {
-      const page = await api.graphLoad(sel.path, GRAPH_PAGE);
+      const page = await api.graphLoad(sel.path, GRAPH_PAGE, refs);
       // Keep the current selection if still present, else select the top node.
       const cur = get().selectedSha;
       const keep = cur && page.rows.some((r) => r.sha === cur) ? cur : page.rows[0]?.sha ?? null;
@@ -597,9 +613,11 @@ export const useRepos = create<ReposState>((set, get) => ({
     const sel = get().selected;
     if (!sel) return;
     const skip = get().graph.filter((r) => !r.wip).length;
+    const pinned = get().pinnedRefs;
+    const refs = pinned.length ? pinned : undefined;
     set({ graphLoading: true });
     try {
-      const page = await api.graphMore(sel.path, skip, GRAPH_PAGE, get().graphCursor);
+      const page = await api.graphMore(sel.path, skip, GRAPH_PAGE, get().graphCursor, refs);
       set((s) => ({
         graph: [...s.graph, ...page.rows],
         graphCursor: page.lanes,
@@ -610,6 +628,26 @@ export const useRepos = create<ReposState>((set, get) => ({
     } finally {
       set({ graphLoading: false });
     }
+  },
+
+  // Graph filter (GitKraken-style solo/pin). Reload page 1 with the new filter;
+  // loadMoreGraph then continues under the same filter.
+  togglePin: async (ref) => {
+    const cur = get().pinnedRefs;
+    const next = cur.includes(ref) ? cur.filter((r) => r !== ref) : [...cur, ref];
+    set({ pinnedRefs: next });
+    await get().loadGraph();
+  },
+
+  soloBranch: async (ref) => {
+    set({ pinnedRefs: [ref] });
+    await get().loadGraph();
+  },
+
+  clearGraphFilter: async () => {
+    if (get().pinnedRefs.length === 0) return;
+    set({ pinnedRefs: [] });
+    await get().loadGraph();
   },
 
   selectNode: (sha) => set({ selectedSha: sha }),
@@ -693,7 +731,16 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (!sel) return;
     try {
       const bl = await api.branchList(sel.path);
-      set({ branchTree: bl, branches: bl.local.map((b) => b.name) });
+      // Drop graph-filter pins for branches that no longer exist (the backend
+      // also tolerates stale refs, but this keeps the pin indicators honest).
+      const valid = new Set([...bl.local.map((b) => b.name), ...bl.remote]);
+      const pinned = get().pinnedRefs;
+      const keptPins = pinned.filter((r) => valid.has(r));
+      set({
+        branchTree: bl,
+        branches: bl.local.map((b) => b.name),
+        ...(keptPins.length !== pinned.length ? { pinnedRefs: keptPins } : {}),
+      });
     } catch (e) {
       set({ error: String(e) });
     }

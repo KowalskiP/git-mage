@@ -54,20 +54,26 @@ pub async fn repo_status(path: String) -> AppResult<RepoStatus> {
 }
 
 #[tauri::command]
-pub async fn graph_load(path: String, limit: Option<usize>) -> AppResult<GraphPage> {
-    git::graph(&path, limit.unwrap_or(2000))
+pub async fn graph_load(
+    path: String,
+    limit: Option<usize>,
+    refs: Option<Vec<String>>,
+) -> AppResult<GraphPage> {
+    git::graph(&path, limit.unwrap_or(2000), refs)
 }
 
 /// Append-only next page: `skip` real commits in, up to `limit` more, resuming
-/// the lane layout from the `lanes` cursor the previous page returned.
+/// the lane layout from the `lanes` cursor the previous page returned. `refs`
+/// must match the filter used for the first page so the pages line up.
 #[tauri::command]
 pub async fn graph_more(
     path: String,
     skip: usize,
     limit: usize,
     lanes: Vec<Option<String>>,
+    refs: Option<Vec<String>>,
 ) -> AppResult<GraphPage> {
-    git::graph_more(&path, skip, limit, lanes)
+    git::graph_more(&path, skip, limit, lanes, refs)
 }
 
 #[tauri::command]
