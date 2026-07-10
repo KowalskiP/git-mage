@@ -87,13 +87,14 @@ fn parse_remote_url(url: &str) -> Option<(String, String)> {
         let (hostport, path) = rest.split_once('/')?;
         let host = hostport.split(':').next().unwrap_or(hostport);
         (host.to_string(), path.to_string())
-    } else if let Some(rest) = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://")) {
-        // https://[user@]host/owner/repo.git
+    } else {
+        // https://[user@]host/owner/repo.git — anything that isn't ssh/scp.
+        let rest = url
+            .strip_prefix("https://")
+            .or_else(|| url.strip_prefix("http://"))?;
         let rest = rest.split_once('@').map(|(_, r)| r).unwrap_or(rest);
         let (host, path) = rest.split_once('/')?;
         (host.to_string(), path.to_string())
-    } else {
-        return None;
     };
 
     let path = path.trim_matches('/').trim_end_matches(".git").to_string();
