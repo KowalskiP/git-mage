@@ -6,6 +6,28 @@ versions track the milestone roadmap in [`docs/SPEC.md`](docs/SPEC.md) §11.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-17
+
+### Added
+- **Generate SSH or GPG keys from a profile.** The profile editor can mint a
+  key (Ed25519/RSA for SSH, Ed25519/RSA for GPG) with an optional passphrase;
+  the passphrase is fed to `ssh-keygen`/`gpg` over stdin (never argv or disk)
+  and the result is wired into the profile — private-key path for SSH, key
+  fingerprint for GPG.
+- **Enter passwords for SSH and HTTPS connections.** A per-repo credentials
+  panel stores an HTTPS username/password per host and an SSH key passphrase
+  per key in the OS keychain (never SQLite), used to authenticate
+  fetch/pull/push and clone non-interactively. Secrets are never read back into
+  the UI.
+
+### Changed
+- **Compact commit graph by default** ([#2](https://github.com/KowalskiP/git-mage/issues/2)).
+  Many-branch repos rendered as a full-height wall of parallel lanes. The graph
+  now walks a bounded, most-active ref set by default (HEAD + the default
+  branch + upstream + the freshest branches) and opens as a readable staircase;
+  a toolbar chip toggles between **Compact** and **All branches**, and solo/pin
+  still overrides.
+
 ## [0.3.1] - 2026-07-08
 
 ### Fixed
