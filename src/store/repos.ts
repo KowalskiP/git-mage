@@ -53,6 +53,18 @@ interface ReposState {
    * graph readable instead of a wall of parallel lanes.
    */
   pinnedRefs: string[];
+  /**
+   * Graph scope when no pins are set (issue #2):
+   * - "compact" (default): walk only `graphDefaultRefs` — the current branch's
+   *   context plus the most active branches — so a many-branch repo opens as a
+   *   handful of lanes instead of a wall.
+   * - "all": walk every ref (`--all`).
+   * Explicit pins (`pinnedRefs`) always override the scope.
+   */
+  graphScope: "compact" | "all";
+  /** Cached compact-scope ref set from the backend; frozen per page-1 load so
+   * `loadMoreGraph` pages line up. */
+  graphDefaultRefs: string[];
   selectedSha: string | null;
   branches: string[];
   branchTree: BranchList;
@@ -138,6 +150,8 @@ interface ReposState {
   soloBranch: (ref: string) => Promise<void>;
   /** Clear the graph filter — show every branch again. */
   clearGraphFilter: () => Promise<void>;
+  /** Switch the default graph scope between "compact" and "all" (reloads). */
+  setGraphScope: (scope: "compact" | "all") => Promise<void>;
   selectNode: (sha: string) => void;
   stage: (files: string[]) => Promise<void>;
   unstage: (files: string[]) => Promise<void>;
@@ -243,6 +257,7 @@ const EMPTY_REPO_STATE = {
   graphAtEnd: false,
   graphCursor: [],
   pinnedRefs: [] as string[],
+  graphDefaultRefs: [] as string[],
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] } as BranchList,
@@ -268,6 +283,8 @@ export const useRepos = create<ReposState>((set, get) => ({
   graphAtEnd: false,
   graphCursor: [],
   pinnedRefs: [],
+  graphScope: "compact",
+  graphDefaultRefs: [],
   selectedSha: null,
   branches: [],
   branchTree: { local: [], remote: [] },
@@ -586,7 +603,24 @@ export const useRepos = create<ReposState>((set, get) => ({
     const sel = get().selected;
     if (!sel) return;
     const pinned = get().pinnedRefs;
-    const refs = pinned.length ? pinned : undefined;
+    // Effective refs: explicit pins win; else in "compact" scope narrow to the
+    // backend's default ref set (refreshed and frozen here so scroll pages line
+    // up); else (scope "all") walk every branch. Empty compact set → `--all`.
+    let refs: string[] | undefined;
+    if (pinned.length) {
+      refs = pinned;
+    } else if (get().graphScope === "compact") {
+      let def: string[] = [];
+      try {
+        const r = await api.graphDefaultRefs(sel.path);
+        if (Array.isArray(r)) def = r;
+      } catch {
+        def = [];
+      }
+      set({ graphDefaultRefs: def });
+      // Empty compact set (tiny repo) → fall back to `--all`, already compact.
+      refs = def.length ? def : undefined;
+    }
     set({ graphLoading: true });
     try {
       const page = await api.graphLoad(sel.path, GRAPH_PAGE, refs);
@@ -614,7 +648,15 @@ export const useRepos = create<ReposState>((set, get) => ({
     if (!sel) return;
     const skip = get().graph.filter((r) => !r.wip).length;
     const pinned = get().pinnedRefs;
-    const refs = pinned.length ? pinned : undefined;
+    // Reuse the same filter page 1 used so the appended page's lanes line up:
+    // pins, else the frozen compact set, else `--all` (undefined).
+    let refs: string[] | undefined;
+    if (pinned.length) {
+      refs = pinned;
+    } else if (get().graphScope === "compact") {
+      const def = get().graphDefaultRefs;
+      refs = def.length ? def : undefined;
+    }
     set({ graphLoading: true });
     try {
       const page = await api.graphMore(sel.path, skip, GRAPH_PAGE, get().graphCursor, refs);
@@ -647,6 +689,12 @@ export const useRepos = create<ReposState>((set, get) => ({
   clearGraphFilter: async () => {
     if (get().pinnedRefs.length === 0) return;
     set({ pinnedRefs: [] });
+    await get().loadGraph();
+  },
+
+  setGraphScope: async (scope) => {
+    if (get().graphScope === scope) return;
+    set({ graphScope: scope });
     await get().loadGraph();
   },
 

@@ -208,6 +208,84 @@ fn collect_commits_cli(
     Ok(parse(&String::from_utf8_lossy(&out.stdout)))
 }
 
+/// Run git in `path` and return trimmed stdout (None on failure/empty).
+fn git_stdout(path: &str, args: &[&str]) -> Option<String> {
+    let out = Command::new("git").hide_console()
+        .current_dir(path)
+        .args(args)
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if s.is_empty() {
+        None
+    } else {
+        Some(s)
+    }
+}
+
+/// A bounded, ranked ref set for the default *compact* graph (issue #2): the
+/// current branch's context plus the most recently active branches, so a repo
+/// with dozens of branches opens as a handful of lanes instead of a wall.
+///
+/// Returns short ref names ("main", "origin/feature"); the caller (the refs
+/// filter in `graph_page`) always anchors HEAD, so a detached checkout still
+/// shows. An empty result means "nothing special to narrow to" — the caller
+/// then falls back to `--all`, which is already compact for a tiny repo.
+pub fn default_graph_refs(path: &str) -> AppResult<Vec<String>> {
+    // Cap on branches walked by default; past this the graph stops being a
+    // readable staircase, which is exactly what we're avoiding.
+    const MAX: usize = 12;
+
+    let mut refs: Vec<String> = Vec::new();
+    fn add(refs: &mut Vec<String>, r: &str) {
+        let r = r.trim();
+        // Skip HEAD (anchored separately) and the `origin/HEAD` pseudo-ref.
+        if !r.is_empty() && r != "HEAD" && !r.ends_with("/HEAD") && !refs.iter().any(|x| x == r) {
+            refs.push(r.to_string());
+        }
+    }
+
+    // The remote's default branch, if published (e.g. "origin/main").
+    if let Some(def) = git_stdout(path, &["rev-parse", "--abbrev-ref", "origin/HEAD"]) {
+        add(&mut refs, def.strip_prefix("origin/").unwrap_or(&def));
+    }
+    // Conventional integration branches that exist locally.
+    for cand in ["main", "master", "develop"] {
+        if git_stdout(path, &["rev-parse", "--verify", "--quiet", cand]).is_some() {
+            add(&mut refs, cand);
+        }
+    }
+    // The current branch and its upstream.
+    if let Some(cur) = git_stdout(path, &["rev-parse", "--abbrev-ref", "HEAD"]) {
+        add(&mut refs, &cur);
+    }
+    if let Some(up) = git_stdout(path, &["rev-parse", "--abbrev-ref", "@{u}"]) {
+        add(&mut refs, &up);
+    }
+    // Fill the rest with the most recently committed-to branches (local + remote).
+    if let Some(list) = git_stdout(
+        path,
+        &[
+            "for-each-ref",
+            "--sort=-committerdate",
+            &format!("--count={MAX}"),
+            "--format=%(refname:short)",
+            "refs/heads",
+            "refs/remotes",
+        ],
+    ) {
+        for r in list.lines() {
+            add(&mut refs, r);
+        }
+    }
+
+    refs.truncate(MAX);
+    Ok(refs)
+}
+
 /// A WIP commit (parent = HEAD) when the working tree has changes, else None.
 fn working_dir_node(path: &str) -> Option<Commit> {
     let status = Command::new("git").hide_console()
@@ -489,6 +567,42 @@ mod tests {
         let all = graph(p, 100, None).unwrap();
         assert!(all.rows.iter().any(|r| r.summary == "f1"), "all-refs graph includes feature");
         assert!(all.rows.iter().any(|r| r.summary == "c2"), "all-refs graph includes main");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn default_refs_pick_active_branches_and_exclude_head() {
+        use std::process::Command;
+        let dir = std::env::temp_dir().join(format!("gitmage-defrefs-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.to_str().unwrap();
+        let git = |args: &[&str]| {
+            assert!(
+                Command::new("git").hide_console().current_dir(&dir).args(args).output().unwrap().status.success(),
+                "git {args:?}"
+            );
+        };
+        git(&["init", "-q", "-b", "main"]);
+        git(&["config", "user.email", "t@t"]);
+        git(&["config", "user.name", "t"]);
+        std::fs::write(dir.join("f.txt"), "c0").unwrap();
+        git(&["add", "."]);
+        git(&["commit", "-q", "-m", "c0"]);
+        git(&["branch", "feature-a"]);
+        git(&["branch", "feature-b"]);
+
+        let refs = default_graph_refs(p).unwrap();
+        assert!(refs.iter().any(|r| r == "main"), "current branch present");
+        assert!(refs.iter().any(|r| r == "feature-a"), "other branches present");
+        assert!(!refs.iter().any(|r| r == "HEAD"), "HEAD is anchored separately, not listed");
+        assert!(refs.len() <= 12, "capped so the graph stays a readable staircase");
+        // No duplicates.
+        let mut sorted = refs.clone();
+        sorted.sort();
+        sorted.dedup();
+        assert_eq!(sorted.len(), refs.len(), "ref set is deduplicated");
+
         let _ = std::fs::remove_dir_all(&dir);
     }
 

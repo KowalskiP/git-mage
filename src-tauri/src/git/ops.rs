@@ -18,15 +18,7 @@ fn run(path: &str, args: &[&str], network: bool) -> AppResult<()> {
         // Never block on a TTY prompt or a merge editor in a headless process.
         cmd.env("GIT_TERMINAL_PROMPT", "0");
         cmd.env("GIT_EDITOR", "true");
-        // HTTPS forge remote with a stored PAT → authenticate via askpass
-        // instead of failing. SSH remotes return None and use the SSH agent.
-        if let Some((user, token)) = crate::forge::https_token(path) {
-            if let Some(helper) = askpass_helper() {
-                cmd.env("GIT_ASKPASS", helper);
-                cmd.env("GITMAGE_USER", user);
-                cmd.env("GITMAGE_TOKEN", token);
-            }
-        }
+        apply_network_auth(&mut cmd, path);
     }
     let out = cmd
         .output()
@@ -55,13 +47,115 @@ fn askpass_helper() -> Option<String> {
     Some(p.to_string_lossy().into_owned())
 }
 
-/// Clone `url` into the new directory `dir` (network). Auth relies on the
-/// system credential helper / SSH agent; we never block on a TTY prompt.
+/// Wire stored credentials into a network git child: an HTTPS username/token via
+/// GIT_ASKPASS, and/or an SSH key passphrase via SSH_ASKPASS. A no-op when
+/// nothing is stored — git then falls back to the system helper / SSH agent and,
+/// with GIT_TERMINAL_PROMPT=0, fails fast instead of hanging.
+fn apply_network_auth(cmd: &mut Command, path: &str) {
+    // HTTPS: a forge PAT or a user-entered host username/password.
+    if let Some((user, secret)) = crate::forge::https_auth(path) {
+        if let Some(helper) = askpass_helper() {
+            cmd.env("GIT_ASKPASS", helper);
+            cmd.env("GITMAGE_USER", user);
+            cmd.env("GITMAGE_TOKEN", secret);
+        }
+    }
+    // SSH: hand a stored key passphrase to `ssh` via SSH_ASKPASS.
+    if let Some((key, pass)) = ssh_passphrase_for(path) {
+        if let Some(helper) = ssh_askpass_helper() {
+            cmd.env("SSH_ASKPASS", helper);
+            // OpenSSH ≥8.4 uses the askpass even without a tty when REQUIRE=force;
+            // DISPLAY covers older ssh, which needs it set (any value) + no tty.
+            cmd.env("SSH_ASKPASS_REQUIRE", "force");
+            if std::env::var_os("DISPLAY").is_none() {
+                cmd.env("DISPLAY", ":0");
+            }
+            cmd.env("GITMAGE_SSH_PASS", pass);
+            cmd.env("GIT_SSH_COMMAND", format!("ssh -i {key} -o IdentitiesOnly=yes"));
+        }
+    }
+}
+
+/// (key_path, passphrase) when the repo's SSH remote uses a key (from
+/// core.sshCommand's `-i`) whose passphrase we have stored; else None.
+fn ssh_passphrase_for(path: &str) -> Option<(String, String)> {
+    let (_, scheme) = crate::forge::remote_host_scheme(path)?;
+    if scheme != "ssh" {
+        return None;
+    }
+    let key = ssh_key_from_config(path)?;
+    let pass = crate::creds::get_ssh_passphrase(&key)?;
+    Some((key, pass))
+}
+
+/// The `-i <path>` key out of the repo's core.sshCommand, if configured.
+pub fn ssh_key_from_config(path: &str) -> Option<String> {
+    let out = Command::new("git").hide_console()
+        .current_dir(path)
+        .args(["config", "--get", "core.sshCommand"])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let cmd = String::from_utf8_lossy(&out.stdout);
+    let mut toks = cmd.split_whitespace();
+    while let Some(t) = toks.next() {
+        if t == "-i" {
+            return toks.next().map(|s| s.trim_matches(['"', '\'']).to_string());
+        }
+        if let Some(rest) = t.strip_prefix("-i") {
+            if !rest.is_empty() {
+                return Some(rest.trim_matches(['"', '\'']).to_string());
+            }
+        }
+    }
+    None
+}
+
+/// A tiny SSH_ASKPASS helper that echoes the passphrase from the environment.
+/// The secret lives only in the env passed to the git/ssh child, not the script.
+fn ssh_askpass_helper() -> Option<String> {
+    let p = std::env::temp_dir().join("gitmage-ssh-askpass.sh");
+    std::fs::write(&p, "#!/bin/sh\nprintf '%s' \"$GITMAGE_SSH_PASS\"\n").ok()?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).ok()?;
+    }
+    Some(p.to_string_lossy().into_owned())
+}
+
+/// Host of an HTTP(S) URL, for looking up a stored clone credential.
+fn https_host_of(url: &str) -> Option<String> {
+    let rest = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://"))?;
+    let rest = rest.split_once('@').map(|(_, r)| r).unwrap_or(rest);
+    let host = rest.split(['/', ':']).next()?;
+    if host.is_empty() {
+        None
+    } else {
+        Some(host.to_string())
+    }
+}
+
+/// Clone `url` into the new directory `dir` (network). Uses a stored HTTPS host
+/// credential when one exists; otherwise relies on the system credential helper
+/// / SSH agent. We never block on a TTY prompt.
 pub fn clone(url: &str, dir: &str) -> AppResult<()> {
     let mut cmd = Command::new("git");
     cmd.hide_console();
     cmd.args(["clone", url, dir]);
     cmd.env("GIT_TERMINAL_PROMPT", "0");
+    // HTTPS: authenticate with a stored username/password for the URL's host.
+    if url.starts_with("https://") || url.starts_with("http://") {
+        if let Some((user, pass)) = https_host_of(url).and_then(|h| crate::creds::get_https(&h)) {
+            if let Some(helper) = askpass_helper() {
+                cmd.env("GIT_ASKPASS", helper);
+                cmd.env("GITMAGE_USER", user);
+                cmd.env("GITMAGE_TOKEN", pass);
+            }
+        }
+    }
     let out = cmd
         .output()
         .map_err(|e| AppError::Git(format!("git: {e}")))?;
@@ -725,6 +819,17 @@ mod tests {
         assert!(!crate::git::status(p).unwrap().merge_in_progress, "merge complete");
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn https_host_parsing_for_clone_creds() {
+        assert_eq!(https_host_of("https://github.com/o/r.git").as_deref(), Some("github.com"));
+        assert_eq!(
+            https_host_of("https://user@gitlab.example.com:8443/o/r.git").as_deref(),
+            Some("gitlab.example.com")
+        );
+        // SSH remotes have no HTTPS host to key a stored password on.
+        assert_eq!(https_host_of("git@github.com:o/r.git"), None);
     }
 }
 

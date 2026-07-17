@@ -16,9 +16,9 @@ use crate::supervisor::{self, AgentSession, Supervisor};
 use crate::terminal::{TermSession, Terminals};
 use crate::forge::{self, Provider};
 use crate::model::{
-    AgentInfo, BlameLine, BranchList, CommitDetail, DiffSides, FileLog, ForgeInfo, ForgeIssue,
-    ForgePull, GitflowConfig, GraphPage, Hunk, LfsStatus, Profile, RebaseCommit, Remote, RepoMeta,
-    RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
+    AgentInfo, BlameLine, BranchList, CommitDetail, ConnectionInfo, DiffSides, FileLog, ForgeInfo,
+    ForgeIssue, ForgePull, GeneratedKey, GitflowConfig, GraphPage, Hunk, LfsStatus, Profile,
+    RebaseCommit, Remote, RepoMeta, RepoStatus, SigningConfig, StashEntry, Submodule, Worktree,
 };
 use crate::watcher::{self, Watchers};
 
@@ -60,6 +60,14 @@ pub async fn graph_load(
     refs: Option<Vec<String>>,
 ) -> AppResult<GraphPage> {
     git::graph(&path, limit.unwrap_or(2000), refs)
+}
+
+/// Ranked ref set for the default *compact* graph (issue #2) — the front-end
+/// passes it straight back as `refs` (like solo/pin) so a many-branch repo
+/// opens as a handful of lanes instead of a wall. Empty → caller shows `--all`.
+#[tauri::command]
+pub async fn graph_default_refs(path: String) -> AppResult<Vec<String>> {
+    git::default_graph_refs(&path)
 }
 
 /// Append-only next page: `skip` real commits in, up to `limit` more, resuming
@@ -598,6 +606,52 @@ pub async fn forge_issues(path: String) -> AppResult<Vec<ForgeIssue>> {
     forge::fetch_issues(&rr, &token).await
 }
 
+// ---- connection credentials (enter passwords for SSH/HTTPS) --------------
+
+/// Host, scheme, and stored-credential state for the repo's remote — everything
+/// the credentials UI needs, without exposing any secret.
+#[tauri::command]
+pub async fn connection_info(path: String) -> AppResult<ConnectionInfo> {
+    let mut info = ConnectionInfo::default();
+    if let Some((host, scheme)) = forge::remote_host_scheme(&path) {
+        if let Some(user) = crate::creds::https_username(&host) {
+            info.has_https_cred = true;
+            info.https_username = user;
+        }
+        if scheme == "ssh" {
+            if let Some(key) = git::ssh_key_from_config(&path) {
+                info.has_ssh_passphrase = crate::creds::has_ssh_passphrase(&key);
+                info.ssh_key = key;
+            }
+        }
+        info.host = host;
+        info.scheme = scheme;
+    }
+    Ok(info)
+}
+
+/// Store an HTTPS username/password for `host` in the OS keychain.
+#[tauri::command]
+pub async fn cred_set_https(host: String, username: String, password: String) -> AppResult<()> {
+    crate::creds::set_https(&host, &username, &password)
+}
+
+#[tauri::command]
+pub async fn cred_clear_https(host: String) -> AppResult<()> {
+    crate::creds::clear_https(&host)
+}
+
+/// Store the passphrase for the SSH private key at `key_path`.
+#[tauri::command]
+pub async fn cred_set_ssh(key_path: String, passphrase: String) -> AppResult<()> {
+    crate::creds::set_ssh_passphrase(&key_path, &passphrase)
+}
+
+#[tauri::command]
+pub async fn cred_clear_ssh(key_path: String) -> AppResult<()> {
+    crate::creds::clear_ssh_passphrase(&key_path)
+}
+
 /// Create a pull/merge request (source → target branch); returns its web URL.
 #[tauri::command]
 pub async fn forge_create_pull(
@@ -736,6 +790,30 @@ pub fn init_repo(dir: String, db: State<Db>) -> AppResult<RepoMeta> {
 }
 
 // ---- identity profiles (SPEC #6) ---------------------------------------
+
+/// Generate an SSH keypair under `~/.ssh` and return its path + public key so
+/// the profile UI can wire it in. Passphrase is fed to `ssh-keygen`, not stored.
+#[tauri::command]
+pub async fn ssh_keygen(
+    name: String,
+    key_type: String,
+    passphrase: String,
+    comment: String,
+) -> AppResult<GeneratedKey> {
+    git::ssh_keygen(&name, &key_type, &passphrase, &comment)
+}
+
+/// Generate a GPG signing key and return its fingerprint (for `user.signingkey`).
+/// Passphrase is fed to `gpg` over stdin, not stored.
+#[tauri::command]
+pub async fn gpg_keygen(
+    name: String,
+    email: String,
+    passphrase: String,
+    algo: String,
+) -> AppResult<GeneratedKey> {
+    git::gpg_keygen(&name, &email, &passphrase, &algo)
+}
 
 #[tauri::command]
 pub fn profiles_list(db: State<Db>) -> AppResult<Vec<Profile>> {

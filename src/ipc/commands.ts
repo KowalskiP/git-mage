@@ -16,6 +16,8 @@ import type {
   ForgeInfo,
   ForgeIssue,
   ForgePull,
+  ConnectionInfo,
+  GeneratedKey,
   GitflowConfig,
   LfsStatus,
   Profile,
@@ -40,6 +42,10 @@ export const repoStatus = (path: string) => invoke<RepoStatus>("repo_status", { 
 
 export const graphLoad = (path: string, limit?: number, refs?: string[]) =>
   invoke<GraphPage>("graph_load", { path, limit, refs });
+
+/** Ranked ref set for the default "compact" graph (issue #2); passed back as `refs`. */
+export const graphDefaultRefs = (path: string) =>
+  invoke<string[]>("graph_default_refs", { path });
 
 export const graphMore = (
   path: string,
@@ -215,6 +221,20 @@ export const profileSave = (profile: Profile) => invoke<Profile>("profile_save",
 export const profileDelete = (id: number) => invoke<void>("profile_delete", { id });
 export const profileApply = (path: string, profile: Profile, global: boolean) =>
   invoke<void>("profile_apply", { path, profile, global });
+export const sshKeygen = (name: string, keyType: string, passphrase: string, comment: string) =>
+  invoke<GeneratedKey>("ssh_keygen", { name, keyType, passphrase, comment });
+export const gpgKeygen = (name: string, email: string, passphrase: string, algo: string) =>
+  invoke<GeneratedKey>("gpg_keygen", { name, email, passphrase, algo });
+
+// Connection credentials (enter passwords for SSH/HTTPS).
+export const connectionInfo = (path: string) =>
+  invoke<ConnectionInfo>("connection_info", { path });
+export const credSetHttps = (host: string, username: string, password: string) =>
+  invoke<void>("cred_set_https", { host, username, password });
+export const credClearHttps = (host: string) => invoke<void>("cred_clear_https", { host });
+export const credSetSsh = (keyPath: string, passphrase: string) =>
+  invoke<void>("cred_set_ssh", { keyPath, passphrase });
+export const credClearSsh = (keyPath: string) => invoke<void>("cred_clear_ssh", { keyPath });
 export const repoIdentity = (path: string) => invoke<[string, string]>("repo_identity", { path });
 export const undo = (path: string) => invoke<string>("undo", { path });
 export const lastAction = (path: string) => invoke<string | null>("last_action", { path });

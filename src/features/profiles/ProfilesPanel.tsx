@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useRepos } from "../../store/repos";
-import { repoIdentity } from "../../ipc/commands";
+import { repoIdentity, sshKeygen, gpgKeygen } from "../../ipc/commands";
+import { ConnectionCreds } from "./ConnectionCreds";
 import { useT } from "../../i18n/useT";
 import type { Profile } from "../../types/git";
 
@@ -44,6 +45,20 @@ export function ProfilesPanel() {
   const [editing, setEditing] = useState<Profile | null>(null);
   const [identity, setIdentity] = useState<[string, string] | null>(null);
 
+  // Inline key generator (SSH/GPG). `gen` holds the form; `genPub` the resulting
+  // public key/fingerprint to show once generation succeeds.
+  type GenKind = "ssh" | "gpg";
+  const [gen, setGen] = useState<{
+    kind: GenKind;
+    name: string;
+    email: string;
+    passphrase: string;
+    algo: string;
+  } | null>(null);
+  const [genBusy, setGenBusy] = useState(false);
+  const [genErr, setGenErr] = useState<string | null>(null);
+  const [genPub, setGenPub] = useState<string | null>(null);
+
   // Show the open repo's current identity so the user sees what they're changing.
   useEffect(() => {
     if (!profilesOpen || !selected) {
@@ -77,6 +92,40 @@ export function ProfilesPanel() {
     if (!editing || !editing.name.trim()) return;
     await saveProfile(editing);
     setEditing(null);
+  }
+
+  function openGen(kind: GenKind) {
+    setGenErr(null);
+    setGenPub(null);
+    setGen({
+      kind,
+      name: editing?.name || editing?.userName || "",
+      email: editing?.userEmail || "",
+      passphrase: "",
+      algo: "ed25519",
+    });
+  }
+
+  async function runGen() {
+    if (!gen || !gen.name.trim()) return;
+    setGenBusy(true);
+    setGenErr(null);
+    setGenPub(null);
+    try {
+      if (gen.kind === "ssh") {
+        const k = await sshKeygen(gen.name, gen.algo, gen.passphrase, gen.email);
+        set({ sshKeyPath: k.path });
+        setGenPub(k.public);
+      } else {
+        const k = await gpgKeygen(gen.name, gen.email, gen.passphrase, gen.algo);
+        set({ signingKey: k.public, signingFormat: "openpgp" });
+        setGenPub(k.public);
+      }
+    } catch (e) {
+      setGenErr(String(e));
+    } finally {
+      setGenBusy(false);
+    }
   }
 
   return (
@@ -163,6 +212,99 @@ export function ProfilesPanel() {
                   {t("profiles.browse")}
                 </button>
               </div>
+
+              <div className="keygen-triggers">
+                <button className="link-btn" type="button" onClick={() => openGen("ssh")}>
+                  {t("keys.genSsh")}
+                </button>
+                <button className="link-btn" type="button" onClick={() => openGen("gpg")}>
+                  {t("keys.genGpg")}
+                </button>
+              </div>
+              {gen && (
+                <div className="keygen">
+                  {genPub ? (
+                    <>
+                      <textarea
+                        className="modal-input keygen__pub"
+                        readOnly
+                        rows={gen.kind === "ssh" ? 3 : 1}
+                        value={genPub}
+                      />
+                      <div className="keygen__hint">
+                        {gen.kind === "ssh" ? t("keys.sshResult") : t("keys.gpgResult")}
+                      </div>
+                      <div className="modal-actions">
+                        <button
+                          className="tbtn tbtn--primary"
+                          type="button"
+                          onClick={() => {
+                            setGen(null);
+                            setGenPub(null);
+                          }}
+                        >
+                          {t("common.done")}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        className="modal-input"
+                        placeholder={t("keys.namePh")}
+                        value={gen.name}
+                        autoFocus
+                        {...inputProps}
+                        onChange={(e) => setGen((g) => (g ? { ...g, name: e.target.value } : g))}
+                      />
+                      {gen.kind === "gpg" && (
+                        <input
+                          className="modal-input"
+                          placeholder={t("keys.emailPh")}
+                          value={gen.email}
+                          {...inputProps}
+                          onChange={(e) => setGen((g) => (g ? { ...g, email: e.target.value } : g))}
+                        />
+                      )}
+                      <div className="settings__row">
+                        <select
+                          className="sign-select"
+                          value={gen.algo}
+                          onChange={(e) => setGen((g) => (g ? { ...g, algo: e.target.value } : g))}
+                        >
+                          <option value="ed25519">Ed25519</option>
+                          <option value="rsa">RSA 4096</option>
+                        </select>
+                        <input
+                          className="modal-input"
+                          type="password"
+                          placeholder={t("keys.passphrasePh")}
+                          value={gen.passphrase}
+                          {...inputProps}
+                          onChange={(e) =>
+                            setGen((g) => (g ? { ...g, passphrase: e.target.value } : g))
+                          }
+                        />
+                      </div>
+                      {genErr && <div className="keygen__err">{genErr}</div>}
+                      <div className="modal-actions">
+                        <button className="tbtn" type="button" onClick={() => setGen(null)}>
+                          {t("common.cancel")}
+                        </button>
+                        <button
+                          className="tbtn tbtn--primary"
+                          type="button"
+                          disabled={genBusy || !gen.name.trim()}
+                          onClick={runGen}
+                        >
+                          {genBusy ? t("keys.generating") : t("keys.generate")}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="modal-actions">
                 <button className="tbtn" onClick={() => setEditing(null)}>
                   {t("common.cancel")}
@@ -227,6 +369,8 @@ export function ProfilesPanel() {
               ))}
             </div>
           )}
+
+          {!editing && <ConnectionCreds />}
         </div>
       </div>
     </div>

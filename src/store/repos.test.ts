@@ -31,6 +31,8 @@ async function defaultInvoke(cmd: string, args?: Record<string, unknown>): Promi
     case "graph_load":
     case "graph_more":
       return { rows: [], lanes: [], atEnd: true };
+    case "graph_default_refs":
+      return [];
     case "branch_list":
       return { local: [{ name: "main", current: true, ahead: 0, behind: 0 }], remote: [] };
     case "repo_status":
@@ -82,7 +84,30 @@ beforeEach(() => {
 
 describe("graph filter (solo / pin)", () => {
   beforeEach(() => {
-    useRepos.setState({ selected: repo({ path: "/tmp/g" }), pinnedRefs: [] });
+    useRepos.setState({ selected: repo({ path: "/tmp/g" }), pinnedRefs: [], graphScope: "compact" });
+  });
+
+  it("compact scope walks the backend's default ref set", async () => {
+    invokeMock.mockImplementation((async (cmd: string) =>
+      cmd === "graph_default_refs" ? ["main", "origin/feature"] : defaultInvoke(cmd)) as never);
+    await useRepos.getState().loadGraph();
+    expect(useRepos.getState().graphDefaultRefs).toEqual(["main", "origin/feature"]);
+    expect(invokeMock).toHaveBeenCalledWith(
+      "graph_load",
+      expect.objectContaining({ path: "/tmp/g", refs: ["main", "origin/feature"] }),
+    );
+  });
+
+  it("setGraphScope('all') reloads walking every branch (no refs)", async () => {
+    invokeMock.mockClear();
+    await useRepos.getState().setGraphScope("all");
+    expect(useRepos.getState().graphScope).toBe("all");
+    expect(invokeMock).toHaveBeenCalledWith(
+      "graph_load",
+      expect.objectContaining({ path: "/tmp/g", refs: undefined }),
+    );
+    // graph_default_refs isn't consulted once we're walking everything.
+    expect(invokeMock).not.toHaveBeenCalledWith("graph_default_refs", expect.anything());
   });
 
   it("soloBranch shows only that branch and passes it as the graph ref filter", async () => {

@@ -232,6 +232,25 @@ export interface Profile {
   sshKeyPath: string;
 }
 
+/** A freshly generated SSH/GPG key returned by the keygen commands. */
+export interface GeneratedKey {
+  kind: string; // "ssh" | "gpg"
+  /** SSH: private-key path. GPG: empty. */
+  path: string;
+  /** SSH: public-key line. GPG: fingerprint. */
+  public: string;
+}
+
+/** A repo's remote connection + stored-credential state (no secrets). */
+export interface ConnectionInfo {
+  host: string;
+  scheme: string; // "https" | "ssh" | ""
+  sshKey: string;
+  hasHttpsCred: boolean;
+  httpsUsername: string;
+  hasSshPassphrase: boolean;
+}
+
 export interface GitflowConfig {
   initialized: boolean;
   main: string;
