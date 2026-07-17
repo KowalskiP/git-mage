@@ -15,6 +15,9 @@ export function GraphActions() {
   const stashSave = useRepos((s) => s.stashSave);
   const pinnedRefs = useRepos((s) => s.pinnedRefs);
   const clearGraphFilter = useRepos((s) => s.clearGraphFilter);
+  const graphScope = useRepos((s) => s.graphScope);
+  const setGraphScope = useRepos((s) => s.setGraphScope);
+  const graphDefaultRefs = useRepos((s) => s.graphDefaultRefs);
 
   const items: { name: IconName; label: string; run: () => void }[] = [
     { name: "fetch", label: "Fetch", run: () => fetch() },
@@ -31,7 +34,7 @@ export function GraphActions() {
           <span>{it.label}</span>
         </button>
       ))}
-      {pinnedRefs.length > 0 && (
+      {pinnedRefs.length > 0 ? (
         <button
           className="graph-filter-chip"
           onClick={() => clearGraphFilter()}
@@ -40,6 +43,20 @@ export function GraphActions() {
           <Icon name="pin" size={13} />
           <span>{t("graph.filtered", { n: pinnedRefs.length })}</span>
           <Icon name="close" size={13} />
+        </button>
+      ) : (
+        <button
+          className={"graph-scope-chip" + (graphScope === "all" ? " graph-scope-chip--all" : "")}
+          onClick={() => setGraphScope(graphScope === "compact" ? "all" : "compact")}
+          disabled={!!busy}
+          title={graphScope === "compact" ? t("graph.scopeCompactHint") : t("graph.scopeAllHint")}
+        >
+          <Icon name="branch" size={13} />
+          <span>
+            {graphScope === "compact"
+              ? t("graph.scopeCompact", { n: graphDefaultRefs.length })
+              : t("graph.scopeAll")}
+          </span>
         </button>
       )}
     </div>

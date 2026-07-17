@@ -1,4 +1,5 @@
 mod agents;
+mod creds;
 mod db;
 mod error;
 mod forge;
@@ -48,6 +49,7 @@ pub fn run() {
             ipc::commands::set_favorite,
             ipc::commands::repo_status,
             ipc::commands::graph_load,
+            ipc::commands::graph_default_refs,
             ipc::commands::graph_more,
             ipc::commands::commit_detail,
             ipc::commands::commit_diff,
@@ -130,6 +132,11 @@ pub fn run() {
             ipc::commands::forge_pulls,
             ipc::commands::forge_issues,
             ipc::commands::forge_create_pull,
+            ipc::commands::connection_info,
+            ipc::commands::cred_set_https,
+            ipc::commands::cred_clear_https,
+            ipc::commands::cred_set_ssh,
+            ipc::commands::cred_clear_ssh,
             ipc::commands::open_external,
             ipc::commands::open_in,
             ipc::commands::clone_repo,
@@ -138,6 +145,8 @@ pub fn run() {
             ipc::commands::profile_save,
             ipc::commands::profile_delete,
             ipc::commands::profile_apply,
+            ipc::commands::ssh_keygen,
+            ipc::commands::gpg_keygen,
             ipc::commands::repo_identity,
             ipc::commands::last_action,
             ipc::commands::undo,

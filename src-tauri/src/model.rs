@@ -17,6 +17,21 @@ pub struct Profile {
     pub ssh_key_path: String,
 }
 
+/// A freshly generated key (SSH or GPG), returned to the profile UI so it can
+/// wire the key into a profile. No private material or passphrase is included.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneratedKey {
+    /// "ssh" | "gpg".
+    pub kind: String,
+    /// SSH: absolute path to the new private key (for `core.sshCommand` /
+    /// `ssh_key_path`). GPG: empty.
+    pub path: String,
+    /// SSH: the public-key line (to copy to the forge). GPG: the key
+    /// fingerprint (for `user.signingkey`).
+    pub public: String,
+}
+
 /// One commit in a file's history (SPEC: file history).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -286,6 +301,26 @@ pub struct ForgeInfo {
     pub repo: String,
     /// Whether a token for this provider is stored in the keychain.
     pub has_token: bool,
+}
+
+/// A repo's network connection + stored-credential state, for the credentials
+/// UI (enter passwords for SSH/HTTPS). No secrets are included — only whether
+/// one is stored and, for HTTPS, the (non-secret) username.
+#[derive(Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ConnectionInfo {
+    /// Remote host (e.g. "github.com"), or empty when there's no remote.
+    pub host: String,
+    /// "https" | "ssh" | "" (unknown/no remote).
+    pub scheme: String,
+    /// Configured SSH key path (`core.sshCommand -i`), for SSH remotes.
+    pub ssh_key: String,
+    /// Whether an HTTPS username/password is stored for this host.
+    pub has_https_cred: bool,
+    /// Stored HTTPS username (empty when none).
+    pub https_username: String,
+    /// Whether a passphrase is stored for the configured SSH key.
+    pub has_ssh_passphrase: bool,
 }
 
 /// A pull/merge request from a forge API (SPEC §M6).

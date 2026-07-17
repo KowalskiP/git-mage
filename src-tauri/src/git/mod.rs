@@ -11,6 +11,7 @@ mod gitflow;
 mod graph;
 mod history;
 mod hunk;
+mod keys;
 mod lfs;
 mod ops;
 mod profile;
@@ -23,10 +24,11 @@ mod submodule;
 mod worktree;
 
 pub use commit::{commit_detail, commit_diff, diff_sides, wip_diff};
-pub use graph::{graph, graph_more};
+pub use graph::{default_graph_refs, graph, graph_more};
 pub use gitflow::{gitflow_finish, gitflow_init, gitflow_start, gitflow_status};
 pub use history::{blame, file_history};
 pub use hunk::{apply_hunk, file_hunks};
+pub use keys::{gpg_keygen, ssh_keygen};
 pub use lfs::{lfs_lock, lfs_pull, lfs_status, lfs_track, lfs_unlock};
 pub use stash::{stash_apply, stash_drop, stash_list, stash_pop, stash_save};
 pub use submodule::{submodule_list, submodule_sync, submodule_update};
@@ -39,7 +41,7 @@ pub use ops::{
     launch_mergetool, list_branches, merge, merge_abort,
     merge_continue, pull, push, rebase, rebase_abort, rebase_continue, rebase_interactive,
     rebase_todo_commits, reset, resolve_side, revert, sequencer_abort, sequencer_continue,
-    tag_create, tag_delete, tag_list, undo, write_resolution,
+    ssh_key_from_config, tag_create, tag_delete, tag_list, undo, write_resolution,
 };
 pub use profile::{apply_profile, identity};
 pub use remotes::{remote_add, remote_list, remote_remove, remote_rename, remote_set_url};

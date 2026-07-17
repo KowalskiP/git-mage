@@ -15,7 +15,7 @@ use crate::git::cmd::HideConsole;
 use crate::error::{AppError, AppResult};
 use crate::model::ForgeInfo;
 
-const KEYCHAIN_SERVICE: &str = "dev.gitmage.desktop";
+pub(crate) const KEYCHAIN_SERVICE: &str = "dev.gitmage.desktop";
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Provider {
@@ -216,6 +216,35 @@ pub fn https_token(path: &str) -> Option<(String, String)> {
     let rr = parse_repo_ref(&url)?;
     let token = get_token(rr.provider)?;
     Some((https_user(rr.provider).to_string(), token))
+}
+
+/// The repo remote's (host, scheme) where scheme is "https" or "ssh". None when
+/// there's no remote or the URL can't be parsed. Used to decide which kind of
+/// credential (HTTPS password vs SSH passphrase) applies.
+pub fn remote_host_scheme(path: &str) -> Option<(String, String)> {
+    let url = remote_url(path)?;
+    let scheme = if url.starts_with("https://") || url.starts_with("http://") {
+        "https"
+    } else {
+        // git@host:… and ssh://… both authenticate over SSH.
+        "ssh"
+    };
+    let (host, _) = parse_remote_url(&url)?;
+    Some((host, scheme.to_string()))
+}
+
+/// (username, secret) to feed git's askpass for an HTTPS remote: a stored forge
+/// PAT if there is one, else a user-entered host credential from the keychain.
+/// None for SSH remotes or when nothing is stored.
+pub fn https_auth(path: &str) -> Option<(String, String)> {
+    if let Some(tok) = https_token(path) {
+        return Some(tok);
+    }
+    let (host, scheme) = remote_host_scheme(path)?;
+    if scheme != "https" {
+        return None;
+    }
+    crate::creds::get_https(&host)
 }
 
 /// Resolve a repo path to its RepoRef, erroring if unsupported.
